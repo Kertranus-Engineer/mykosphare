@@ -22,3 +22,13 @@ export {
   safeNumber,
   sanitizeString,
 } from "./validation"
+export { verifyIngestionKey } from "./auth"
+export type { AuthResult } from "./auth"
+export { checkRateLimit, getRateLimitStoreSize } from "./rate-limit"
+export type { RateLimitResult } from "./rate-limit"
+export {
+  recordAccepted,
+  recordRejected,
+  getIngestionMetrics,
+  resetIngestionMetrics,
+} from "./metrics"
