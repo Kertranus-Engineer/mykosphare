@@ -76,35 +76,41 @@ export default function AnalyticsPage() {
   return (
     <div className="flex flex-col gap-4 p-6">
       <div>
-        <h1 className="text-lg font-semibold text-foreground">Analytics</h1>
-        <p className="text-sm text-muted-foreground">
+        <h1 className="text-lg font-semibold tracking-tight text-foreground">
+          Analytics
+        </h1>
+        <p className="text-sm text-muted-foreground/70">
           Operational intelligence and environmental performance metrics
         </p>
       </div>
 
-      <div className="flex gap-4">
+      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         {kpis.map((kpi) => (
-          <Card key={kpi.label} size="sm" className="flex-1">
+          <Card
+            key={kpi.label}
+            size="sm"
+            className="transition-all duration-200 hover:ring-foreground/20 hover:shadow-[0_0_16px_-6px] hover:shadow-foreground/10"
+          >
             <CardContent className="flex flex-col gap-2">
               <div className="flex items-center gap-2">
                 <div className="flex size-7 items-center justify-center rounded-lg bg-muted">
-                  <kpi.icon className="size-3.5 text-muted-foreground" />
+                  <kpi.icon className="size-3.5 text-muted-foreground/60" />
                 </div>
-                <span className="text-xs text-muted-foreground">
+                <span className="text-xs text-muted-foreground/70">
                   {kpi.label}
                 </span>
               </div>
-              <span className="text-xl font-semibold tabular-nums text-foreground">
+              <span className="text-xl font-semibold tabular-nums tracking-tight text-foreground">
                 {kpi.value}
               </span>
-              <span className="text-[10px] text-muted-foreground">{kpi.sub}</span>
+              <span className="text-[10px] text-muted-foreground/50">{kpi.sub}</span>
             </CardContent>
           </Card>
         ))}
       </div>
 
-      <div className="flex gap-4">
-        <Card className="flex-[2]">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+        <Card className="col-span-2 transition-all duration-200 hover:ring-foreground/20 hover:shadow-[0_0_16px_-6px] hover:shadow-foreground/10">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-sm">
               <Activity className="size-4 text-muted-foreground" />
@@ -112,7 +118,7 @@ export default function AnalyticsPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="h-48 w-full">
+            <div className="h-48 w-full min-w-0">
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart data={trendData}>
                   <defs>
@@ -168,7 +174,7 @@ export default function AnalyticsPage() {
           </CardContent>
         </Card>
 
-        <Card className="flex-1">
+        <Card className="transition-all duration-200 hover:ring-foreground/20 hover:shadow-[0_0_16px_-6px] hover:shadow-foreground/10">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-sm">
               <BarChart3 className="size-4 text-muted-foreground" />
@@ -176,7 +182,7 @@ export default function AnalyticsPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="h-48 w-full">
+            <div className="h-48 w-full min-w-0">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={efficiencyData}>
                   <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
@@ -213,12 +219,12 @@ export default function AnalyticsPage() {
         </Card>
       </div>
 
-      <Card>
+      <Card className="transition-all duration-200 hover:ring-foreground/20 hover:shadow-[0_0_16px_-6px] hover:shadow-foreground/10">
         <CardHeader>
           <CardTitle className="text-sm">Operational Summary</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-2 gap-3 lg:grid-cols-3">
             {[
               { label: "Uptime", value: "14d 7h 32m" },
               { label: "Data Points Collected", value: "847,291" },
@@ -231,10 +237,10 @@ export default function AnalyticsPage() {
                 key={item.label}
                 className="flex items-center justify-between rounded-lg bg-muted/20 px-3 py-2.5"
               >
-                <span className="text-xs text-muted-foreground">
+                <span className="text-xs text-muted-foreground/70">
                   {item.label}
                 </span>
-                <span className="text-sm font-medium tabular-nums text-foreground">
+                <span className="text-sm font-medium tabular-nums tracking-tight text-foreground">
                   {item.value}
                 </span>
               </div>

@@ -15,7 +15,7 @@ export function DashboardGrid() {
 
   return (
     <div className="flex flex-col gap-4 p-6">
-      <div className="flex gap-4">
+      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         <MetricCard
           icon={Thermometer}
           label="Temperature"
@@ -46,18 +46,18 @@ export function DashboardGrid() {
         />
       </div>
 
-      <div className="flex gap-4">
-        <div className="flex-[3]">
+      <div className="flex flex-col gap-4 xl:flex-row">
+        <div className="flex-1 xl:flex-[3]">
           <ChamberPanel />
         </div>
-        <div className="flex flex-[1.4] flex-col gap-4">
+        <div className="flex flex-col gap-4 xl:flex-[1.4]">
           <AiAnalysisPanel />
           <AlertPanel />
         </div>
       </div>
 
-      <div className="flex gap-4">
-        <div className="flex-[2]">
+      <div className="flex flex-col gap-4 xl:flex-row">
+        <div className="flex-1 xl:flex-[2]">
           <TelemetryChart />
         </div>
         <div className="flex-1">

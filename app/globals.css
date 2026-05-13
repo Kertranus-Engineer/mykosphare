@@ -157,3 +157,12 @@
     box-shadow: 0 0 8px 2px currentColor;
   }
 }
+
+@keyframes scan-line {
+  0% {
+    top: -2%;
+  }
+  100% {
+    top: 102%;
+  }
+}

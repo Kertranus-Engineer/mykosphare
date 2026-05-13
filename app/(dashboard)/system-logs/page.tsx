@@ -24,23 +24,25 @@ export default function SystemLogsPage() {
 
   return (
     <div className="flex flex-col gap-4 p-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-lg font-semibold text-foreground">System Logs</h1>
-          <p className="text-sm text-muted-foreground">
+      <div className="flex items-start justify-between gap-4">
+        <div className="min-w-0">
+          <h1 className="text-lg font-semibold tracking-tight text-foreground">
+            System Logs
+          </h1>
+          <p className="text-sm text-muted-foreground/70">
             Operational event log and system telemetry history
           </p>
         </div>
-        <div className="flex items-center gap-2 rounded-lg border border-border/50 bg-muted/30 px-3 py-1.5">
-          <Search className="size-3.5 text-muted-foreground" />
-          <span className="text-xs text-muted-foreground">
+        <div className="flex shrink-0 items-center gap-2 rounded-lg border border-border/50 bg-muted/30 px-3 py-1.5">
+          <Search className="size-3.5 text-muted-foreground/60" />
+          <span className="text-xs text-muted-foreground/60">
             Filter logs...
           </span>
         </div>
       </div>
 
-      <div className="flex gap-4">
-        <Card className="flex-1">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+        <Card className="transition-all duration-200 hover:ring-foreground/20 hover:shadow-[0_0_16px_-6px] hover:shadow-foreground/10">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-sm">
               <ScrollText className="size-4 text-muted-foreground" />
@@ -52,9 +54,9 @@ export default function SystemLogsPage() {
               {liveLogs.map((log, i) => (
                 <div
                   key={`${log.time}-${i}`}
-                  className="flex items-center gap-3 rounded px-2 py-1.5 hover:bg-muted/20"
+                  className="flex items-center gap-3 rounded px-2 py-1.5 transition-colors hover:bg-muted/20"
                 >
-                  <span className="w-10 text-right text-[11px] tabular-nums text-muted-foreground/60">
+                  <span className="w-10 shrink-0 text-right text-[11px] tabular-nums text-muted-foreground/60">
                     {log.time}
                   </span>
                   <div
@@ -74,7 +76,7 @@ export default function SystemLogsPage() {
           </CardContent>
         </Card>
 
-        <Card className="flex-1">
+        <Card className="transition-all duration-200 hover:ring-foreground/20 hover:shadow-[0_0_16px_-6px] hover:shadow-foreground/10">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-sm">
               <ScrollText className="size-4 text-muted-foreground" />
@@ -86,9 +88,9 @@ export default function SystemLogsPage() {
               {archivalLogs.map((log, i) => (
                 <div
                   key={i}
-                  className="flex items-center gap-3 rounded px-2 py-1.5 hover:bg-muted/20"
+                  className="flex items-center gap-3 rounded px-2 py-1.5 transition-colors hover:bg-muted/20"
                 >
-                  <span className="w-10 text-right text-[11px] tabular-nums text-muted-foreground/60">
+                  <span className="w-10 shrink-0 text-right text-[11px] tabular-nums text-muted-foreground/60">
                     {log.time}
                   </span>
                   <div

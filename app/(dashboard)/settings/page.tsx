@@ -100,14 +100,16 @@ export default function SettingsPage() {
   return (
     <div className="flex flex-col gap-4 p-6">
       <div>
-        <h1 className="text-lg font-semibold text-foreground">Settings</h1>
-        <p className="text-sm text-muted-foreground">
+        <h1 className="text-lg font-semibold tracking-tight text-foreground">
+          Settings
+        </h1>
+        <p className="text-sm text-muted-foreground/70">
           System configuration and chamber profile management
         </p>
       </div>
 
-      <div className="flex gap-4">
-        <Card className="flex-1">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+        <Card className="transition-all duration-200 hover:ring-foreground/20 hover:shadow-[0_0_16px_-6px] hover:shadow-foreground/10">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-sm">
               <Cog className="size-4 text-muted-foreground" />
@@ -121,7 +123,7 @@ export default function SettingsPage() {
                   key={item.label}
                   className="flex items-center justify-between rounded-lg bg-muted/20 px-3 py-2"
                 >
-                  <span className="text-xs text-muted-foreground">
+                  <span className="text-xs text-muted-foreground/70">
                     {item.label}
                   </span>
                   <span className="text-xs font-medium tabular-nums text-foreground">
@@ -133,7 +135,7 @@ export default function SettingsPage() {
           </CardContent>
         </Card>
 
-        <Card className="flex-1">
+        <Card className="transition-all duration-200 hover:ring-foreground/20 hover:shadow-[0_0_16px_-6px] hover:shadow-foreground/10">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-sm">
               <Thermometer className="size-4 text-muted-foreground" />
@@ -167,8 +169,8 @@ export default function SettingsPage() {
         </Card>
       </div>
 
-      <div className="flex gap-4">
-        <Card className="flex-1">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+        <Card className="transition-all duration-200 hover:ring-foreground/20 hover:shadow-[0_0_16px_-6px] hover:shadow-foreground/10">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-sm">
               <Bell className="size-4 text-muted-foreground" />
@@ -203,11 +205,11 @@ export default function SettingsPage() {
           </CardContent>
         </Card>
 
-        <Card className="flex-1">
+        <Card className="transition-all duration-200 hover:ring-foreground/20 hover:shadow-[0_0_16px_-6px] hover:shadow-foreground/10">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-sm">
               <Fan className="size-4 text-muted-foreground" />
-              Airflow & Monitoring
+              Airflow & Controls
             </CardTitle>
           </CardHeader>
           <CardContent className="flex flex-col gap-3">
@@ -241,7 +243,7 @@ export default function SettingsPage() {
           </CardContent>
         </Card>
 
-        <Card className="flex-1">
+        <Card className="transition-all duration-200 hover:ring-foreground/20 hover:shadow-[0_0_16px_-6px] hover:shadow-foreground/10">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-sm">
               <Monitor className="size-4 text-muted-foreground" />

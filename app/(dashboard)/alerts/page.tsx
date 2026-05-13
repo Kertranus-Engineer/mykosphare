@@ -33,13 +33,15 @@ export default function AlertsPage() {
   return (
     <div className="flex flex-col gap-4 p-6">
       <div>
-        <h1 className="text-lg font-semibold text-foreground">Alerts</h1>
-        <p className="text-sm text-muted-foreground">
+        <h1 className="text-lg font-semibold tracking-tight text-foreground">
+          Alerts
+        </h1>
+        <p className="text-sm text-muted-foreground/70">
           Active and historical environmental alerts
         </p>
       </div>
 
-      <Card>
+      <Card className="transition-all duration-200 hover:ring-foreground/20 hover:shadow-[0_0_16px_-6px] hover:shadow-foreground/10">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-sm">
             <AlertTriangle className="size-4 text-amber-500" />
@@ -70,7 +72,7 @@ export default function AlertsPage() {
                     <span className="text-sm font-medium text-foreground">
                       {alert.label}
                     </span>
-                    <span className="text-xs text-muted-foreground">
+                    <span className="text-xs text-muted-foreground/70">
                       {alert.description}
                     </span>
                   </div>
@@ -80,7 +82,7 @@ export default function AlertsPage() {
           ) : (
             <div className="flex items-center justify-center gap-2 rounded-lg border border-dashed border-border/50 p-6">
               <CheckCircle2 className="size-4 text-emerald-500" />
-              <span className="text-sm text-muted-foreground">
+              <span className="text-sm text-muted-foreground/70">
                 No active alerts
               </span>
             </div>
@@ -88,7 +90,7 @@ export default function AlertsPage() {
         </CardContent>
       </Card>
 
-      <Card>
+      <Card className="transition-all duration-200 hover:ring-foreground/20 hover:shadow-[0_0_16px_-6px] hover:shadow-foreground/10">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-sm">
             <Clock className="size-4 text-muted-foreground" />
@@ -100,18 +102,18 @@ export default function AlertsPage() {
             {resolvedAlerts.map((alert) => (
               <div
                 key={alert.label}
-                className="flex items-start gap-3 rounded-lg bg-muted/20 p-3"
+                className="flex items-start gap-3 rounded-lg bg-muted/20 p-3 transition-colors hover:bg-muted/30"
               >
-                <CheckCircle2 className="mt-0.5 size-4 text-emerald-500/60" />
-                <div className="flex flex-1 flex-col gap-0.5">
+                <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-emerald-500/60" />
+                <div className="flex flex-1 flex-col gap-0.5 min-w-0">
                   <span className="text-sm font-medium text-foreground">
                     {alert.label}
                   </span>
-                  <span className="text-xs text-muted-foreground">
+                  <span className="text-xs text-muted-foreground/70">
                     {alert.description}
                   </span>
                 </div>
-                <span className="text-[10px] text-muted-foreground/50">
+                <span className="shrink-0 text-[10px] text-muted-foreground/50">
                   {alert.time}
                 </span>
               </div>
