@@ -1,19 +1,23 @@
 "use client"
 
-import { ScrollText, Search, Clock } from "lucide-react"
+import { ScrollText, Clock } from "lucide-react"
 
 import { useLogs, useUptime } from "@/mock/simulator"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { cn } from "@/lib/utils"
 import { getUptime } from "@/mock/device-registry"
+import { useRealtimeLogs } from "@/lib/realtime/subscriptions"
+import { RealtimeBadge } from "@/lib/realtime/status"
 
 export default function SystemLogsPage() {
   const liveLogs = useLogs()
   const uptime = useUptime()
   const uptimeStr = uptime > 0 ? getUptime() : "0m"
+  const { data: rtLogs, status, latency } = useRealtimeLogs(50)
 
   const recentLogs = liveLogs.slice(0, 10)
   const archiveLogs = liveLogs.slice(10)
+  const hasPersisted = rtLogs.length > 0
 
   return (
     <div className="flex flex-col gap-4 p-6">
@@ -74,36 +78,68 @@ export default function SystemLogsPage() {
             <CardTitle className="flex items-center gap-2 text-sm">
               <ScrollText className="size-4 text-muted-foreground" />
               Archive
+              {hasPersisted && (
+                <span className="text-[10px] font-normal text-muted-foreground/50">
+                  {rtLogs.length} entries
+                </span>
+              )}
+              <span className="ml-auto">
+                <RealtimeBadge status={status} latency={latency} />
+              </span>
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-0.5">
-              {archiveLogs.length > 0 ? archiveLogs.map((log, i) => (
-                <div
-                  key={i}
-                  className="flex items-center gap-3 rounded px-2 py-1.5 transition-colors hover:bg-muted/20"
-                >
-                  <span className="w-10 shrink-0 text-right text-[11px] tabular-nums text-muted-foreground/60">
-                    {log.time}
-                  </span>
+            {hasPersisted ? (
+              <div className="space-y-0.5">
+                {rtLogs.map((log, i) => (
                   <div
-                    className={cn(
-                      "size-1.5 shrink-0 rounded-full",
-                      log.type === "success"
-                        ? "bg-emerald-500/60"
-                        : "bg-muted-foreground/30"
-                    )}
-                  />
-                  <span className="text-xs text-muted-foreground/70">
-                    {log.message}
-                  </span>
-                </div>
-              )) : (
-                <p className="py-4 text-center text-xs text-muted-foreground/50">
-                  No archived logs yet. More events will appear here as the session progresses.
-                </p>
-              )}
-            </div>
+                    key={log.id ?? i}
+                    className="flex items-center gap-3 rounded px-2 py-1.5 transition-colors hover:bg-muted/20"
+                  >
+                    <span className="w-10 shrink-0 text-right text-[11px] tabular-nums text-muted-foreground/60">
+                      {log.created_at
+                        ? new Date(log.created_at).toLocaleTimeString("en-US", {
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })
+                        : "--"}
+                    </span>
+                    <div className="size-1.5 shrink-0 rounded-full bg-muted-foreground/30" />
+                    <span className="text-xs text-muted-foreground/70">
+                      {log.message}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            ) : archiveLogs.length > 0 ? (
+              <div className="space-y-0.5">
+                {archiveLogs.map((log, i) => (
+                  <div
+                    key={i}
+                    className="flex items-center gap-3 rounded px-2 py-1.5 transition-colors hover:bg-muted/20"
+                  >
+                    <span className="w-10 shrink-0 text-right text-[11px] tabular-nums text-muted-foreground/60">
+                      {log.time}
+                    </span>
+                    <div
+                      className={cn(
+                        "size-1.5 shrink-0 rounded-full",
+                        log.type === "success"
+                          ? "bg-emerald-500/60"
+                          : "bg-muted-foreground/30"
+                      )}
+                    />
+                    <span className="text-xs text-muted-foreground/70">
+                      {log.message}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="py-4 text-center text-xs text-muted-foreground/50">
+                No archived logs yet. More events will appear here as the session progresses.
+              </p>
+            )}
           </CardContent>
         </Card>
       </div>

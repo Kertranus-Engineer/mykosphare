@@ -6,26 +6,31 @@ import {
   Fan,
   Monitor,
   Thermometer,
+  Loader2,
 } from "lucide-react"
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { cn } from "@/lib/utils"
-import { usePersistedState } from "@/mock/persistence"
 import { useUptime } from "@/mock/simulator"
 import { DEPLOYMENT_ID, CLUSTER, REGION, SOFTWARE_VERSION, getUptime } from "@/mock/device-registry"
+import { useSettings, type AppSettings } from "@/lib/services/settings-service"
+import { useRealtimeSettings } from "@/lib/realtime/subscriptions"
+import { RealtimeBadge } from "@/lib/realtime/status"
 
 function Toggle({
   label,
   description,
   storageKey,
-  defaultOn = false,
+  settings,
+  onToggle,
 }: {
   label: string
   description: string
   storageKey: string
-  defaultOn?: boolean
+  settings: AppSettings
+  onToggle: (key: string, value: boolean) => void
 }) {
-  const [on, setOn] = usePersistedState(storageKey, defaultOn)
+  const on = settings.config[storageKey] === true
   return (
     <div className="flex items-center justify-between rounded-lg bg-muted/20 px-3 py-2.5">
       <div className="flex flex-col">
@@ -34,7 +39,7 @@ function Toggle({
       </div>
       <button
         type="button"
-        onClick={() => setOn(!on)}
+        onClick={() => onToggle(storageKey, !on)}
         className={cn(
           "relative inline-flex h-5 w-9 shrink-0 cursor-pointer items-center rounded-full transition-colors duration-200",
           on ? "bg-emerald-500" : "bg-muted-foreground/30"
@@ -59,6 +64,8 @@ function SliderControl({
   min,
   max,
   step = 0.5,
+  settings,
+  onChange,
 }: {
   label: string
   storageKey: string
@@ -67,8 +74,10 @@ function SliderControl({
   min: number
   max: number
   step?: number
+  settings: AppSettings
+  onChange: (key: string, value: number) => void
 }) {
-  const [val, setVal] = usePersistedState(storageKey, defaultVal)
+  const val = (settings.config[storageKey] as number) ?? defaultVal
   return (
     <div className="rounded-lg bg-muted/20 px-3 py-2.5">
       <div className="mb-2 flex items-center justify-between">
@@ -83,7 +92,7 @@ function SliderControl({
         max={max}
         step={step}
         value={val}
-        onChange={(e) => setVal(Number(e.target.value))}
+        onChange={(e) => onChange(storageKey, Number(e.target.value))}
         className="h-1.5 w-full cursor-pointer appearance-none rounded-full bg-muted-foreground/20 accent-emerald-500"
       />
     </div>
@@ -91,6 +100,8 @@ function SliderControl({
 }
 
 export default function SettingsPage() {
+  const { settings, updateSetting, loading, online } = useSettings()
+  const { status: rtStatus, latency: rtLatency } = useRealtimeSettings()
   const uptime = useUptime()
   const uptimeStr = uptime > 0 ? getUptime() : "0m"
 
@@ -102,15 +113,39 @@ export default function SettingsPage() {
     { label: "Cluster", value: CLUSTER },
   ]
 
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center p-12">
+        <Loader2 className="size-5 animate-spin text-muted-foreground/50" />
+      </div>
+    )
+  }
+
   return (
     <div className="flex flex-col gap-4 p-6">
-      <div>
-        <h1 className="text-lg font-semibold tracking-tight text-foreground">
-          Settings
-        </h1>
-        <p className="text-sm text-muted-foreground/70">
-          System configuration and chamber profile management
-        </p>
+      <div className="flex items-start justify-between gap-4">
+        <div className="min-w-0">
+          <h1 className="text-lg font-semibold tracking-tight text-foreground">
+            Settings
+          </h1>
+          <p className="text-sm text-muted-foreground/70">
+            System configuration and chamber profile management
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          <div className="flex shrink-0 items-center gap-1.5 rounded-md border border-border/50 bg-muted/30 px-2.5 py-1">
+            <div
+              className={cn(
+                "size-1.5 rounded-full",
+                online ? "bg-emerald-500 shadow-[0_0_5px_1px] shadow-emerald-500/30" : "bg-amber-500"
+              )}
+            />
+            <span className="text-[10px] font-medium tracking-wide text-muted-foreground/60">
+              {online ? "CLOUD SYNCED" : "LOCAL ONLY"}
+            </span>
+          </div>
+          <RealtimeBadge status={rtStatus} latency={rtLatency} />
+        </div>
       </div>
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
@@ -155,6 +190,8 @@ export default function SettingsPage() {
               unit="\u00b0C"
               min={20}
               max={28}
+              settings={settings}
+              onChange={updateSetting}
             />
             <SliderControl
               label="Humidity Target"
@@ -163,6 +200,8 @@ export default function SettingsPage() {
               unit="%"
               min={50}
               max={75}
+              settings={settings}
+              onChange={updateSetting}
             />
             <SliderControl
               label="CO\u2082 Limit"
@@ -172,6 +211,8 @@ export default function SettingsPage() {
               min={350}
               max={500}
               step={5}
+              settings={settings}
+              onChange={updateSetting}
             />
           </CardContent>
         </Card>
@@ -190,30 +231,36 @@ export default function SettingsPage() {
               label="Temperature Alerts"
               description="Notify when outside threshold"
               storageKey="toggle_temp_alerts"
-              defaultOn
+              settings={settings}
+              onToggle={updateSetting}
             />
             <Toggle
               label="Humidity Alerts"
               description="Notify on humidity deviation"
               storageKey="toggle_hum_alerts"
-              defaultOn
+              settings={settings}
+              onToggle={updateSetting}
             />
             <Toggle
               label="CO\u2082 Alerts"
               description="Notify on elevated CO\u2082 levels"
               storageKey="toggle_co2_alerts"
-              defaultOn
+              settings={settings}
+              onToggle={updateSetting}
             />
             <Toggle
               label="Maintenance Reminders"
               description="Filter replacement, calibration due"
               storageKey="toggle_maintenance"
-              defaultOn
+              settings={settings}
+              onToggle={updateSetting}
             />
             <Toggle
               label="System Updates"
               description="Software and firmware updates"
               storageKey="toggle_updates"
+              settings={settings}
+              onToggle={updateSetting}
             />
           </CardContent>
         </Card>
@@ -234,6 +281,8 @@ export default function SettingsPage() {
               min={1}
               max={10}
               step={0.5}
+              settings={settings}
+              onChange={updateSetting}
             />
             <SliderControl
               label="Fan Speed"
@@ -243,18 +292,23 @@ export default function SettingsPage() {
               min={10}
               max={100}
               step={5}
+              settings={settings}
+              onChange={updateSetting}
             />
             <div className="flex flex-col gap-2 pt-1">
               <Toggle
                 label="Auto-balancing"
                 description="Automatic airflow adjustment"
                 storageKey="toggle_auto_balance"
-                defaultOn
+                settings={settings}
+                onToggle={updateSetting}
               />
               <Toggle
                 label="Night Mode"
                 description="Reduced activity during dark cycle"
                 storageKey="toggle_night_mode"
+                settings={settings}
+                onToggle={updateSetting}
               />
             </div>
           </CardContent>
@@ -272,29 +326,36 @@ export default function SettingsPage() {
               label="Telemetry Recording"
               description="Log sensor data to history"
               storageKey="toggle_telemetry"
-              defaultOn
+              settings={settings}
+              onToggle={updateSetting}
             />
             <Toggle
               label="Predictive Alerts"
               description="AI-based anomaly prediction"
               storageKey="toggle_predictive"
-              defaultOn
+              settings={settings}
+              onToggle={updateSetting}
             />
             <Toggle
               label="Camera Recording"
               description="Timelapse image capture"
               storageKey="toggle_camera"
-              defaultOn
+              settings={settings}
+              onToggle={updateSetting}
             />
             <Toggle
               label="Remote Access"
               description="External API access"
               storageKey="toggle_remote"
+              settings={settings}
+              onToggle={updateSetting}
             />
             <Toggle
               label="Diagnostic Mode"
               description="Extended sensor logging"
               storageKey="toggle_diagnostic"
+              settings={settings}
+              onToggle={updateSetting}
             />
           </CardContent>
         </Card>

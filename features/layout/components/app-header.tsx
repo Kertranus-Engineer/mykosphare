@@ -5,6 +5,8 @@ import { Bell, Circle, RefreshCw } from "lucide-react"
 import { useEnvironment } from "@/mock/environment"
 import { useClock } from "@/mock/simulator"
 import { cn } from "@/lib/utils"
+import { RealtimeBadge } from "@/lib/realtime/status"
+import { useRealtimeLogs } from "@/lib/realtime/subscriptions"
 
 const BADGE_STYLES: Record<string, string> = {
   STABLE: "bg-emerald-500/10 text-emerald-500 ring-emerald-500/20",
@@ -16,6 +18,7 @@ const BADGE_STYLES: Record<string, string> = {
 export function AppHeader() {
   const time = useClock()
   const env = useEnvironment()
+  const { status: rtStatus, latency } = useRealtimeLogs(1)
 
   return (
     <header className="sticky top-0 z-20 flex h-14 items-center justify-between border-b border-border bg-background/80 backdrop-blur-sm px-6">
@@ -35,6 +38,7 @@ export function AppHeader() {
         >
           {env.label}
         </div>
+        <RealtimeBadge status={rtStatus} latency={latency} />
       </div>
 
       <div className="flex items-center gap-2">

@@ -5,6 +5,8 @@ import { ScrollText } from "lucide-react"
 import { useLogs } from "@/mock/simulator"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { cn } from "@/lib/utils"
+import { useRealtimeLogs } from "@/lib/realtime/subscriptions"
+import { RealtimeBadge } from "@/lib/realtime/status"
 
 function LogDot({ type }: { type: "info" | "success" }) {
   return (
@@ -21,6 +23,7 @@ function LogDot({ type }: { type: "info" | "success" }) {
 
 export function SystemLogs() {
   const logs = useLogs()
+  const { data: rtLogs, status, latency } = useRealtimeLogs(5)
 
   return (
     <Card>
@@ -28,6 +31,14 @@ export function SystemLogs() {
         <CardTitle className="flex items-center gap-2">
           <ScrollText className="size-4 text-muted-foreground" />
           System Logs
+          <span className="ml-auto flex items-center gap-2">
+            {rtLogs.length > 0 && (
+              <span className="text-[10px] font-normal text-muted-foreground/40">
+                {rtLogs.length} cloud
+              </span>
+            )}
+            <RealtimeBadge status={status} latency={latency} />
+          </span>
         </CardTitle>
       </CardHeader>
       <CardContent>

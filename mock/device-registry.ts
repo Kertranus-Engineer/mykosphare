@@ -28,7 +28,6 @@ const DEVICE_DEFS = [
 
 function generateDevice(index: number, elapsed: number): DeviceInfo {
   const def = DEVICE_DEFS[index]
-  const jitter = index * 7 + Math.sin(elapsed * 0.001) * 3
   const healthBase = 94 + Math.sin(elapsed * 0.0005 + index) * 5
   const health = Math.min(99.9, Math.max(85, Math.round(healthBase * 10) / 10))
 
@@ -69,6 +68,23 @@ let uptimeSeconds = 0
 export function tickUptime(seconds: number) {
   uptimeSeconds = seconds
   uptimeCounter++
+}
+
+export function getDeviceSnapshot(): { device_id: string; device_type: string | null; status: string | null; health: number | null; uptime: number | null }[] {
+  const elapsed = uptimeSeconds
+  return DEVICE_DEFS.map((def, i) => {
+    const healthBase = 94 + Math.sin(elapsed * 0.0005 + i) * 5
+    const health = Math.min(99.9, Math.max(85, Math.round(healthBase * 10) / 10))
+    const statuses: DeviceInfo["status"][] = ["online", "online", "online", "online", "online", "warning"]
+    const status = health < 90 ? "warning" : health > 98 ? statuses[i % statuses.length] : "online"
+    return {
+      device_id: `${def.model}-${String(i + 1).padStart(2, "0")}`,
+      device_type: def.model,
+      status,
+      health,
+      uptime: Math.max(0, elapsed - i * 360),
+    }
+  })
 }
 
 export function getUptime(): string {

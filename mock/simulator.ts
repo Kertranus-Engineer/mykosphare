@@ -2,7 +2,10 @@
 
 import { useSyncExternalStore } from "react"
 import { loadLogs, persistLogs } from "./persistence"
-import { tickUptime } from "./device-registry"
+import { tickUptime, getDeviceSnapshot } from "./device-registry"
+import { insertLog } from "@/lib/services/logs-service"
+import { upsertDeviceBatch } from "@/lib/services/devices-service"
+import { insertTelemetry } from "@/lib/services/telemetry-service"
 
 export interface MetricSnapshot {
   value: number
@@ -47,6 +50,32 @@ function computeMetric(
     trend: delta > 0.01 ? "up" : delta < -0.01 ? "down" : "stable",
     delta,
   }
+}
+
+function computeEnvironmentalState(tel: TelemetrySnapshot): string {
+  const highCo2 = tel.co2.value > 420
+  const lowHum = tel.humidity.value < 59
+  const highHum = tel.humidity.value > 63
+  const lowTemp = tel.temperature.value < 23.8
+  const highTemp = tel.temperature.value > 25.5
+  const inWarning = highCo2 || lowHum || highHum || lowTemp || highTemp
+
+  if (inWarning) {
+    const recovering =
+      (highCo2 && tel.co2.trend === "down") ||
+      (lowHum && tel.humidity.trend === "up") ||
+      (highHum && tel.humidity.trend === "down") ||
+      (lowTemp && tel.temperature.trend === "up") ||
+      (highTemp && tel.temperature.trend === "down")
+    return recovering ? "RECOVERY" : "WARNING"
+  }
+
+  const fluctuating =
+    Math.abs(tel.humidity.delta) > 0.2 ||
+    Math.abs(tel.temperature.delta) > 0.08 ||
+    Math.abs(tel.co2.delta) > 1
+
+  return fluctuating ? "OPTIMIZING" : "STABLE"
 }
 
 function formatHHMM(date: Date) {
@@ -114,6 +143,7 @@ function notify() {
 }
 
 let intervalId: ReturnType<typeof setInterval> | null = null
+let tickCounter = 0
 
 function startLoop() {
   intervalId = setInterval(() => {
@@ -137,6 +167,15 @@ function startLoop() {
     uptimeSeconds += 2.5
     tickUptime(uptimeSeconds)
 
+    insertTelemetry(
+      telemetry.temperature.value,
+      telemetry.humidity.value,
+      telemetry.co2.value,
+      telemetry.energyUsage.value,
+      computeEnvironmentalState(telemetry),
+      "OPERATIONAL"
+    )
+
     if (Math.random() < 0.3) {
       const msg =
         LOG_TEMPLATES[Math.floor(Math.random() * LOG_TEMPLATES.length)]
@@ -149,6 +188,21 @@ function startLoop() {
         ...logs,
       ].slice(0, MAX_LOGS)
       persistLogs(LOG_STORAGE_KEY, logs)
+      insertLog(msg, "operation")
+    }
+
+    tickCounter++
+    if (tickCounter % 20 === 0) {
+      const devices = getDeviceSnapshot()
+      upsertDeviceBatch(devices.map((d) => ({
+        device_id: d.device_id,
+        device_type: d.device_type,
+        status: d.status,
+        health: d.health,
+        uptime: d.uptime,
+        last_sync: new Date().toISOString(),
+        deployment_id: "MYK-CH-001",
+      })))
     }
 
     notify()
