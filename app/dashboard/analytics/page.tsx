@@ -114,7 +114,7 @@ export default function AnalyticsPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-sm">
               <Activity className="size-4 text-muted-foreground" />
-              Temperature & CO₂ Trends
+              Temperature & CO\u2082 Trends
             </CardTitle>
           </CardHeader>
           <CardContent>

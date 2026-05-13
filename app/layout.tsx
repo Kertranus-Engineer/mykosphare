@@ -13,8 +13,31 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "MYKOSPHARE",
-  description: "Industrial Environmental Intelligence Platform",
+  title: {
+    default: "MYKOSPHARE",
+    template: "%s · MYKOSPHARE",
+  },
+  description:
+    "Environmental Intelligence Platform — realtime environmental automation, vision-assisted monitoring, and intelligent telemetry infrastructure for controlled environment agriculture and industrial biotech.",
+  openGraph: {
+    title: "MYKOSPHARE",
+    description:
+      "Environmental Intelligence Platform — industrial biotech telemetry and automation.",
+    url: "https://mykosphare.vercel.app",
+    siteName: "MYKOSPHARE",
+    locale: "en_US",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "MYKOSPHARE",
+    description:
+      "Environmental Intelligence Platform — industrial biotech telemetry and automation.",
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
 };
 
 export default function RootLayout({

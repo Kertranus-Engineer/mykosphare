@@ -57,21 +57,21 @@ export default function EnvironmentPage() {
 
   const zones = [
     {
-      name: "Zone A — Main Chamber",
+      name: "Zone A \u2014 Main Chamber",
       temp: tel.temperature.value,
       hum: tel.humidity.value,
       co2: tel.co2.value,
       status: env.state,
     },
     {
-      name: "Zone B — Incubation",
+      name: "Zone B \u2014 Incubation",
       temp: tel.temperature.value + 0.3,
       hum: tel.humidity.value - 1.2,
       co2: tel.co2.value + 5,
       status: "STABLE",
     },
     {
-      name: "Zone C — Harvest",
+      name: "Zone C \u2014 Harvest",
       temp: tel.temperature.value - 0.5,
       hum: tel.humidity.value + 0.8,
       co2: tel.co2.value - 3,
@@ -130,7 +130,7 @@ export default function EnvironmentPage() {
                 <div className="flex flex-col gap-1 rounded-lg bg-muted/30 p-2.5">
                   <Thermometer className="size-3.5 text-muted-foreground/60" />
                   <span className="text-lg font-semibold tabular-nums tracking-tight text-foreground">
-                    {zone.temp.toFixed(1)}°
+                    {zone.temp.toFixed(1)}\u00b0
                   </span>
                   <span className="text-[10px] text-muted-foreground/60">Temp</span>
                 </div>
@@ -146,7 +146,7 @@ export default function EnvironmentPage() {
                   <span className="text-lg font-semibold tabular-nums tracking-tight text-foreground">
                     {zone.co2}
                   </span>
-                  <span className="text-[10px] text-muted-foreground/60">CO₂ ppm</span>
+                  <span className="text-[10px] text-muted-foreground/60">CO\u2082 ppm</span>
                 </div>
               </div>
             </CardContent>

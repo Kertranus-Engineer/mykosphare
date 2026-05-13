@@ -20,7 +20,7 @@ const resolvedAlerts = [
     severity: "info" as const,
   },
   {
-    label: "CO₂ Fluctuation",
+    label: "CO\u2082 Fluctuation",
     description: "Reading spiked to 435 ppm — air exchange engaged",
     time: "12h ago",
     severity: "info" as const,

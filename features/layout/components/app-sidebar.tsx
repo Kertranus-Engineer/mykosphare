@@ -15,13 +15,13 @@ import { useUptime } from "@/mock/simulator"
 import { DEPLOYMENT_ID, REGION, SOFTWARE_VERSION, getUptime } from "@/mock/device-registry"
 
 const navItems = [
-  { icon: LayoutDashboard, label: "Overview", href: "/" },
-  { icon: Sprout, label: "Environment", href: "/environment" },
-  { icon: Activity, label: "Analytics", href: "/analytics" },
-  { icon: Camera, label: "Camera", href: "/camera" },
-  { icon: AlertTriangle, label: "Alerts", href: "/alerts" },
-  { icon: ScrollText, label: "System Logs", href: "/system-logs" },
-  { icon: Cog, label: "Settings", href: "/settings" },
+  { icon: LayoutDashboard, label: "Overview", href: "/dashboard" },
+  { icon: Sprout, label: "Environment", href: "/dashboard/environment" },
+  { icon: Activity, label: "Analytics", href: "/dashboard/analytics" },
+  { icon: Camera, label: "Camera", href: "/dashboard/camera" },
+  { icon: AlertTriangle, label: "Alerts", href: "/dashboard/alerts" },
+  { icon: ScrollText, label: "System Logs", href: "/dashboard/system-logs" },
+  { icon: Cog, label: "Settings", href: "/dashboard/settings" },
 ]
 
 export function AppSidebar() {
@@ -30,7 +30,7 @@ export function AppSidebar() {
 
   return (
     <aside className="fixed inset-y-0 left-0 z-30 flex w-60 flex-col border-r border-sidebar-border bg-sidebar">
-      <Link href="/" className="flex h-14 items-center gap-2.5 border-b border-sidebar-border px-5">
+      <Link href="/dashboard" className="flex h-14 items-center gap-2.5 border-b border-sidebar-border px-5">
         <div className="flex size-7 items-center justify-center rounded-lg bg-sidebar-primary">
           <Sprout className="size-4 text-sidebar-primary-foreground" />
         </div>

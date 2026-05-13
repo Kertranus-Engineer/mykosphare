@@ -59,7 +59,7 @@ export function getSessionElapsed(): number {
 }
 
 export const DEPLOYMENT_ID = "MYK-CH-001"
-export const CLUSTER = "Environment Alpha"
+export const CLUSTER = "Alpha"
 export const REGION = "NA-East / DC-02"
 export const SOFTWARE_VERSION = "v0.1.0"
 

@@ -128,7 +128,7 @@ export default function CameraPage() {
                   </span>
                   <span className="text-[10px] text-muted-foreground/30">|</span>
                   <span className="text-[10px] tabular-nums text-muted-foreground/50">
-                    3840×2160
+                    3840\u00d72160
                   </span>
                 </div>
               </div>
@@ -209,7 +209,7 @@ export default function CameraPage() {
             </CardHeader>
             <CardContent className="flex flex-col gap-2">
               {[
-                { label: "PAR", value: "412 µmol/m²/s" },
+                { label: "PAR", value: "412 \u00b5mol/m\u00b2/s" },
                 { label: "Color Temp", value: "6500K" },
                 { label: "NIR Index", value: "0.84" },
                 { label: "Chlorophyll", value: "Normal" },
@@ -237,7 +237,7 @@ export default function CameraPage() {
             </CardHeader>
             <CardContent className="flex flex-col gap-2">
               {[
-                { label: "Resolution", value: "3840×2160" },
+                { label: "Resolution", value: "3840\u00d72160" },
                 { label: "Frame Rate", value: "30 fps" },
                 { label: "Codec", value: "H.265" },
                 { label: "Bitrate", value: "12 Mbps" },
