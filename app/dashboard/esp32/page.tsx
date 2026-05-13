@@ -96,7 +96,7 @@ export default function ESP32Page() {
   const [pseudocodeCopied, setPseudocodeCopied] = useState(false)
 
   const hasPhysicalSource = bridge?.hasActivePhysicalSource ?? false
-  const physicalCount = bridge?.physicalSources.length ?? 0
+  const physicalCount = bridge?.physicalSources?.length ?? 0
   const lastPacket = bridge?.lastPhysicalPacket
 
   return (
@@ -201,13 +201,13 @@ export default function ESP32Page() {
             <div className="flex items-baseline gap-3">
               <div>
                 <div className="text-sm font-semibold tabular-nums text-foreground/80">
-                  {bridge?.sourceBreakdown.physical ?? 0}
+                  {bridge?.sourceBreakdown?.physical ?? 0}
                 </div>
                 <p className="text-[10px] text-muted-foreground/50">Physical</p>
               </div>
               <div>
                 <div className="text-sm font-semibold tabular-nums text-muted-foreground/60">
-                  {bridge?.sourceBreakdown.simulator ?? 0}
+                  {bridge?.sourceBreakdown?.simulator ?? 0}
                 </div>
                 <p className="text-[10px] text-muted-foreground/50">
                   Simulator
@@ -226,7 +226,7 @@ export default function ESP32Page() {
           </CardHeader>
           <CardContent>
             <div className="text-sm font-semibold tabular-nums text-foreground/80">
-              {bridge?.heartbeats.length ?? 0}
+              {bridge?.heartbeats?.length ?? 0}
             </div>
             <p className="mt-0.5 text-[11px] text-muted-foreground/50">
               {`Every ${PROTOCOL.HEARTBEAT_CADENCE_MS / 1000}s cadence`}

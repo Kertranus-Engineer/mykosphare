@@ -1,5 +1,6 @@
 "use client"
 
+import { useEffect, useState } from "react"
 import {
   Bell,
   Cog,
@@ -99,11 +100,18 @@ function SliderControl({
   )
 }
 
+function useMounted() {
+  const [mounted, setMounted] = useState(false)
+  useEffect(() => setMounted(true), [])
+  return mounted
+}
+
 export default function SettingsPage() {
+  const mounted = useMounted()
   const { settings, updateSetting, loading, online } = useSettings()
   const { status: rtStatus, latency: rtLatency } = useRealtimeSettings()
   const uptime = useUptime()
-  const uptimeStr = uptime > 0 ? getUptime() : "0m"
+  const uptimeStr = mounted ? (uptime > 0 ? getUptime() : "0m") : "—"
 
   const identityItems = [
     { label: "Chamber ID", value: DEPLOYMENT_ID },

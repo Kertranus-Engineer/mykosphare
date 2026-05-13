@@ -1,5 +1,6 @@
 "use client"
 
+import { useEffect, useState } from "react"
 import { Sprout, Thermometer, Droplets, Wind, Gauge, Ruler, Cpu } from "lucide-react"
 
 import { useEnvironment } from "@/mock/environment"
@@ -8,7 +9,7 @@ import { useDeviceRegistry } from "@/mock/device-registry"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { cn } from "@/lib/utils"
 
-function DeviceRow({ device }: { device: ReturnType<typeof useDeviceRegistry>[number] }) {
+function DeviceRow({ device, mounted }: { device: ReturnType<typeof useDeviceRegistry>[number]; mounted: boolean }) {
   return (
     <div className="flex items-center gap-3 rounded-lg bg-muted/20 px-3 py-2.5 transition-colors hover:bg-muted/30">
       <div
@@ -29,7 +30,9 @@ function DeviceRow({ device }: { device: ReturnType<typeof useDeviceRegistry>[nu
         <span className="text-[10px] text-muted-foreground/60">{device.role}</span>
       </div>
       <div className="flex shrink-0 items-center gap-3">
-        <span className="text-[11px] tabular-nums text-muted-foreground/60">{device.uptime}</span>
+        <span className="text-[11px] tabular-nums text-muted-foreground/60">
+          {mounted ? device.uptime : "—"}
+        </span>
         <span
           className={cn(
             "text-[11px] font-medium tabular-nums",
@@ -43,14 +46,21 @@ function DeviceRow({ device }: { device: ReturnType<typeof useDeviceRegistry>[nu
           {device.health}%
         </span>
         <span className="w-12 text-right text-[10px] text-muted-foreground/50">
-          {device.lastSync}
+          {mounted ? device.lastSync : "—"}
         </span>
       </div>
     </div>
   )
 }
 
+function useMounted() {
+  const [mounted, setMounted] = useState(false)
+  useEffect(() => setMounted(true), [])
+  return mounted
+}
+
 export default function EnvironmentPage() {
+  const mounted = useMounted()
   const env = useEnvironment()
   const tel = useTelemetry()
   const devices = useDeviceRegistry()
@@ -130,21 +140,21 @@ export default function EnvironmentPage() {
                 <div className="flex flex-col gap-1 rounded-lg bg-muted/30 p-2.5">
                   <Thermometer className="size-3.5 text-muted-foreground/60" />
                   <span className="text-lg font-semibold tabular-nums tracking-tight text-foreground">
-                    {zone.temp.toFixed(1)}\u00b0
+                    {mounted ? `${zone.temp.toFixed(1)}\u00b0` : "—\u00b0"}
                   </span>
                   <span className="text-[10px] text-muted-foreground/60">Temp</span>
                 </div>
                 <div className="flex flex-col gap-1 rounded-lg bg-muted/30 p-2.5">
                   <Droplets className="size-3.5 text-muted-foreground/60" />
                   <span className="text-lg font-semibold tabular-nums tracking-tight text-foreground">
-                    {zone.hum.toFixed(1)}%
+                    {mounted ? `${zone.hum.toFixed(1)}%` : "—%"}
                   </span>
                   <span className="text-[10px] text-muted-foreground/60">Humidity</span>
                 </div>
                 <div className="flex flex-col gap-1 rounded-lg bg-muted/30 p-2.5">
                   <Wind className="size-3.5 text-muted-foreground/60" />
                   <span className="text-lg font-semibold tabular-nums tracking-tight text-foreground">
-                    {zone.co2}
+                    {mounted ? zone.co2 : "—"}
                   </span>
                   <span className="text-[10px] text-muted-foreground/60">CO\u2082 ppm</span>
                 </div>
@@ -234,7 +244,7 @@ export default function EnvironmentPage() {
         <CardContent>
           <div className="flex flex-col gap-1">
             {devices.map((device) => (
-              <DeviceRow key={device.id} device={device} />
+              <DeviceRow key={device.id} device={device} mounted={mounted} />
             ))}
           </div>
         </CardContent>

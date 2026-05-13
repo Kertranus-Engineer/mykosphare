@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect } from "react"
+import { Suspense, useEffect } from "react"
 import { useActionState } from "react"
 import { useFormStatus } from "react-dom"
 import { useRouter, useSearchParams } from "next/navigation"
@@ -32,7 +32,7 @@ function SubmitButton() {
   )
 }
 
-export default function LoginPage() {
+function LoginForm() {
   const [state, formAction] = useActionState(login, null)
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -164,5 +164,59 @@ export default function LoginPage() {
         </footer>
       </div>
     </div>
+  )
+}
+
+function LoginFallback() {
+  return (
+    <div className="relative flex min-h-screen flex-col overflow-hidden bg-[#050505]">
+      <div className="pointer-events-none fixed inset-0">
+        <div className="absolute inset-0 animate-ambient bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-emerald-950/[0.12] via-transparent to-transparent" />
+        <div
+          className="absolute inset-0 opacity-[0.015]"
+          style={{
+            backgroundImage:
+              "linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)",
+            backgroundSize: "64px 64px",
+          }}
+        />
+      </div>
+      <div className="relative z-10 flex min-h-screen flex-col">
+        <header className="flex items-center justify-between px-6 py-5 sm:px-10">
+          <div className="flex items-center gap-2.5">
+            <div className="flex size-7 items-center justify-center rounded-lg bg-emerald-500/10">
+              <Sprout className="size-4 text-emerald-500" />
+            </div>
+            <span className="text-sm font-semibold tracking-[0.15em] text-white/80">
+              MYKOSPHARE
+            </span>
+          </div>
+          <div className="flex items-center gap-4 text-[11px] tracking-wider text-white/25">
+            <span>MYK-CH-001</span>
+            <span className="hidden sm:inline">·</span>
+            <span className="hidden sm:inline">v0.1.0</span>
+          </div>
+        </header>
+        <main className="flex flex-1 items-center justify-center px-6 sm:px-10">
+          <div className="w-full max-w-sm text-center">
+            <div className="size-5 animate-pulse rounded-full bg-white/5 mx-auto" />
+          </div>
+        </main>
+        <footer className="px-6 py-5 sm:px-10">
+          <div className="flex flex-col items-center justify-between gap-1 text-[10px] text-white/15 sm:flex-row">
+            <span>NA-East / DC-02</span>
+            <span>Industrial Biotech · Environmental Intelligence</span>
+          </div>
+        </footer>
+      </div>
+    </div>
+  )
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<LoginFallback />}>
+      <LoginForm />
+    </Suspense>
   )
 }

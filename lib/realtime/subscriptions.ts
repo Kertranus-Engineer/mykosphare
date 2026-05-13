@@ -1,31 +1,49 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useRef, useCallback } from "react"
 import { createClient } from "@/lib/supabase/client"
 import { fetchLogs, type ServiceLogEntry } from "@/lib/services/logs-service"
 import { fetchDevices, type ServiceDevice } from "@/lib/services/devices-service"
 import { fetchRecentTelemetry, type TelemetryRow } from "@/lib/services/telemetry-service"
 import type { Setting } from "@/types/database"
+import type { RealtimeChannel } from "@supabase/supabase-js"
 
 const DEPLOYMENT_ID = "MYK-CH-001"
 
 type ConnectionStatus = "connecting" | "live" | "degraded" | "offline"
 
+let channelIdCounter = 0
+
+function nextChannelId(base: string) {
+  return `${base}-${++channelIdCounter}`
+}
+
 export function useRealtimeLogs(limit = 50) {
   const [data, setData] = useState<ServiceLogEntry[]>([])
   const [status, setStatus] = useState<ConnectionStatus>("connecting")
   const [latency, setLatency] = useState<number | null>(null)
+  const channelRef = useRef<RealtimeChannel | null>(null)
+  const supabaseRef = useRef<ReturnType<typeof createClient> | null>(null)
 
   useEffect(() => {
     let cancelled = false
+
+    if (!supabaseRef.current) {
+      supabaseRef.current = createClient()
+    }
+    const supabase = supabaseRef.current
+
+    if (channelRef.current) {
+      supabase.removeChannel(channelRef.current)
+      channelRef.current = null
+    }
 
     fetchLogs(limit).then((result) => {
       if (!cancelled) setData(result)
     })
 
-    const supabase = createClient()
     const channel = supabase
-      .channel("realtime-logs")
+      .channel(nextChannelId("realtime-logs"))
       .on(
         "postgres_changes" as const,
         { event: "INSERT", schema: "public", table: "logs", filter: `deployment_id=eq.${DEPLOYMENT_ID}` },
@@ -45,9 +63,10 @@ export function useRealtimeLogs(limit = 50) {
         setStatus(subStatus === "SUBSCRIBED" ? "live" : subStatus === "CHANNEL_ERROR" ? "degraded" : "connecting")
       })
 
+    channelRef.current = channel
+
     const pinger = setInterval(async () => {
       try {
-        const supabase = createClient()
         const t0 = Date.now()
         const { error } = await supabase.from("logs").select("id", { count: "exact", head: true }).limit(1)
         if (!error) {
@@ -61,7 +80,10 @@ export function useRealtimeLogs(limit = 50) {
 
     return () => {
       cancelled = true
-      supabase.removeChannel(channel)
+      if (channelRef.current) {
+        supabase.removeChannel(channelRef.current)
+        channelRef.current = null
+      }
       clearInterval(pinger)
     }
   }, [limit])
@@ -73,17 +95,28 @@ export function useRealtimeDevices() {
   const [data, setData] = useState<ServiceDevice[]>([])
   const [status, setStatus] = useState<ConnectionStatus>("connecting")
   const [latency, setLatency] = useState<number | null>(null)
+  const channelRef = useRef<RealtimeChannel | null>(null)
+  const supabaseRef = useRef<ReturnType<typeof createClient> | null>(null)
 
   useEffect(() => {
     let cancelled = false
+
+    if (!supabaseRef.current) {
+      supabaseRef.current = createClient()
+    }
+    const supabase = supabaseRef.current
+
+    if (channelRef.current) {
+      supabase.removeChannel(channelRef.current)
+      channelRef.current = null
+    }
 
     fetchDevices().then((result) => {
       if (!cancelled) setData(result)
     })
 
-    const supabase = createClient()
     const channel = supabase
-      .channel("realtime-devices")
+      .channel(nextChannelId("realtime-devices"))
       .on(
         "postgres_changes" as const,
         { event: "*", schema: "public", table: "devices", filter: `deployment_id=eq.${DEPLOYMENT_ID}` },
@@ -108,9 +141,10 @@ export function useRealtimeDevices() {
         setStatus(subStatus === "SUBSCRIBED" ? "live" : subStatus === "CHANNEL_ERROR" ? "degraded" : "connecting")
       })
 
+    channelRef.current = channel
+
     const pinger = setInterval(async () => {
       try {
-        const supabase = createClient()
         const t0 = Date.now()
         const { error } = await supabase.from("devices").select("id", { count: "exact", head: true }).limit(1)
         if (!error) {
@@ -124,7 +158,10 @@ export function useRealtimeDevices() {
 
     return () => {
       cancelled = true
-      supabase.removeChannel(channel)
+      if (channelRef.current) {
+        supabase.removeChannel(channelRef.current)
+        channelRef.current = null
+      }
       clearInterval(pinger)
     }
   }, [])
@@ -136,17 +173,28 @@ export function useRealtimeTelemetry(limit = 200) {
   const [data, setData] = useState<TelemetryRow[]>([])
   const [status, setStatus] = useState<ConnectionStatus>("connecting")
   const [latency, setLatency] = useState<number | null>(null)
+  const channelRef = useRef<RealtimeChannel | null>(null)
+  const supabaseRef = useRef<ReturnType<typeof createClient> | null>(null)
 
   useEffect(() => {
     let cancelled = false
+
+    if (!supabaseRef.current) {
+      supabaseRef.current = createClient()
+    }
+    const supabase = supabaseRef.current
+
+    if (channelRef.current) {
+      supabase.removeChannel(channelRef.current)
+      channelRef.current = null
+    }
 
     fetchRecentTelemetry(limit).then((result) => {
       if (!cancelled) setData(result)
     })
 
-    const supabase = createClient()
     const channel = supabase
-      .channel("realtime-telemetry")
+      .channel(nextChannelId("realtime-telemetry"))
       .on(
         "postgres_changes" as const,
         { event: "INSERT", schema: "public", table: "telemetry", filter: `deployment_id=eq.${DEPLOYMENT_ID}` },
@@ -174,9 +222,10 @@ export function useRealtimeTelemetry(limit = 200) {
         )
       })
 
+    channelRef.current = channel
+
     const pinger = setInterval(async () => {
       try {
-        const supabase = createClient()
         const t0 = Date.now()
         const { error } = await supabase
           .from("telemetry")
@@ -193,7 +242,10 @@ export function useRealtimeTelemetry(limit = 200) {
 
     return () => {
       cancelled = true
-      supabase.removeChannel(channel)
+      if (channelRef.current) {
+        supabase.removeChannel(channelRef.current)
+        channelRef.current = null
+      }
       clearInterval(pinger)
     }
   }, [limit])
@@ -205,13 +257,24 @@ export function useRealtimeAlerts(limit = 30) {
   const [data, setData] = useState<Record<string, unknown>[]>([])
   const [status, setStatus] = useState<ConnectionStatus>("connecting")
   const [latency, setLatency] = useState<number | null>(null)
+  const channelRef = useRef<RealtimeChannel | null>(null)
+  const supabaseRef = useRef<ReturnType<typeof createClient> | null>(null)
 
   useEffect(() => {
     let cancelled = false
 
+    if (!supabaseRef.current) {
+      supabaseRef.current = createClient()
+    }
+    const supabase = supabaseRef.current
+
+    if (channelRef.current) {
+      supabase.removeChannel(channelRef.current)
+      channelRef.current = null
+    }
+
     ;(async () => {
       try {
-        const supabase = createClient()
         const { data: result } = await supabase
           .from("alerts")
           .select("*")
@@ -224,9 +287,8 @@ export function useRealtimeAlerts(limit = 30) {
       }
     })()
 
-    const supabase = createClient()
     const channel = supabase
-      .channel("realtime-alerts")
+      .channel(nextChannelId("realtime-alerts"))
       .on(
         "postgres_changes" as const,
         { event: "INSERT", schema: "public", table: "alerts", filter: `deployment_id=eq.${DEPLOYMENT_ID}` },
@@ -245,9 +307,10 @@ export function useRealtimeAlerts(limit = 30) {
         setStatus(subStatus === "SUBSCRIBED" ? "live" : subStatus === "CHANNEL_ERROR" ? "degraded" : "connecting")
       })
 
+    channelRef.current = channel
+
     const pinger = setInterval(async () => {
       try {
-        const supabase = createClient()
         const t0 = Date.now()
         const { error } = await supabase.from("alerts").select("id", { count: "exact", head: true }).limit(1)
         if (!error) {
@@ -261,7 +324,10 @@ export function useRealtimeAlerts(limit = 30) {
 
     return () => {
       cancelled = true
-      supabase.removeChannel(channel)
+      if (channelRef.current) {
+        supabase.removeChannel(channelRef.current)
+        channelRef.current = null
+      }
       clearInterval(pinger)
     }
   }, [limit])
@@ -273,10 +339,14 @@ export function useRealtimeSettings() {
   const [settings, setSettings] = useState<Setting | null>(null)
   const [status, setStatus] = useState<ConnectionStatus>("connecting")
   const [latency, setLatency] = useState<number | null>(null)
+  const channelRef = useRef<RealtimeChannel | null>(null)
+  const supabaseRef = useRef<ReturnType<typeof createClient> | null>(null)
 
   const refresh = useCallback(() => {
-    const supabase = createClient()
-    supabase
+    if (!supabaseRef.current) {
+      supabaseRef.current = createClient()
+    }
+    supabaseRef.current
       .from("settings")
       .select("*")
       .eq("deployment_id", DEPLOYMENT_ID)
@@ -287,27 +357,41 @@ export function useRealtimeSettings() {
   }, [])
 
   useEffect(() => {
+    let cancelled = false
+
     refresh()
 
-    const supabase = createClient()
+    if (!supabaseRef.current) {
+      supabaseRef.current = createClient()
+    }
+    const supabase = supabaseRef.current
+
+    if (channelRef.current) {
+      supabase.removeChannel(channelRef.current)
+      channelRef.current = null
+    }
+
     const channel = supabase
-      .channel("realtime-settings")
+      .channel(nextChannelId("realtime-settings"))
       .on(
         "postgres_changes" as const,
         { event: "*", schema: "public", table: "settings", filter: `deployment_id=eq.${DEPLOYMENT_ID}` },
         (payload: { new: Record<string, unknown>; commit_timestamp?: string }) => {
+          if (cancelled) return
           const ts = payload.commit_timestamp ? new Date(payload.commit_timestamp).getTime() : Date.now()
           setLatency(Math.max(0, Date.now() - ts))
           if (payload.new) setSettings(payload.new as unknown as Setting)
         }
       )
       .subscribe((subStatus: string) => {
+        if (cancelled) return
         setStatus(subStatus === "SUBSCRIBED" ? "live" : subStatus === "CHANNEL_ERROR" ? "degraded" : "connecting")
       })
 
+    channelRef.current = channel
+
     const pinger = setInterval(async () => {
       try {
-        const supabase = createClient()
         const t0 = Date.now()
         const { error } = await supabase.from("settings").select("id", { count: "exact", head: true }).limit(1)
         if (!error) {
@@ -320,7 +404,11 @@ export function useRealtimeSettings() {
     }, 30000)
 
     return () => {
-      supabase.removeChannel(channel)
+      cancelled = true
+      if (channelRef.current) {
+        supabase.removeChannel(channelRef.current)
+        channelRef.current = null
+      }
       clearInterval(pinger)
     }
   }, [refresh])
