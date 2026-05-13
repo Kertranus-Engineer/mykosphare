@@ -4,8 +4,7 @@ import { useSyncExternalStore } from "react"
 import { loadLogs, persistLogs } from "./persistence"
 import { tickUptime, getDeviceSnapshot } from "./device-registry"
 import { insertLog } from "@/lib/services/logs-service"
-import { upsertDeviceBatch } from "@/lib/services/devices-service"
-import { insertTelemetry } from "@/lib/services/telemetry-service"
+import { ingestTelemetry, ingestDeviceHeartbeatBatch } from "@/lib/ingestion"
 
 export interface MetricSnapshot {
   value: number
@@ -167,14 +166,21 @@ function startLoop() {
     uptimeSeconds += 2.5
     tickUptime(uptimeSeconds)
 
-    insertTelemetry(
-      telemetry.temperature.value,
-      telemetry.humidity.value,
-      telemetry.co2.value,
-      telemetry.energyUsage.value,
-      computeEnvironmentalState(telemetry),
-      "OPERATIONAL"
-    )
+    ingestTelemetry({
+      version: 1,
+      source: "simulator",
+      timestamp: currentTime.toISOString(),
+      deviceId: "MYK-SIM-001",
+      deploymentId: "MYK-CH-001",
+      metrics: {
+        temperature: telemetry.temperature.value,
+        humidity: telemetry.humidity.value,
+        co2: telemetry.co2.value,
+        energyUsage: telemetry.energyUsage.value,
+      },
+      environmentalState: computeEnvironmentalState(telemetry),
+      operationalMode: "OPERATIONAL",
+    })
 
     if (Math.random() < 0.3) {
       const msg =
@@ -194,15 +200,19 @@ function startLoop() {
     tickCounter++
     if (tickCounter % 20 === 0) {
       const devices = getDeviceSnapshot()
-      upsertDeviceBatch(devices.map((d) => ({
-        device_id: d.device_id,
-        device_type: d.device_type,
-        status: d.status,
-        health: d.health,
-        uptime: d.uptime,
-        last_sync: new Date().toISOString(),
-        deployment_id: "MYK-CH-001",
-      })))
+      ingestDeviceHeartbeatBatch(
+        devices.map((d) => ({
+          version: 1,
+          source: "simulator",
+          timestamp: currentTime.toISOString(),
+          deviceId: d.device_id,
+          deviceType: d.device_type ?? "unknown",
+          status: d.status ?? "online",
+          health: d.health ?? 100,
+          uptime: d.uptime ?? 0,
+          deploymentId: "MYK-CH-001",
+        }))
+      )
     }
 
     notify()
