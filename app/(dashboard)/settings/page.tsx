@@ -1,30 +1,31 @@
 "use client"
 
-import { useState } from "react"
 import {
   Bell,
   Cog,
   Fan,
-  Gauge,
   Monitor,
-  Sliders,
   Thermometer,
-  ToggleLeft,
 } from "lucide-react"
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { cn } from "@/lib/utils"
+import { usePersistedState } from "@/mock/persistence"
+import { useUptime } from "@/mock/simulator"
+import { DEPLOYMENT_ID, CLUSTER, REGION, SOFTWARE_VERSION, getUptime } from "@/mock/device-registry"
 
 function Toggle({
   label,
   description,
+  storageKey,
   defaultOn = false,
 }: {
   label: string
   description: string
+  storageKey: string
   defaultOn?: boolean
 }) {
-  const [on, setOn] = useState(defaultOn)
+  const [on, setOn] = usePersistedState(storageKey, defaultOn)
   return (
     <div className="flex items-center justify-between rounded-lg bg-muted/20 px-3 py-2.5">
       <div className="flex flex-col">
@@ -52,20 +53,22 @@ function Toggle({
 
 function SliderControl({
   label,
-  value: initial,
+  storageKey,
+  defaultVal,
   unit,
   min,
   max,
   step = 0.5,
 }: {
   label: string
-  value: number
+  storageKey: string
+  defaultVal: number
   unit: string
   min: number
   max: number
   step?: number
 }) {
-  const [val, setVal] = useState(initial)
+  const [val, setVal] = usePersistedState(storageKey, defaultVal)
   return (
     <div className="rounded-lg bg-muted/20 px-3 py-2.5">
       <div className="mb-2 flex items-center justify-between">
@@ -87,16 +90,18 @@ function SliderControl({
   )
 }
 
-const IDENTITY = [
-  { label: "Chamber ID", value: "MYK-CH-001" },
-  { label: "Deployment", value: "NA-East / DC-02" },
-  { label: "Software", value: "MYKOSPHARE v0.1.0" },
-  { label: "Uptime", value: "14d 7h 32m" },
-  { label: "Cluster", value: "Environment Alpha" },
-  { label: "Sensor Mesh", value: "24 nodes online" },
-]
-
 export default function SettingsPage() {
+  const uptime = useUptime()
+  const uptimeStr = uptime > 0 ? getUptime() : "0m"
+
+  const identityItems = [
+    { label: "Chamber ID", value: DEPLOYMENT_ID },
+    { label: "Deployment", value: REGION },
+    { label: "Software", value: `MYKOSPHARE ${SOFTWARE_VERSION}` },
+    { label: "Session Uptime", value: uptimeStr },
+    { label: "Cluster", value: CLUSTER },
+  ]
+
   return (
     <div className="flex flex-col gap-4 p-6">
       <div>
@@ -118,7 +123,7 @@ export default function SettingsPage() {
           </CardHeader>
           <CardContent>
             <div className="space-y-2">
-              {IDENTITY.map((item) => (
+              {identityItems.map((item) => (
                 <div
                   key={item.label}
                   className="flex items-center justify-between rounded-lg bg-muted/20 px-3 py-2"
@@ -145,21 +150,24 @@ export default function SettingsPage() {
           <CardContent className="flex flex-col gap-3">
             <SliderControl
               label="Temperature Range"
-              value={24.5}
+              storageKey="threshold_temp"
+              defaultVal={24.5}
               unit="°C"
               min={20}
               max={28}
             />
             <SliderControl
               label="Humidity Target"
-              value={61}
+              storageKey="threshold_hum"
+              defaultVal={61}
               unit="%"
               min={50}
               max={75}
             />
             <SliderControl
               label="CO₂ Limit"
-              value={420}
+              storageKey="threshold_co2"
+              defaultVal={420}
               unit="ppm"
               min={350}
               max={500}
@@ -181,26 +189,31 @@ export default function SettingsPage() {
             <Toggle
               label="Temperature Alerts"
               description="Notify when outside threshold"
+              storageKey="toggle_temp_alerts"
               defaultOn
             />
             <Toggle
               label="Humidity Alerts"
               description="Notify on humidity deviation"
+              storageKey="toggle_hum_alerts"
               defaultOn
             />
             <Toggle
               label="CO₂ Alerts"
               description="Notify on elevated CO₂ levels"
+              storageKey="toggle_co2_alerts"
               defaultOn
             />
             <Toggle
               label="Maintenance Reminders"
               description="Filter replacement, calibration due"
+              storageKey="toggle_maintenance"
               defaultOn
             />
             <Toggle
               label="System Updates"
               description="Software and firmware updates"
+              storageKey="toggle_updates"
             />
           </CardContent>
         </Card>
@@ -215,7 +228,8 @@ export default function SettingsPage() {
           <CardContent className="flex flex-col gap-3">
             <SliderControl
               label="Air Exchange Rate"
-              value={4}
+              storageKey="slider_air_exchange"
+              defaultVal={4}
               unit="/hr"
               min={1}
               max={10}
@@ -223,7 +237,8 @@ export default function SettingsPage() {
             />
             <SliderControl
               label="Fan Speed"
-              value={65}
+              storageKey="slider_fan_speed"
+              defaultVal={65}
               unit="%"
               min={10}
               max={100}
@@ -233,11 +248,13 @@ export default function SettingsPage() {
               <Toggle
                 label="Auto-balancing"
                 description="Automatic airflow adjustment"
+                storageKey="toggle_auto_balance"
                 defaultOn
               />
               <Toggle
                 label="Night Mode"
                 description="Reduced activity during dark cycle"
+                storageKey="toggle_night_mode"
               />
             </div>
           </CardContent>
@@ -254,25 +271,30 @@ export default function SettingsPage() {
             <Toggle
               label="Telemetry Recording"
               description="Log sensor data to history"
+              storageKey="toggle_telemetry"
               defaultOn
             />
             <Toggle
               label="Predictive Alerts"
               description="AI-based anomaly prediction"
+              storageKey="toggle_predictive"
               defaultOn
             />
             <Toggle
               label="Camera Recording"
               description="Timelapse image capture"
+              storageKey="toggle_camera"
               defaultOn
             />
             <Toggle
               label="Remote Access"
               description="External API access"
+              storageKey="toggle_remote"
             />
             <Toggle
               label="Diagnostic Mode"
               description="Extended sensor logging"
+              storageKey="toggle_diagnostic"
             />
           </CardContent>
         </Card>

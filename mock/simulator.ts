@@ -1,6 +1,8 @@
 "use client"
 
 import { useSyncExternalStore } from "react"
+import { loadLogs, persistLogs } from "./persistence"
+import { tickUptime } from "./device-registry"
 
 export interface MetricSnapshot {
   value: number
@@ -20,6 +22,9 @@ export interface LogEntry {
   message: string
   type: "info" | "success"
 }
+
+const LOG_STORAGE_KEY = "operational_logs"
+const MAX_LOGS = 30
 
 function clamp(v: number, min: number, max: number) {
   return Math.max(min, Math.min(max, v))
@@ -84,16 +89,17 @@ let telemetry: TelemetrySnapshot = {
   energyUsage: { value: 1.8, trend: "stable", delta: 0 },
 }
 
-let logs: LogEntry[] = [
+let logs: LogEntry[] = loadLogs<LogEntry>(LOG_STORAGE_KEY, [
   { time: "22:14", message: "HUMIDITY NORMALIZED", type: "success" },
   { time: "22:15", message: "FAE ENABLED", type: "info" },
   { time: "22:17", message: "SENSOR STATUS STABLE", type: "success" },
   { time: "22:19", message: "CO₂ LEVELS STABILIZING", type: "success" },
   { time: "22:22", message: "AIRFLOW ADJUSTMENT COMPLETE", type: "info" },
   { time: "22:25", message: "TELEMETRY SYNC OK", type: "success" },
-]
+])
 
 let currentTime = new Date()
+let uptimeSeconds = 0
 
 const listeners = new Set<() => void>()
 
@@ -128,6 +134,8 @@ function startLoop() {
     }
 
     currentTime = new Date()
+    uptimeSeconds += 2.5
+    tickUptime(uptimeSeconds)
 
     if (Math.random() < 0.3) {
       const msg =
@@ -139,7 +147,8 @@ function startLoop() {
           type: (Math.random() < 0.6 ? "success" : "info") as "success" | "info",
         },
         ...logs,
-      ].slice(0, 20)
+      ].slice(0, MAX_LOGS)
+      persistLogs(LOG_STORAGE_KEY, logs)
     }
 
     notify()
@@ -165,6 +174,10 @@ export function getFormattedTime(): string {
   })
 }
 
+export function getUptimeSeconds(): number {
+  return uptimeSeconds
+}
+
 export function useTelemetry(): TelemetrySnapshot {
   return useSyncExternalStore(subscribe, getTelemetry, getTelemetry)
 }
@@ -175,4 +188,8 @@ export function useLogs(): LogEntry[] {
 
 export function useClock(): string {
   return useSyncExternalStore(subscribe, getFormattedTime, getFormattedTime)
+}
+
+export function useUptime(): number {
+  return useSyncExternalStore(subscribe, getUptimeSeconds, getUptimeSeconds)
 }

@@ -11,6 +11,8 @@ import {
   Sprout,
 } from "lucide-react"
 import { NavItem } from "./nav-item"
+import { useUptime } from "@/mock/simulator"
+import { DEPLOYMENT_ID, REGION, SOFTWARE_VERSION, getUptime } from "@/mock/device-registry"
 
 const navItems = [
   { icon: LayoutDashboard, label: "Overview", href: "/" },
@@ -23,6 +25,9 @@ const navItems = [
 ]
 
 export function AppSidebar() {
+  const uptime = useUptime()
+  const uptimeStr = uptime > 0 ? getUptime() : "0m"
+
   return (
     <aside className="fixed inset-y-0 left-0 z-30 flex w-60 flex-col border-r border-sidebar-border bg-sidebar">
       <Link href="/" className="flex h-14 items-center gap-2.5 border-b border-sidebar-border px-5">
@@ -48,10 +53,13 @@ export function AppSidebar() {
       <div className="border-t border-sidebar-border p-3">
         <div className="rounded-lg bg-sidebar-accent/50 px-3 py-2">
           <p className="text-[11px] font-medium text-sidebar-foreground/50">
-            MYK-CH-001
+            {DEPLOYMENT_ID}
           </p>
           <p className="text-[11px] text-sidebar-foreground/40">
-            NA-East · v0.1.0
+            {REGION} · {SOFTWARE_VERSION}
+          </p>
+          <p className="mt-1 text-[10px] tabular-nums text-sidebar-foreground/30">
+            Session: {uptimeStr}
           </p>
         </div>
       </div>

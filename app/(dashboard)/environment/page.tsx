@@ -1,15 +1,59 @@
 "use client"
 
-import { Sprout, Thermometer, Droplets, Wind, Gauge, Ruler } from "lucide-react"
+import { Sprout, Thermometer, Droplets, Wind, Gauge, Ruler, Cpu } from "lucide-react"
 
 import { useEnvironment } from "@/mock/environment"
 import { useTelemetry } from "@/mock/simulator"
+import { useDeviceRegistry } from "@/mock/device-registry"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { cn } from "@/lib/utils"
+
+function DeviceRow({ device }: { device: ReturnType<typeof useDeviceRegistry>[number] }) {
+  return (
+    <div className="flex items-center gap-3 rounded-lg bg-muted/20 px-3 py-2.5 transition-colors hover:bg-muted/30">
+      <div
+        className={cn(
+          "size-2 shrink-0 rounded-full",
+          device.status === "online"
+            ? "bg-emerald-500 shadow-[0_0_6px_1px] shadow-emerald-500/30"
+            : device.status === "warning"
+              ? "bg-amber-500 shadow-[0_0_6px_1px] shadow-amber-500/30"
+              : "bg-red-500"
+        )}
+      />
+      <div className="flex min-w-0 flex-1 flex-col">
+        <div className="flex items-center gap-2">
+          <span className="text-xs font-medium text-foreground">{device.id}</span>
+          <span className="text-[10px] text-muted-foreground/50">{device.model}</span>
+        </div>
+        <span className="text-[10px] text-muted-foreground/60">{device.role}</span>
+      </div>
+      <div className="flex shrink-0 items-center gap-3">
+        <span className="text-[11px] tabular-nums text-muted-foreground/60">{device.uptime}</span>
+        <span
+          className={cn(
+            "text-[11px] font-medium tabular-nums",
+            device.health >= 95
+              ? "text-emerald-500"
+              : device.health >= 90
+                ? "text-amber-500"
+                : "text-red-500"
+          )}
+        >
+          {device.health}%
+        </span>
+        <span className="w-12 text-right text-[10px] text-muted-foreground/50">
+          {device.lastSync}
+        </span>
+      </div>
+    </div>
+  )
+}
 
 export default function EnvironmentPage() {
   const env = useEnvironment()
   const tel = useTelemetry()
+  const devices = useDeviceRegistry()
 
   const zones = [
     {
@@ -179,6 +223,22 @@ export default function EnvironmentPage() {
           </CardContent>
         </Card>
       </div>
+
+      <Card className="transition-all duration-200 hover:ring-foreground/20 hover:shadow-[0_0_16px_-6px] hover:shadow-foreground/10">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-sm">
+            <Cpu className="size-4 text-muted-foreground" />
+            Device Registry
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-col gap-1">
+            {devices.map((device) => (
+              <DeviceRow key={device.id} device={device} />
+            ))}
+          </div>
+        </CardContent>
+      </Card>
     </div>
   )
 }

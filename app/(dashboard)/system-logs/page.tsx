@@ -1,26 +1,19 @@
 "use client"
 
-import { ScrollText, Search } from "lucide-react"
+import { ScrollText, Search, Clock } from "lucide-react"
 
-import { useLogs } from "@/mock/simulator"
+import { useLogs, useUptime } from "@/mock/simulator"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { cn } from "@/lib/utils"
-
-const archivalLogs = [
-  { time: "21:45", message: "LIGHT CYCLE TRANSITION", type: "info" as const },
-  { time: "21:30", message: "AIR EXCHANGE CYCLE START", type: "info" as const },
-  { time: "21:15", message: "HUMIDITY CHECK PASSED", type: "success" as const },
-  { time: "21:00", message: "SENSOR CALIBRATION OK", type: "success" as const },
-  { time: "20:45", message: "TEMPERATURE WITHIN RANGE", type: "success" as const },
-  { time: "20:30", message: "FAE CYCLE COMPLETE", type: "info" as const },
-  { time: "20:15", message: "MONITORING IDLE", type: "info" as const },
-  { time: "20:00", message: "TELEMETRY SYNC OK", type: "success" as const },
-  { time: "19:45", message: "AIRFLOW ADJUSTMENT COMPLETE", type: "info" as const },
-  { time: "19:30", message: "CO₂ LEVELS NORMALIZED", type: "success" as const },
-]
+import { getUptime } from "@/mock/device-registry"
 
 export default function SystemLogsPage() {
   const liveLogs = useLogs()
+  const uptime = useUptime()
+  const uptimeStr = uptime > 0 ? getUptime() : "0m"
+
+  const recentLogs = liveLogs.slice(0, 10)
+  const archiveLogs = liveLogs.slice(10)
 
   return (
     <div className="flex flex-col gap-4 p-6">
@@ -34,9 +27,9 @@ export default function SystemLogsPage() {
           </p>
         </div>
         <div className="flex shrink-0 items-center gap-2 rounded-lg border border-border/50 bg-muted/30 px-3 py-1.5">
-          <Search className="size-3.5 text-muted-foreground/60" />
-          <span className="text-xs text-muted-foreground/60">
-            Filter logs...
+          <Clock className="size-3.5 text-muted-foreground/60" />
+          <span className="text-xs tabular-nums text-muted-foreground/60">
+            Session: {uptimeStr}
           </span>
         </div>
       </div>
@@ -46,12 +39,12 @@ export default function SystemLogsPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-sm">
               <ScrollText className="size-4 text-muted-foreground" />
-              Live Feed
+              Recent Events
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-0.5">
-              {liveLogs.map((log, i) => (
+              {recentLogs.map((log, i) => (
                 <div
                   key={`${log.time}-${i}`}
                   className="flex items-center gap-3 rounded px-2 py-1.5 transition-colors hover:bg-muted/20"
@@ -80,12 +73,12 @@ export default function SystemLogsPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-sm">
               <ScrollText className="size-4 text-muted-foreground" />
-              History
+              Archive
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-0.5">
-              {archivalLogs.map((log, i) => (
+              {archiveLogs.length > 0 ? archiveLogs.map((log, i) => (
                 <div
                   key={i}
                   className="flex items-center gap-3 rounded px-2 py-1.5 transition-colors hover:bg-muted/20"
@@ -105,7 +98,11 @@ export default function SystemLogsPage() {
                     {log.message}
                   </span>
                 </div>
-              ))}
+              )) : (
+                <p className="py-4 text-center text-xs text-muted-foreground/50">
+                  No archived logs yet. More events will appear here as the session progresses.
+                </p>
+              )}
             </div>
           </CardContent>
         </Card>
