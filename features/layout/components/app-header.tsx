@@ -7,6 +7,7 @@ import { useClock } from "@/mock/simulator"
 import { cn } from "@/lib/utils"
 import { RealtimeBadge } from "@/lib/realtime/status"
 import { useRealtimeLogs } from "@/lib/realtime/subscriptions"
+import { OperatorDropdown } from "./operator-dropdown"
 
 const BADGE_STYLES: Record<string, string> = {
   STABLE: "bg-emerald-500/10 text-emerald-500 ring-emerald-500/20",
@@ -54,12 +55,7 @@ export function AppHeader() {
         >
           <Bell className="size-4" />
         </button>
-        <button
-          type="button"
-          className="ml-1 flex size-8 items-center justify-center rounded-full bg-muted text-xs font-medium text-muted-foreground transition-all duration-150 hover:bg-muted/80"
-        >
-          OP
-        </button>
+        <OperatorDropdown />
       </div>
     </header>
   )
