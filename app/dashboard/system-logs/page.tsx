@@ -5,6 +5,7 @@ import { ScrollText, Clock } from "lucide-react"
 
 import { useLogs, useUptime } from "@/mock/simulator"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { EmptyState } from "@/components/ui/empty-state"
 import { cn } from "@/lib/utils"
 import { getUptime } from "@/mock/device-registry"
 import { useRealtimeLogs } from "@/lib/realtime/subscriptions"
@@ -12,7 +13,10 @@ import { RealtimeBadge } from "@/lib/realtime/status"
 
 function useMounted() {
   const [mounted, setMounted] = useState(false)
-  useEffect(() => setMounted(true), [])
+  useEffect(() => {
+    const t = setTimeout(() => setMounted(true), 0)
+    return () => clearTimeout(t)
+  }, [])
   return mounted
 }
 
@@ -165,9 +169,11 @@ export default function SystemLogsPage() {
                 ))}
               </div>
             ) : (
-              <p className="py-4 text-center text-xs text-muted-foreground/50">
-                No archived logs yet. More events will appear here as the session progresses.
-              </p>
+              <EmptyState
+                icon={ScrollText}
+                title="No archived logs"
+                description="More events will appear here as the session progresses."
+              />
             )}
           </CardContent>
         </Card>

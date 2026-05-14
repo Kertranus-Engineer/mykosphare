@@ -16,6 +16,7 @@ import {
 } from "lucide-react"
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { EmptyState } from "@/components/ui/empty-state"
 import { cn } from "@/lib/utils"
 import { PROTOCOL, PAYLOAD_EXAMPLES } from "@/lib/protocol"
 import { validateTelemetryPayload, validateDeviceHeartbeat, validateEnvironmentalEvent } from "@/lib/ingestion"
@@ -389,10 +390,11 @@ export default function ProtocolPage() {
                 ))}
               </div>
             ) : (
-              <p className="py-4 text-center text-xs text-muted-foreground/50">
-                No source timing data available. Send telemetry via the ingestion
-                API to populate.
-              </p>
+              <EmptyState
+                icon={Clock}
+                title="No source timing data"
+                description="Send telemetry via the ingestion API to populate."
+              />
             )}
           </CardContent>
         </Card>
@@ -423,9 +425,11 @@ export default function ProtocolPage() {
                   </p>
                 </div>
               ) : (
-                <p className="py-4 text-center text-xs text-muted-foreground/50">
-                  No latency data available yet.
-                </p>
+                <EmptyState
+                  icon={Gauge}
+                  title="No latency data"
+                  description="Latency metrics appear once telemetry flows through the pipeline."
+                />
               )}
             </CardContent>
           </Card>
@@ -470,9 +474,11 @@ export default function ProtocolPage() {
                   </div>
                 </div>
               ) : (
-                <p className="py-4 text-center text-xs text-muted-foreground/50">
-                  No samples yet.
-                </p>
+                <EmptyState
+                  icon={Activity}
+                  title="No samples yet"
+                  description="Latency samples will appear as packets are ingested."
+                />
               )}
             </CardContent>
           </Card>
@@ -528,10 +534,11 @@ export default function ProtocolPage() {
                 ))}
               </div>
             ) : (
-              <p className="py-4 text-center text-xs text-muted-foreground/50">
-                No heartbeat data yet. Device heartbeats appear when devices send
-                heartbeats via the ingestion API.
-              </p>
+              <EmptyState
+                icon={HeartPulse}
+                title="No heartbeat data"
+                description="Device heartbeats appear when devices send heartbeats via the ingestion API."
+              />
             )}
           </CardContent>
         </Card>

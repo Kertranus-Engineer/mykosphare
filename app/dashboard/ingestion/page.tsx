@@ -17,6 +17,7 @@ import {
 } from "lucide-react"
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { EmptyState } from "@/components/ui/empty-state"
 import { cn } from "@/lib/utils"
 import { getIngestionLogs, type IngestionLogEntry } from "@/lib/ingestion"
 
@@ -78,7 +79,9 @@ export default function IngestionPage() {
   const [showAllSources, setShowAllSources] = useState(false)
 
   useEffect(() => {
-    setIngestionLogs(getIngestionLogs(50))
+    const logs = getIngestionLogs(50)
+    const t = setTimeout(() => setIngestionLogs(logs), 0)
+    return () => clearTimeout(t)
   }, [metrics.totalAccepted + metrics.totalRejected])
 
   const totalRequests = metrics.totalAccepted + metrics.totalRejected
@@ -209,13 +212,11 @@ export default function IngestionPage() {
                 ))}
               </div>
             ) : (
-              <p className="py-4 text-center text-xs text-muted-foreground/50">
-                No external sources detected yet. POST to
-                <code className="mx-1 rounded bg-muted/30 px-1 py-0.5 text-[10px]">
-                  /api/ingest/telemetry
-                </code>
-                to begin.
-              </p>
+              <EmptyState
+                icon={Zap}
+                title="No external sources detected"
+                description='POST to /api/ingest/telemetry to begin.'
+              />
             )}
           </CardContent>
         </Card>
@@ -272,10 +273,11 @@ export default function IngestionPage() {
                 ))}
               </div>
             ) : (
-              <p className="py-4 text-center text-xs text-muted-foreground/50">
-                No ingestion events yet. Events appear as data flows through the
-                ingestion pipeline.
-              </p>
+              <EmptyState
+                icon={Clock}
+                title="No ingestion events"
+                description="Events appear as data flows through the ingestion pipeline."
+              />
             )}
           </CardContent>
         </Card>

@@ -29,10 +29,17 @@ export function ChamberPanel() {
   const dotColor = chamberDotColor(env.state)
   const sweepColor =
     env.state === "WARNING"
-      ? "via-amber-500/5"
+      ? "via-amber-500/8"
       : env.state === "RECOVERY"
-        ? "via-teal-500/5"
+        ? "via-teal-500/8"
         : "via-emerald-500/5"
+
+  const chamberGlow =
+    env.state === "WARNING"
+      ? "shadow-[0_0_20px_-4px] shadow-amber-500/15"
+      : env.state === "RECOVERY"
+        ? "shadow-[0_0_20px_-4px] shadow-teal-500/15"
+        : ""
 
   const airflowActive = env.state === "WARNING" || env.state === "OPTIMIZING"
 
@@ -60,7 +67,10 @@ export function ChamberPanel() {
         </CardTitle>
       </CardHeader>
       <CardContent className="flex flex-col gap-3">
-        <div className="relative flex aspect-[2/1] items-center justify-center overflow-hidden rounded-lg bg-gradient-to-br from-muted/90 to-muted">
+        <div className={cn(
+          "relative flex aspect-[2/1] items-center justify-center overflow-hidden rounded-lg bg-gradient-to-br from-muted/90 to-muted transition-all duration-700",
+          chamberGlow
+        )}>
           <div className="absolute inset-0 bg-gradient-to-t from-background/50 to-transparent" />
           <div className="absolute inset-0 bg-gradient-to-b from-background/20 to-transparent" />
 

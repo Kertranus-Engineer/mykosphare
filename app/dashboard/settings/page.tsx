@@ -8,6 +8,8 @@ import {
   Monitor,
   Thermometer,
   Loader2,
+  Volume2,
+  VolumeX,
 } from "lucide-react"
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -102,7 +104,10 @@ function SliderControl({
 
 function useMounted() {
   const [mounted, setMounted] = useState(false)
-  useEffect(() => setMounted(true), [])
+  useEffect(() => {
+    const t = setTimeout(() => setMounted(true), 0)
+    return () => clearTimeout(t)
+  }, [])
   return mounted
 }
 
@@ -368,6 +373,50 @@ export default function SettingsPage() {
           </CardContent>
         </Card>
       </div>
+
+      <Card className="transition-all duration-200 hover:ring-foreground/20 hover:shadow-[0_0_16px_-6px] hover:shadow-foreground/10">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-sm">
+            <Volume2 className="size-4 text-muted-foreground" />
+            Operational Audio
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center justify-between rounded-lg bg-muted/20 px-3 py-2.5">
+            <div className="flex items-center gap-2">
+              {settings.config["toggle_audio"] ? (
+                <Volume2 className="size-4 text-emerald-500" />
+              ) : (
+                <VolumeX className="size-4 text-muted-foreground/50" />
+              )}
+              <div className="flex flex-col">
+                <span className="text-sm text-foreground">Operational Sounds</span>
+                <span className="text-xs text-muted-foreground">
+                  Alert pings, relay clicks, command confirmations
+                </span>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => updateSetting("toggle_audio", !settings.config["toggle_audio"])}
+              className={cn(
+                "relative inline-flex h-5 w-9 shrink-0 cursor-pointer items-center rounded-full transition-colors duration-200",
+                settings.config["toggle_audio"] ? "bg-emerald-500" : "bg-muted-foreground/30"
+              )}
+            >
+              <span
+                className={cn(
+                  "inline-block size-3.5 rounded-full bg-background shadow-sm transition-transform duration-200",
+                  settings.config["toggle_audio"] ? "translate-x-[18px]" : "translate-x-[3px]"
+                )}
+              />
+            </button>
+          </div>
+          <p className="mt-2 text-[10px] text-muted-foreground/50">
+            Muted by default. Sounds play through browser audio context.
+          </p>
+        </CardContent>
+      </Card>
     </div>
   )
 }

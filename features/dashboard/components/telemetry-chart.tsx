@@ -1,6 +1,5 @@
 "use client"
 
-import { useMemo } from "react"
 import {
   Area,
   AreaChart,
@@ -63,7 +62,7 @@ const THEMES = {
 
 export function TelemetryChart() {
   const env = useEnvironment()
-  const theme = useMemo(() => THEMES[env.state], [env.state])
+  const theme = THEMES[env.state]
 
   return (
     <Card className="transition-all duration-200 hover:ring-foreground/20 hover:shadow-[0_0_16px_-6px] hover:shadow-foreground/10">
@@ -77,7 +76,7 @@ export function TelemetryChart() {
               env.color
             )}
           >
-            {THEMES[env.state].label}
+            {theme.label}
           </span>
         </CardTitle>
       </CardHeader>

@@ -87,6 +87,17 @@ export async function ingestTelemetry(
     data!.operationalMode ?? "OPERATIONAL"
   )
 
+  if (success) {
+    const { evaluateTelemetry } = await import("@/lib/alerts/engine")
+    evaluateTelemetry({
+      temperature: data!.metrics.temperature ?? null,
+      humidity: data!.metrics.humidity ?? null,
+      co2: data!.metrics.co2 ?? null,
+      deviceId: data!.deviceId,
+      timestamp: data!.timestamp,
+    })
+  }
+
   const now = new Date().toISOString()
   const latencyMs = Date.now() - new Date(data!.timestamp).getTime()
   recordPacket({

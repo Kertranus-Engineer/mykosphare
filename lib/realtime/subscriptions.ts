@@ -1,11 +1,11 @@
 "use client"
 
 import { useState, useEffect, useRef, useCallback } from "react"
-import { createClient } from "@/lib/supabase/client"
+import { createClient, isSupabaseConfigured } from "@/lib/supabase/client"
 import { fetchLogs, type ServiceLogEntry } from "@/lib/services/logs-service"
 import { fetchDevices, type ServiceDevice } from "@/lib/services/devices-service"
 import { fetchRecentTelemetry, type TelemetryRow } from "@/lib/services/telemetry-service"
-import type { Setting } from "@/types/database"
+import type { Setting, Alert } from "@/types/database"
 import type { RealtimeChannel } from "@supabase/supabase-js"
 
 const DEPLOYMENT_ID = "MYK-CH-001"
@@ -16,6 +16,15 @@ let channelIdCounter = 0
 
 function nextChannelId(base: string) {
   return `${base}-${++channelIdCounter}`
+}
+
+function tryCreateClient(): ReturnType<typeof createClient> | null {
+  if (!isSupabaseConfigured()) return null
+  try {
+    return createClient()
+  } catch {
+    return null
+  }
 }
 
 export function useRealtimeLogs(limit = 50) {
@@ -29,7 +38,11 @@ export function useRealtimeLogs(limit = 50) {
     let cancelled = false
 
     if (!supabaseRef.current) {
-      supabaseRef.current = createClient()
+      supabaseRef.current = tryCreateClient()
+    }
+    if (!supabaseRef.current) {
+      setStatus("offline")
+      return
     }
     const supabase = supabaseRef.current
 
@@ -102,7 +115,11 @@ export function useRealtimeDevices() {
     let cancelled = false
 
     if (!supabaseRef.current) {
-      supabaseRef.current = createClient()
+      supabaseRef.current = tryCreateClient()
+    }
+    if (!supabaseRef.current) {
+      setStatus("offline")
+      return
     }
     const supabase = supabaseRef.current
 
@@ -180,7 +197,11 @@ export function useRealtimeTelemetry(limit = 200) {
     let cancelled = false
 
     if (!supabaseRef.current) {
-      supabaseRef.current = createClient()
+      supabaseRef.current = tryCreateClient()
+    }
+    if (!supabaseRef.current) {
+      setStatus("offline")
+      return
     }
     const supabase = supabaseRef.current
 
@@ -254,7 +275,7 @@ export function useRealtimeTelemetry(limit = 200) {
 }
 
 export function useRealtimeAlerts(limit = 30) {
-  const [data, setData] = useState<Record<string, unknown>[]>([])
+  const [data, setData] = useState<Alert[]>([])
   const [status, setStatus] = useState<ConnectionStatus>("connecting")
   const [latency, setLatency] = useState<number | null>(null)
   const channelRef = useRef<RealtimeChannel | null>(null)
@@ -264,7 +285,11 @@ export function useRealtimeAlerts(limit = 30) {
     let cancelled = false
 
     if (!supabaseRef.current) {
-      supabaseRef.current = createClient()
+      supabaseRef.current = tryCreateClient()
+    }
+    if (!supabaseRef.current) {
+      setStatus("offline")
+      return
     }
     const supabase = supabaseRef.current
 
@@ -281,7 +306,7 @@ export function useRealtimeAlerts(limit = 30) {
           .eq("deployment_id", DEPLOYMENT_ID)
           .order("created_at", { ascending: false })
           .limit(limit)
-        if (!cancelled) setData(result ?? [])
+        if (!cancelled) setData((result ?? []) as unknown as Alert[])
       } catch {
         if (!cancelled) setData([])
       }
@@ -297,8 +322,28 @@ export function useRealtimeAlerts(limit = 30) {
           const ts = payload.commit_timestamp ? new Date(payload.commit_timestamp).getTime() : Date.now()
           setLatency(Math.max(0, Date.now() - ts))
           setData((prev) => {
-            if (prev.some((a) => a.id === payload.new.id)) return prev
-            return [payload.new, ...prev].slice(0, limit)
+            const alert = payload.new as unknown as Alert
+            if (prev.some((a) => a.id === alert.id)) return prev
+            return [alert, ...prev].slice(0, limit)
+          })
+        }
+      )
+      .on(
+        "postgres_changes" as const,
+        { event: "UPDATE", schema: "public", table: "alerts", filter: `deployment_id=eq.${DEPLOYMENT_ID}` },
+        (payload: { new: Record<string, unknown>; commit_timestamp?: string }) => {
+          if (cancelled) return
+          const ts = payload.commit_timestamp ? new Date(payload.commit_timestamp).getTime() : Date.now()
+          setLatency(Math.max(0, Date.now() - ts))
+          setData((prev) => {
+            const updated = payload.new as unknown as Alert
+            const idx = prev.findIndex((a) => a.id === updated.id)
+            if (idx >= 0) {
+              const next = [...prev]
+              next[idx] = { ...next[idx], ...updated }
+              return next
+            }
+            return prev
           })
         }
       )
@@ -344,8 +389,9 @@ export function useRealtimeSettings() {
 
   const refresh = useCallback(() => {
     if (!supabaseRef.current) {
-      supabaseRef.current = createClient()
+      supabaseRef.current = tryCreateClient()
     }
+    if (!supabaseRef.current) return
     supabaseRef.current
       .from("settings")
       .select("*")
@@ -359,12 +405,16 @@ export function useRealtimeSettings() {
   useEffect(() => {
     let cancelled = false
 
-    refresh()
-
     if (!supabaseRef.current) {
-      supabaseRef.current = createClient()
+      supabaseRef.current = tryCreateClient()
+    }
+    if (!supabaseRef.current) {
+      setStatus("offline")
+      return
     }
     const supabase = supabaseRef.current
+
+    refresh()
 
     if (channelRef.current) {
       supabase.removeChannel(channelRef.current)

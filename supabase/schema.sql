@@ -87,6 +87,7 @@ CREATE TABLE IF NOT EXISTS public.alerts (
   title             text,
   description       text,
   resolved          boolean         NOT NULL DEFAULT false,
+  resolved_at       timestamptz,
   deployment_id     text            NOT NULL DEFAULT 'MYK-CH-001'
 );
 

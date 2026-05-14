@@ -50,10 +50,12 @@ export interface Telemetry {
 export interface Alert {
   id: string
   created_at: string
+  updated_at: string | null
   severity: string | null
   title: string | null
   description: string | null
   resolved: boolean
+  resolved_at: string | null
   deployment_id: string | null
 }
 

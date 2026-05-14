@@ -51,7 +51,7 @@ function generateDevice(index: number, elapsed: number): DeviceInfo {
   }
 }
 
-let sessionStart = Date.now()
+const sessionStart = Date.now()
 
 export function getSessionElapsed(): number {
   return Math.floor((Date.now() - sessionStart) / 1000)

@@ -2,12 +2,9 @@
 
 import {
   Camera,
-  Clock,
   Crosshair,
   Eye,
-  Focus,
   Image,
-  Scan,
   Video,
   Zap,
 } from "lucide-react"

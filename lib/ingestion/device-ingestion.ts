@@ -4,6 +4,9 @@ import { logIngestionEvent } from "./ingestion-logger"
 import { upsertDeviceBatch } from "@/lib/services/devices-service"
 import { checkDuplicate, checkFloodProtection, recordPacket } from "@/lib/protocol"
 
+let lastHeartbeatEval = 0
+const HEARTBEAT_EVAL_INTERVAL = 60_000
+
 export async function ingestDeviceHeartbeat(
   payload: unknown
 ): Promise<IngestionResult> {
@@ -93,6 +96,16 @@ export async function ingestDeviceHeartbeat(
     accepted: success,
     normalized: normalized || undefined,
   })
+
+  if (success) {
+    const now = Date.now()
+    if (now - lastHeartbeatEval > HEARTBEAT_EVAL_INTERVAL) {
+      lastHeartbeatEval = now
+      const { evaluateHeartbeat, evaluateOfflineDevices } = await import("@/lib/alerts/engine")
+      evaluateHeartbeat()
+      evaluateOfflineDevices()
+    }
+  }
 
   return {
     accepted: success,

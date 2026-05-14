@@ -5,6 +5,10 @@ import { loadLogs, persistLogs } from "./persistence"
 import { tickUptime, getDeviceSnapshot } from "./device-registry"
 import { insertLog } from "@/lib/services/logs-service"
 import { ingestTelemetry, ingestDeviceHeartbeatBatch } from "@/lib/ingestion"
+import { getActiveScenario, applyScenarioEffects, shouldDropHeartbeat } from "./scenarios"
+import type { Scenario } from "./scenarios"
+
+export type { Scenario } from "./scenarios"
 
 export interface MetricSnapshot {
   value: number
@@ -96,6 +100,14 @@ const LOG_TEMPLATES = [
   "PRESSURE NOMINAL",
 ]
 
+const SCENARIO_LOG_MAP: Record<string, string> = {
+  "humidity-drift": "SCENARIO: Humidity drift active — monitoring response",
+  "intermittent-heartbeat": "SCENARIO: Intermittent heartbeat loss — checking connectivity",
+  "co2-spike": "SCENARIO: CO₂ spike detected — air exchange response",
+  "device-offline": "SCENARIO: Device offline — evaluating isolation",
+  "recovery-cycle": "SCENARIO: Recovery cycle — returning to baseline",
+}
+
 interface InternalState {
   temp: number
   hum: number
@@ -126,6 +138,9 @@ let logs: LogEntry[] = loadLogs<LogEntry>(LOG_STORAGE_KEY, [
   { time: "22:25", message: "TELEMETRY SYNC OK", type: "success" },
 ])
 
+let scenario: Scenario | null = null
+let lastScenarioLog = 0
+
 let currentTime = new Date()
 let uptimeSeconds = 0
 
@@ -134,7 +149,13 @@ const listeners = new Set<() => void>()
 function subscribe(listener: () => void) {
   listeners.add(listener)
   if (listeners.size === 1 && !intervalId) startLoop()
-  return () => listeners.delete(listener)
+  return () => {
+    listeners.delete(listener)
+    if (listeners.size === 0 && intervalId) {
+      clearInterval(intervalId)
+      intervalId = null
+    }
+  }
 }
 
 function notify() {
@@ -147,13 +168,17 @@ let tickCounter = 0
 function startLoop() {
   intervalId = setInterval(() => {
     const prev = raw
+    const now = Date.now()
+    scenario = getActiveScenario(now)
 
-    raw = {
+    const randomWalk: InternalState = {
       temp: clamp(raw.temp + (Math.random() - 0.5) * 0.08, 23.5, 26.0),
       hum: clamp(raw.hum + (Math.random() - 0.5) * 0.25, 58, 65),
       co2: clamp(raw.co2 + (Math.random() - 0.5) * 1.5, 395, 430),
       energy: clamp(raw.energy + (Math.random() - 0.5) * 0.04, 1.5, 2.2),
     }
+
+    raw = applyScenarioEffects(randomWalk, scenario)
 
     telemetry = {
       temperature: computeMetric(raw.temp, prev.temp, 1),
@@ -197,11 +222,39 @@ function startLoop() {
       insertLog(msg, "operation")
     }
 
+    if (scenario && now - lastScenarioLog > 10000) {
+      const logMsg = SCENARIO_LOG_MAP[scenario.type]
+      if (logMsg) {
+        lastScenarioLog = now
+        logs = [
+          {
+            time: formatHHMM(currentTime),
+            message: logMsg,
+            type: "info" as const,
+          },
+          ...logs,
+        ].slice(0, MAX_LOGS)
+        persistLogs(LOG_STORAGE_KEY, logs)
+        insertLog(logMsg, "scenario")
+      }
+    }
+
     tickCounter++
     if (tickCounter % 20 === 0) {
       const devices = getDeviceSnapshot()
+      const filteredDevices = devices.map((d, i) => {
+        const drop = shouldDropHeartbeat(i, scenario, now)
+        if (drop) {
+          return {
+            ...d,
+            status: "offline",
+            health: Math.max(0, (d.health ?? 100) - 30),
+          }
+        }
+        return d
+      })
       ingestDeviceHeartbeatBatch(
-        devices.map((d) => ({
+        filteredDevices.map((d) => ({
           version: 1,
           source: "simulator",
           timestamp: currentTime.toISOString(),
@@ -242,6 +295,10 @@ export function getUptimeSeconds(): number {
   return uptimeSeconds
 }
 
+export function getScenario(): Scenario | null {
+  return scenario
+}
+
 export function useTelemetry(): TelemetrySnapshot {
   return useSyncExternalStore(subscribe, getTelemetry, getTelemetry)
 }
@@ -256,4 +313,8 @@ export function useClock(): string {
 
 export function useUptime(): number {
   return useSyncExternalStore(subscribe, getUptimeSeconds, getUptimeSeconds)
+}
+
+export function useScenario(): Scenario | null {
+  return useSyncExternalStore(subscribe, getScenario, getScenario)
 }

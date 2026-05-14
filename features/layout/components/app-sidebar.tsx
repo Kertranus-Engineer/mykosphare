@@ -4,23 +4,35 @@ import Link from "next/link"
 import {
   Activity,
   AlertTriangle,
+  Brain,
   Camera,
   Cog,
   Cpu,
   Database,
+  Gauge,
   LayoutDashboard,
   Radio,
   ScrollText,
   Sprout,
+  Share2,
+  Clock,
+  Wrench,
+  Terminal,
 } from "lucide-react"
 import { NavItem } from "./nav-item"
 import { useUptime } from "@/mock/simulator"
-import { DEPLOYMENT_ID, REGION, SOFTWARE_VERSION, getUptime } from "@/mock/device-registry"
+import { DEPLOYMENT_ID, REGION, SOFTWARE_VERSION } from "@/mock/device-registry"
 
 const navItems = [
   { icon: LayoutDashboard, label: "Overview", href: "/dashboard" },
+  { icon: Gauge, label: "Unified", href: "/dashboard/unified" },
   { icon: Sprout, label: "Environment", href: "/dashboard/environment" },
   { icon: Activity, label: "Analytics", href: "/dashboard/analytics" },
+  { icon: Brain, label: "Intelligence", href: "/dashboard/intelligence" },
+  { icon: Wrench, label: "Maintenance", href: "/dashboard/maintenance" },
+  { icon: Share2, label: "Topology", href: "/dashboard/topology" },
+  { icon: Clock, label: "Timeline", href: "/dashboard/timeline" },
+  { icon: Terminal, label: "Command Center", href: "/dashboard/command-center" },
   { icon: Camera, label: "Camera", href: "/dashboard/camera" },
   { icon: Database, label: "Ingestion", href: "/dashboard/ingestion" },
   { icon: Cpu, label: "Protocol", href: "/dashboard/protocol" },
@@ -30,9 +42,16 @@ const navItems = [
   { icon: Cog, label: "Settings", href: "/dashboard/settings" },
 ]
 
+function fmtDuration(seconds: number): string {
+  const h = Math.floor(seconds / 3600)
+  const m = Math.floor((seconds % 3600) / 60)
+  if (h > 0) return `${h}h ${m}m`
+  return `${m}m`
+}
+
 export function AppSidebar() {
   const uptime = useUptime()
-  const uptimeStr = uptime > 0 ? getUptime() : "0m"
+  const uptimeStr = uptime > 0 ? fmtDuration(uptime) : "0m"
 
   return (
     <aside className="fixed inset-y-0 left-0 z-30 flex w-60 flex-col border-r border-sidebar-border bg-sidebar">

@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { Sprout, Thermometer, Droplets, Wind, Gauge, Ruler, Cpu } from "lucide-react"
+import { Thermometer, Droplets, Wind, Gauge, Ruler, Cpu } from "lucide-react"
 
 import { useEnvironment } from "@/mock/environment"
 import { useTelemetry } from "@/mock/simulator"
@@ -55,7 +55,10 @@ function DeviceRow({ device, mounted }: { device: ReturnType<typeof useDeviceReg
 
 function useMounted() {
   const [mounted, setMounted] = useState(false)
-  useEffect(() => setMounted(true), [])
+  useEffect(() => {
+    const t = setTimeout(() => setMounted(true), 0)
+    return () => clearTimeout(t)
+  }, [])
   return mounted
 }
 
