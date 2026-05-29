@@ -1,7 +1,7 @@
 "use client"
 
 import { useMemo, useState, useEffect } from "react"
-import { Thermometer, Droplets, Wind, Wifi, WifiOff, Clock, FlaskConical, Sprout, CheckCircle2, Circle, Target, Heart, DollarSign, ShieldCheck } from "lucide-react"
+import { Thermometer, Droplets, Wind, Wifi, WifiOff, Clock, FlaskConical, Sprout, CheckCircle2, Circle, Target, Heart, DollarSign, ShieldCheck, Zap } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 import { useDashboardTelemetry, useRealTimeTelemetry } from "@/lib/useTelemetry"
@@ -13,14 +13,13 @@ import { AlertPanel } from "./alert-panel"
 import { ChamberPanel } from "./chamber-panel"
 import { LcdStatus } from "./lcd-status"
 import { MetricCard } from "./metric-card"
+import { OperationalNarrative } from "./operational-narrative"
 import { SystemLogs } from "./system-logs"
 import { TelemetryChart } from "./telemetry-chart"
-import { QuickStart } from "@/features/quick-start/components/quick-start"
 import { TelemetryDebugPanel } from "./telemetry-debug"
-import { OperationalNarrative } from "./operational-narrative"
-import { EnergyCard } from "./energy-card"
 import { AutoDemo } from "./auto-demo"
 import { MissionStatus } from "./mission-status"
+import { QuickStart } from "@/features/quick-start/components/quick-start"
 import { Card, CardContent } from "@/components/ui/card"
 
 function executiveSummaryLabel(state: string): string {
@@ -94,15 +93,6 @@ export function DashboardGrid() {
         </div>
       </div>
 
-      {/* ── Platform Purpose ───────────────────── */}
-      <Card size="sm" className="transition-all duration-300 hover:scale-[1.01] hover:ring-foreground/20 border-emerald-500/15 shadow-[0_0_12px_-4px] shadow-emerald-500/5">
-        <CardContent className="flex items-center gap-3 relative z-10 py-2.5">
-          <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-emerald-500/10 border border-emerald-500/20"><Sprout className="size-4 text-emerald-500" /></div>
-          <div className="flex flex-col min-w-0"><span className="text-xs font-semibold tracking-tight text-emerald-400">Platform Purpose</span><p className="text-[11px] leading-relaxed text-foreground/50">MYKOSPHARE provides affordable environmental monitoring through ESP32-based hardware, cloud telemetry and intelligent analytics.</p></div>
-        </CardContent>
-      </Card>
-
-      <QuickStart />
       {isDev && <TelemetryDebugPanel />}
 
       {/* ── Status Bar ────────────────────────── */}
@@ -144,21 +134,6 @@ export function DashboardGrid() {
         </CardContent>
       </Card>
 
-      {/* ── Explore Platform ──────────────────── */}
-      <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
-        {[
-          { label: "Architecture", desc: "Understand how the platform works.", href: "/dashboard/architecture", color: "text-blue-500", bg: "bg-blue-500/5", border: "border-blue-500/15" },
-          { label: "Prototype", desc: "Inspect the hardware implementation.", href: "/dashboard/prototype", color: "text-amber-500", bg: "bg-amber-500/5", border: "border-amber-500/15" },
-          { label: "Applications", desc: "Discover deployment opportunities.", href: "/dashboard/applications", color: "text-violet-500", bg: "bg-violet-500/5", border: "border-violet-500/15" },
-        ].map((link, i) => (
-          <a key={link.label} href={link.href} className={cn("flex items-center gap-2 rounded-lg border px-3 py-2 transition-all duration-200 hover:scale-[1.01] hover:ring-foreground/10", link.bg, link.border)} style={{ animationDelay: `${i * 60}ms` }}>
-            <div className={cn("size-1.5 rounded-full", link.color.replace("text-", "bg-"))} />
-            <div className="flex flex-col min-w-0"><span className={cn("text-[11px] font-semibold tracking-tight", link.color)}>{link.label}</span><span className="text-[9px] text-muted-foreground/50 leading-tight">{link.desc}</span></div>
-            <span className="text-[9px] text-muted-foreground/25 ml-auto shrink-0">→</span>
-          </a>
-        ))}
-      </div>
-
       {/* ── KPI Strip ─────────────────────────── */}
       <div className="flex items-center gap-1.5 flex-wrap">
         {[
@@ -179,13 +154,13 @@ export function DashboardGrid() {
       {/* ── Mission Status ────────────────────── */}
       <MissionStatus />
 
-      {/* ── Project Summary ───────────────────── */}
-      <Card size="sm" className="transition-all duration-300 hover:scale-[1.01] hover:ring-foreground/20 border-blue-500/10 shadow-[0_0_12px_-4px] shadow-blue-500/5">
-        <CardContent className="flex items-center gap-3 relative z-10 py-2.5">
-          <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-blue-500/10 border border-blue-500/20"><Sprout className="size-4 text-blue-500" /></div>
-          <div className="flex flex-col min-w-0"><span className="text-xs font-semibold tracking-tight text-blue-400">Project Summary</span><p className="text-[11px] leading-relaxed text-foreground/50">MYKOSPHARE combines low-cost IoT hardware, cloud telemetry and environmental analytics into a platform designed for education, research and monitoring applications.</p></div>
-        </CardContent>
-      </Card>
+      {/* ── Compact Metrics 2x2 ────────────────── */}
+      <div className="grid grid-cols-2 gap-3">
+        <MetricCard compact icon={Thermometer} label="Temperature" value={tempVal} unit="°C" decimals={1} trend={tel.temperature.trend} delta={tel.temperature.delta} critical={tempCritical} warning={tempWarning} />
+        <MetricCard compact icon={Droplets} label="Humidity" value={humVal} unit="%" decimals={1} trend={tel.humidity.trend} delta={tel.humidity.delta} critical={humCritical} warning={humWarning} />
+        <MetricCard compact icon={Wind} label="CO₂" value={co2Val} unit=" ppm" decimals={0} trend={tel.co2.trend} delta={tel.co2.delta} />
+        <MetricCard compact icon={Zap} label="Energy" value={tel.energyUsage.value} unit=" kWh" decimals={1} trend={tel.energyUsage.trend} delta={tel.energyUsage.delta} />
+      </div>
 
       {/* ── AI Analysis + Executive Summary ───── */}
       <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
@@ -194,11 +169,8 @@ export function DashboardGrid() {
           <CardContent className="flex flex-col gap-2 relative z-10 py-3">
             <div className="flex items-center gap-2">
               <ShieldCheck className="size-4 text-emerald-500" />
-              <span className="text-sm font-semibold tracking-tight text-foreground">Executive Summary</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="text-[10px] font-medium tracking-wider text-muted-foreground/50 uppercase">Current State</span>
-              <span className={cn("text-xs font-semibold px-2 py-0.5 rounded border", env.state === "CRITICAL" || env.state === "ESCALATION" ? "text-red-500 bg-red-500/10 border-red-500/20" : env.state === "WARNING" ? "text-amber-500 bg-amber-500/10 border-amber-500/20" : "text-emerald-500 bg-emerald-500/10 border-emerald-500/20")}>
+              <span className="text-xs font-semibold tracking-tight text-foreground">Executive Summary</span>
+              <span className={cn("ml-auto text-[10px] font-semibold px-2 py-0.5 rounded border", env.state === "CRITICAL" || env.state === "ESCALATION" ? "text-red-500 bg-red-500/10 border-red-500/20" : env.state === "WARNING" ? "text-amber-500 bg-amber-500/10 border-amber-500/20" : "text-emerald-500 bg-emerald-500/10 border-emerald-500/20")}>
                 {executiveSummaryLabel(env.state)}
               </span>
             </div>
@@ -207,6 +179,21 @@ export function DashboardGrid() {
             </p>
           </CardContent>
         </Card>
+      </div>
+
+      {/* ── Explore Platform ──────────────────── */}
+      <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+        {[
+          { label: "Architecture", desc: "Understand how the platform works.", href: "/dashboard/architecture", color: "text-blue-500", bg: "bg-blue-500/5", border: "border-blue-500/15" },
+          { label: "Prototype", desc: "Inspect the hardware implementation.", href: "/dashboard/prototype", color: "text-amber-500", bg: "bg-amber-500/5", border: "border-amber-500/15" },
+          { label: "Applications", desc: "Discover deployment opportunities.", href: "/dashboard/applications", color: "text-violet-500", bg: "bg-violet-500/5", border: "border-violet-500/15" },
+        ].map((link, i) => (
+          <a key={link.label} href={link.href} className={cn("flex items-center gap-2 rounded-lg border px-3 py-2 transition-all duration-200 hover:scale-[1.01] hover:ring-foreground/10", link.bg, link.border)} style={{ animationDelay: `${i * 60}ms` }}>
+            <div className={cn("size-1.5 rounded-full", link.color.replace("text-", "bg-"))} />
+            <div className="flex flex-col min-w-0"><span className={cn("text-[11px] font-semibold tracking-tight", link.color)}>{link.label}</span><span className="text-[9px] text-muted-foreground/50 leading-tight">{link.desc}</span></div>
+            <span className="text-[9px] text-muted-foreground/25 ml-auto shrink-0">→</span>
+          </a>
+        ))}
       </div>
 
       {/* ── Why MYKOSPHARE? ───────────────────── */}
@@ -233,14 +220,6 @@ export function DashboardGrid() {
         </CardContent>
       </Card>
 
-      {/* ── Compact Metrics 2x2 ────────────────── */}
-      <div className="grid grid-cols-2 gap-3">
-        <MetricCard compact icon={Thermometer} label="Temperature" value={tempVal} unit="°C" decimals={1} trend={tel.temperature.trend} delta={tel.temperature.delta} critical={tempCritical} warning={tempWarning} />
-        <MetricCard compact icon={Droplets} label="Humidity" value={humVal} unit="%" decimals={1} trend={tel.humidity.trend} delta={tel.humidity.delta} critical={humCritical} warning={humWarning} />
-        <MetricCard compact icon={Wind} label="CO₂" value={co2Val} unit=" ppm" decimals={0} trend={tel.co2.trend} delta={tel.co2.delta} />
-        <EnergyCard tel={tel} />
-      </div>
-
       {/* ── Chamber + LCD + Alerts ────────────── */}
       <div className="flex flex-col gap-3 xl:flex-row">
         <div className="flex-1 xl:flex-[3] rounded-lg section-tint-chamber"><ChamberPanel /></div>
@@ -263,6 +242,8 @@ export function DashboardGrid() {
           <div className="hidden sm:flex shrink-0 items-center gap-2 rounded-lg bg-emerald-500/5 border border-emerald-500/10 px-3 py-1.5"><span className="text-xs font-semibold text-emerald-500 tabular-nums">~$89</span><span className="text-[9px] text-emerald-500/40 font-medium uppercase tracking-wider">total</span></div>
         </CardContent>
       </Card>
+
+      <QuickStart />
 
       {/* ── Project Info ──────────────────────── */}
       <div className="flex items-center gap-2">
