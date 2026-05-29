@@ -18,6 +18,11 @@ import {
   Terminal,
   PanelLeftClose,
   PanelLeft,
+  GitBranch,
+  Briefcase,
+  PiggyBank,
+  Map,
+  Layers,
 } from "lucide-react"
 import { NavItem } from "./nav-item"
 import { useUptime } from "@/mock/simulator"
@@ -44,6 +49,16 @@ const navGroups: NavGroup[] = [
       { icon: Share2, label: "Topology", href: "/dashboard/topology" },
       { icon: Clock, label: "Timeline", href: "/dashboard/timeline" },
       { icon: Terminal, label: "Command Center", href: "/dashboard/command-center" },
+    ],
+  },
+  {
+    label: "PROJECT",
+    items: [
+      { icon: GitBranch, label: "Architecture", href: "/dashboard/architecture" },
+      { icon: Briefcase, label: "Applications", href: "/dashboard/applications" },
+      { icon: PiggyBank, label: "Cost Advantage", href: "/dashboard/cost-advantage" },
+      { icon: Map, label: "Roadmap", href: "/dashboard/roadmap" },
+      { icon: Layers, label: "Technology Stack", href: "/dashboard/technology-stack" },
     ],
   },
   {

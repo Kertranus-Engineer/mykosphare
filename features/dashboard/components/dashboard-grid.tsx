@@ -20,6 +20,7 @@ import { TelemetryDebugPanel } from "./telemetry-debug"
 import { OperationalNarrative } from "./operational-narrative"
 import { EnergyCard } from "./energy-card"
 import { AutoDemo } from "./auto-demo"
+import { MissionStatus } from "./mission-status"
 export function DashboardGrid() {
   const tel = useDashboardTelemetry()
   const rtTel = useRealTimeTelemetry()
@@ -45,9 +46,9 @@ export function DashboardGrid() {
 
   const statusText = booting
     ? "WAITING FOR TELEMETRY"
-    : rtTel.stale && rtTel.source === "esp32"
+    : rtTel.stale && rtTel.source === "live"
       ? "TELEMETRY STALE"
-      : rtTel.source === "demo"
+      : rtTel.source === "simulated"
         ? "SIMULATION ACTIVE"
         : rtTel.degraded
           ? "TELEMETRY DEGRADED"
@@ -57,7 +58,7 @@ export function DashboardGrid() {
 
   const statusColor = booting
     ? "bg-blue-500 animate-pulse"
-    : rtTel.source === "demo"
+    : rtTel.source === "simulated"
       ? "bg-amber-500 animate-pulse"
       : rtTel.degraded
         ? "bg-amber-500 animate-pulse"
@@ -66,14 +67,14 @@ export function DashboardGrid() {
           : "bg-muted-foreground/30"
 
   return (
-    <div className={`flex flex-col gap-3 p-2 ${initDone ? "dashboard-init" : "dashboard-init-hidden"}`}>
+    <div className={`flex flex-col gap-5 p-2 ${initDone ? "dashboard-init" : "dashboard-init-hidden"}`}>
       <QuickStart />
       <TelemetryDebugPanel />
 
       <div className="flex items-center justify-between">
         <AutoDemo />
         <div className="flex items-center gap-2">
-          {rtTel.source === "demo" && (
+          {rtTel.source === "simulated" && (
             <div className="flex items-center gap-1 rounded-md border border-amber-500/30 bg-amber-500/10 px-2.5 py-1">
               <FlaskConical className="size-3 text-amber-500" />
               <span className="text-[10px] font-medium text-amber-500 tracking-wide">SIMULATION</span>
@@ -103,7 +104,8 @@ export function DashboardGrid() {
           </div>
         </div>
       </div>
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+      <MissionStatus />
+      <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
         <MetricCard
           icon={Thermometer}
           label="Temperature"
@@ -138,7 +140,7 @@ export function DashboardGrid() {
         <EnergyCard tel={tel} />
       </div>
 
-      <div className="flex flex-col gap-4 xl:flex-row">
+      <div className="flex flex-col gap-5 xl:flex-row">
         <div className="flex-1 xl:flex-[3] rounded-lg section-tint-chamber">
           <ChamberPanel />
         </div>

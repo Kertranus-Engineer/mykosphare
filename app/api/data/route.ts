@@ -1,4 +1,4 @@
-import { writeTelemetry, readTelemetry, recordTelemetryError } from "@/lib/server/telemetry-store"
+import { writeTelemetry, getActiveTelemetry, recordTelemetryError } from "@/lib/server/telemetry-store"
 
 // ── POST /api/data — ESP32 sends telemetry ──────
 export async function POST(req: Request) {
@@ -12,7 +12,6 @@ export async function POST(req: Request) {
     const rawTemp = body.temp
     const rawHum = body.hum
 
-    // Validate
     const temp = Number(rawTemp)
     const hum = Number(rawHum)
 
@@ -69,36 +68,39 @@ export async function POST(req: Request) {
 
 // ── GET /api/data — frontend polls this ─────────
 export async function GET() {
-  const snap = readTelemetry()
+  const active = getActiveTelemetry()
 
   console.log(
-    `[API:DATA] GET → temp=${snap.temp} hum=${snap.hum} heartbeat=${snap.heartbeat ? "yes" : "no"} freshness=${snap.freshnessMs}ms stale=${snap.stale} posts=${snap.postCount} errors=${snap.errorCount}`
+    `[API:DATA] GET → source=${active.source} temp=${active.temp} hum=${active.hum} freshness=${active.freshnessMs}ms stale=${active.stale} posts=${active.postCount} errors=${active.errorCount}`
   )
 
   return Response.json({
-    temp: snap.temp,
-    hum: snap.hum,
-    fan: snap.fan,
-    humidifier: snap.humidifier,
-    heartbeat: snap.heartbeat,
-    serverReceivedAt: snap.serverReceivedAt,
-    freshnessMs: snap.freshnessMs,
-    stale: snap.stale,
-    postCount: snap.postCount,
-    errorCount: snap.errorCount,
-    storeCreatedAt: snap.storeCreatedAt,
+    temp: active.temp,
+    hum: active.hum,
+    fan: active.fan,
+    humidifier: active.humidifier,
+    heartbeat: active.heartbeat,
+    serverReceivedAt: active.serverReceivedAt,
+    freshnessMs: active.freshnessMs,
+    stale: active.stale,
+    postCount: active.postCount,
+    errorCount: active.errorCount,
+    storeCreatedAt: active.storeCreatedAt,
+    source: active.source,
+    simulated: active.simulated ?? null,
   })
 }
 
 // ── HEAD /api/data — lightweight liveness check ──
 export async function HEAD() {
-  const snap = readTelemetry()
+  const active = getActiveTelemetry()
   return new Response(null, {
     status: 200,
     headers: {
-      "X-Telemetry-FreshnessMs": String(snap.freshnessMs),
-      "X-Telemetry-Stale": snap.stale ? "1" : "0",
-      "X-Telemetry-Posts": String(snap.postCount),
+      "X-Telemetry-FreshnessMs": String(active.freshnessMs),
+      "X-Telemetry-Stale": active.stale ? "1" : "0",
+      "X-Telemetry-Posts": String(active.postCount),
+      "X-Telemetry-Source": active.source,
     },
   })
 }

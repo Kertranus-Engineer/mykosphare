@@ -8,28 +8,30 @@
  * que el módulo es reimportado (HMR en dev, nueva lambda en prod).
  */
 
+import { generateSimulatedTelemetry } from "./simulator"
+import type { SimulatedTelemetry } from "./simulator"
+
 export interface TelemetryRecord {
   temp: number
   hum: number
   fan: boolean | null
   humidifier: boolean | null
-  /** ISO timestamp del último POST exitoso del ESP32 */
   heartbeat: string | null
-  /** Timestamp enviado por el ESP32 (si lo manda) */
   rawTimestamp: string | null
-  /** ISO timestamp del servidor cuando recibió el último POST */
   serverReceivedAt: string | null
 }
 
+export type TelemetrySource = "live" | "simulated" | "none"
+
+const SIMULATION_TIMEOUT_MS = 15000
+
 export interface TelemetryStore {
-  /** Último snapshot de telemetry recibido */
   latest: TelemetryRecord
-  /** Cuenta de POSTs recibidos desde arranque */
   postCount: number
-  /** Cuenta de errores en POST desde arranque */
   errorCount: number
-  /** Timestamp de creación del store */
   createdAt: string
+  lastRealDataAt: string | null
+  demoData: { temp: number; hum: number; postedAt: string } | null
 }
 
 function createEmptyRecord(): TelemetryRecord {
@@ -50,10 +52,11 @@ function createStore(): TelemetryStore {
     postCount: 0,
     errorCount: 0,
     createdAt: new Date().toISOString(),
+    lastRealDataAt: null,
+    demoData: null,
   }
 }
 
-// GlobalThis key — prefijo único para evitar colisiones
 const STORE_KEY = "__mykosphare_telemetry_v1" as const
 
 interface GlobalWithStore {
@@ -69,7 +72,6 @@ function getStore(): TelemetryStore {
   return g[STORE_KEY]
 }
 
-/** Escribe telemetry recibido del ESP32 en el store */
 export function writeTelemetry(data: {
   temp: number
   hum: number
@@ -90,6 +92,7 @@ export function writeTelemetry(data: {
     serverReceivedAt: now,
   }
   store.postCount++
+  store.lastRealDataAt = now
 
   console.log(
     `[STORE] WRITE → temp=${store.latest.temp} hum=${store.latest.hum} ` +
@@ -101,7 +104,16 @@ export function writeTelemetry(data: {
   return store.latest
 }
 
-/** Registra un intento fallido de POST */
+export function writeDemoTelemetry(data: { temp: number; hum: number }): void {
+  const store = getStore()
+  store.demoData = { temp: data.temp, hum: data.hum, postedAt: new Date().toISOString() }
+}
+
+export function clearDemoTelemetry(): void {
+  const store = getStore()
+  store.demoData = null
+}
+
 export function recordTelemetryError(): void {
   const store = getStore()
   store.errorCount++
@@ -124,7 +136,6 @@ export interface TelemetrySnapshot {
 
 const STALE_MS = 15000
 
-/** Lee el snapshot actual para GET /api/data */
 export function readTelemetry(): TelemetrySnapshot {
   const store = getStore()
   const { latest } = store
@@ -160,13 +171,85 @@ export function readTelemetry(): TelemetrySnapshot {
   }
 }
 
-/** Devuelve si el store tiene datos reales (ESP32 ha hecho POST) */
 export function hasRealData(): boolean {
   const store = getStore()
   return store.latest.heartbeat !== null && (store.latest.temp > 0 || store.latest.hum > 0)
 }
 
-/** Para debug: vuelca todo el estado del store */
+export function getTelemetrySource(): TelemetrySource {
+  const store = getStore()
+  if (store.lastRealDataAt) {
+    const elapsed = Date.now() - new Date(store.lastRealDataAt).getTime()
+    if (elapsed < SIMULATION_TIMEOUT_MS) return "live"
+  }
+  return "none"
+}
+
+export interface ActiveTelemetry {
+  temp: number
+  hum: number
+  fan: boolean | null
+  humidifier: boolean | null
+  heartbeat: string | null
+  serverReceivedAt: string | null
+  freshnessMs: number
+  stale: boolean
+  postCount: number
+  errorCount: number
+  storeCreatedAt: string
+  source: TelemetrySource
+  simulated?: SimulatedTelemetry
+}
+
+export function getActiveTelemetry(): ActiveTelemetry {
+  const source = getTelemetrySource()
+
+  if (source === "live") {
+    const snap = readTelemetry()
+    return { ...snap, source }
+  }
+
+  const store = getStore()
+
+  if (store.demoData) {
+    const demoAge = Date.now() - new Date(store.demoData.postedAt).getTime()
+    if (demoAge < SIMULATION_TIMEOUT_MS) {
+      return {
+        temp: store.demoData.temp,
+        hum: store.demoData.hum,
+        fan: null,
+        humidifier: null,
+        heartbeat: null,
+        serverReceivedAt: store.demoData.postedAt,
+        freshnessMs: demoAge,
+        stale: demoAge > STALE_MS,
+        postCount: store.postCount,
+        errorCount: store.errorCount,
+        storeCreatedAt: store.createdAt,
+        source: "simulated",
+      }
+    }
+  }
+
+  const sim = generateSimulatedTelemetry()
+
+  return {
+    temp: sim.temp,
+    hum: sim.hum,
+    fan: sim.fan,
+    humidifier: sim.humidifier,
+    heartbeat: null,
+    serverReceivedAt: new Date().toISOString(),
+    freshnessMs: 0,
+    stale: false,
+    postCount: store.postCount,
+    errorCount: store.errorCount,
+    storeCreatedAt: store.createdAt,
+    source: "simulated",
+    simulated: sim,
+  }
+}
+
 export function debugDump(): TelemetryStore {
   return getStore()
 }

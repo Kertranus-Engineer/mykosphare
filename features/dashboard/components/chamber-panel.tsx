@@ -244,7 +244,7 @@ export function ChamberPanel() {
             </span>
             <span className="text-[9px] text-muted-foreground/20">|</span>
             <span className="text-[9px] tabular-nums text-muted-foreground/50">
-              {rtTel.online ? "ESP32 ONLINE" : "ESP32 OFFLINE"}
+              {rtTel.source === "live" ? "ESP32 ONLINE" : rtTel.source === "simulated" ? "SIMULATION" : "ESP32 OFFLINE"}
             </span>
           </div>
         </div>
@@ -278,9 +278,9 @@ export function ChamberPanel() {
           <span className="text-muted-foreground/30">
             {airflowActive ? "FAE ACTIVE" : "FAE STANDBY"}
           </span>
-          <Radio className={cn("size-3", rtTel.online ? "text-emerald-500/40" : "text-muted-foreground/30")} />
+          <Radio className={cn("size-3", rtTel.source === "live" ? "text-emerald-500/40" : rtTel.source === "simulated" ? "text-amber-500/40" : "text-muted-foreground/30")} />
           <span className="text-muted-foreground/30">
-            {rtTel.online ? "ESP32 ONLINE" : "ESP32 OFFLINE"}
+            {rtTel.source === "live" ? "ESP32 ONLINE" : rtTel.source === "simulated" ? "SIMULATION" : "ESP32 OFFLINE"}
           </span>
         </div>
 

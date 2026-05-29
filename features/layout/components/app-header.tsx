@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useMemo, useState } from "react"
-import { Bell, Circle, RefreshCw, Activity, Thermometer, Droplets, Wind, Sparkles } from "lucide-react"
+import { Bell, Circle, RefreshCw, Activity, Thermometer, Droplets, Wind, Sparkles, Radio, FlaskConical } from "lucide-react"
 
 import { useRealEnvironment } from "@/lib/useEnvironment"
 import { useRealTimeTelemetry, useDashboardTelemetry } from "@/lib/useTelemetry"
@@ -74,6 +74,7 @@ export function AppHeader() {
 
   const insight = useMemo(() => {
     if (!rtTel.online) return "Awaiting sensor synchronization"
+    if (rtTel.source === "simulated") return "Simulated environmental model active"
     if (rtTel.degraded) return "Stream integrity degraded"
     if (env.state === "CRITICAL") return "Thermal escalation risk elevated — intervention recommended"
     if (env.state === "ESCALATION") return "Environmental instability increasing"
@@ -81,7 +82,7 @@ export function AppHeader() {
     if (env.state === "RECOVERY") return "Environmental parameters stabilizing toward equilibrium"
     if (env.state === "PRE_WARNING") return "Minor parameter drift — probability analysis active"
     return AI_INSIGHTS[insightIdx % AI_INSIGHTS.length]
-  }, [env.state, rtTel.online, rtTel.degraded, insightIdx])
+  }, [env.state, rtTel.online, rtTel.source, rtTel.degraded, insightIdx])
 
   useEffect(() => {
     const id = setTimeout(() => setTime(clientTime()), 0)
@@ -105,26 +106,44 @@ export function AppHeader() {
         <div className="flex items-center gap-2">
           <Circle className={cn(
             "size-2.5 fill-emerald-500 text-emerald-500 transition-all duration-500",
+            rtTel.source === "simulated" && "fill-amber-500 text-amber-500",
             env.state === "WARNING" && "fill-amber-500 text-amber-500 animate-pulse",
             env.state === "CRITICAL" && "fill-red-500 text-red-500 animate-pulse",
             env.state === "RECOVERY" && "fill-teal-500 text-teal-500",
-            env.state === "STABLE" && hasData && "animate-pulse"
+            env.state === "STABLE" && hasData && rtTel.source === "live" && "animate-pulse"
           )} />
           <span className={cn(
             "text-xs font-medium transition-all duration-500",
             "shadow-[0_0_8px_-2px]",
-            env.state === "CRITICAL" ? "text-red-500 shadow-red-500/15" : env.state === "WARNING" ? "text-amber-500 shadow-amber-500/10" : env.state === "RECOVERY" ? "text-teal-500 shadow-teal-500/10" : rtTel.online ? "text-emerald-500 shadow-emerald-500/10" : "text-muted-foreground/40 shadow-none"
+            env.state === "CRITICAL" ? "text-red-500 shadow-red-500/15" :
+            env.state === "WARNING" ? "text-amber-500 shadow-amber-500/10" :
+            env.state === "RECOVERY" ? "text-teal-500 shadow-teal-500/10" :
+            rtTel.source === "live" ? "text-emerald-500 shadow-emerald-500/10" :
+            rtTel.source === "simulated" ? "text-amber-500 shadow-amber-500/10" :
+            "text-muted-foreground/40 shadow-none"
           )}>
-            {rtTel.online ? "ESP32 ONLINE" : "DEVICE OFFLINE"}
+            {rtTel.source === "live" ? "ESP32 ONLINE" :
+             rtTel.source === "simulated" ? "ESP32 ONLINE" :
+             "DEVICE OFFLINE"}
           </span>
-          {rtTel.source === "demo" && (
-            <span className="text-[9px] font-medium text-amber-500/50 tracking-wider border border-amber-500/20 rounded px-1.5 py-0.5 ml-1">
-              SIMULATION
+
+          {/* Telemetry Source Badge */}
+          {rtTel.source === "live" && (
+            <span
+              title="Data received from physical ESP32 hardware."
+              className="text-[9px] font-semibold text-emerald-500 tracking-wider border border-emerald-500/30 bg-emerald-500/10 rounded px-2 py-0.5 ml-1 cursor-help transition-all duration-300 shadow-[0_0_8px_-2px] shadow-emerald-500/15"
+            >
+              <Radio className="size-2.5 inline-block mr-1 -mt-px" />
+              LIVE TELEMETRY
             </span>
           )}
-          {rtTel.source === "esp32" && (
-            <span className="text-[9px] font-medium text-emerald-500/40 tracking-wider border border-emerald-500/20 rounded px-1.5 py-0.5 ml-1">
-              LIVE
+          {rtTel.source === "simulated" && (
+            <span
+              title="No ESP32 detected. Showing simulated environmental data."
+              className="text-[9px] font-semibold text-amber-500 tracking-wider border border-amber-500/30 bg-amber-500/10 rounded px-2 py-0.5 ml-1 cursor-help transition-all duration-300 shadow-[0_0_8px_-2px] shadow-amber-500/15"
+            >
+              <FlaskConical className="size-2.5 inline-block mr-1 -mt-px" />
+              SIMULATION MODE
             </span>
           )}
         </div>

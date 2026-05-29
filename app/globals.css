@@ -597,6 +597,10 @@ html[data-ops-state="RECOVERY"] .main-vignette::before {
 .dashboard-init > *:nth-child(5) { animation: dashboard-init 0.4s ease-out 0.45s both; }
 .dashboard-init > *:nth-child(6) { animation: dashboard-init 0.4s ease-out 0.50s both; }
 .dashboard-init > *:nth-child(7) { animation: dashboard-init 0.4s ease-out 0.55s both; }
+.dashboard-init > *:nth-child(8) { animation: dashboard-init 0.4s ease-out 0.60s both; }
+.dashboard-init > *:nth-child(9) { animation: dashboard-init 0.4s ease-out 0.65s both; }
+.dashboard-init > *:nth-child(10) { animation: dashboard-init 0.4s ease-out 0.70s both; }
+.dashboard-init > *:nth-child(11) { animation: dashboard-init 0.4s ease-out 0.75s both; }
 
 /* Prevent flash of unstyled content during init */
 .dashboard-init-hidden {

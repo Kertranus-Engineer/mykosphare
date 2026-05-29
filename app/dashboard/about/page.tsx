@@ -1,6 +1,6 @@
 "use client"
 
-import { Cpu, Eye, GitBranch, Layers, Radar, Sparkles } from "lucide-react"
+import { Cpu, Eye, GitBranch, Layers, Radar, Sparkles, Sprout, ShieldCheck } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
 import { useLocale } from "@/lib/locales/locale-context"
@@ -63,6 +63,17 @@ export default function AboutPage() {
           {t("about.subtitle")}
         </p>
       </div>
+
+      <Card className="transition-all duration-200 hover:ring-foreground/20 hover:shadow-[0_0_16px_-6px] hover:shadow-foreground/10 border-emerald-500/10">
+        <CardContent className="flex items-start gap-4 py-5">
+          <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-emerald-500/10 border border-emerald-500/20">
+            <ShieldCheck className="size-5 text-emerald-500" />
+          </div>
+          <p className="text-sm leading-relaxed text-muted-foreground/80">
+            MYKOSPHARE is an environmental intelligence platform designed to collect, analyze and visualize environmental conditions through affordable hardware and modern web technologies. The project focuses on accessibility, scalability and educational value while maintaining a professional operational interface.
+          </p>
+        </CardContent>
+      </Card>
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 xl:grid-cols-3">
         {SECTIONS.map((section) => (

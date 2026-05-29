@@ -16,7 +16,7 @@ export interface RealTimeTelemetry {
   serverReceivedAt: string | null
   freshnessMs: number
   stale: boolean
-  source: "esp32" | "demo" | "none"
+  source: "live" | "simulated" | "none"
 }
 
 interface HistoryPoint {
@@ -48,11 +48,13 @@ let history: HistoryPoint[] = []
 let lastFetchTime: number | null = null
 let lastSuccessfulFetch: number = 0
 const listeners = new Set<() => void>()
-let demoActive = false
 let retryCount = 0
 let pollInterval: ReturnType<typeof setInterval> | null = null
 let watchdogInterval: ReturnType<typeof setInterval> | null = null
 let abortController: AbortController | null = null
+
+// Track previous source for transition detection
+let prevSource: RealTimeTelemetry["source"] = "none"
 
 function notify() {
   listeners.forEach((l) => l())
@@ -64,18 +66,22 @@ async function fetchTelemetry() {
   const signal = abortController.signal
 
   try {
-    const url = demoActive ? "/api/demo" : "/api/data"
-    const res = await fetch(url, { signal })
+    const res = await fetch("/api/data", { signal })
 
     if (res.ok) {
       const data = await res.json()
+
+      const sourceFromServer: RealTimeTelemetry["source"] =
+        data.source === "live" ? "live" :
+        data.source === "simulated" ? "simulated" :
+        "none"
 
       const hasTemp = typeof data.temp === "number" && isFinite(data.temp)
       const hasHum = typeof data.hum === "number" && isFinite(data.hum)
       const hasValidData = hasTemp && hasHum && (data.temp > 0 || data.hum > 0)
       const hasHeartbeat = typeof data.heartbeat === "string" && data.heartbeat.length > 0
 
-      if (typeof data.temp === "number" && typeof data.hum === "number") {
+      if (hasTemp && hasHum) {
         const wasOffline = !globalState.online
         const now = new Date()
         const time = now.toLocaleTimeString("en-GB", {
@@ -84,10 +90,7 @@ async function fetchTelemetry() {
           second: "2-digit",
         })
 
-        // Determine source: ESP32 if heartbeat exists OR we have valid sensor data
-        const isEsp32 = hasHeartbeat || (!demoActive && hasValidData)
-        // Determine online: ESP32 source AND (has heartbeat OR valid data with freshness)
-        const isOnline = demoActive || (isEsp32 && (hasHeartbeat || hasValidData))
+        const isOnline = sourceFromServer === "live" || sourceFromServer === "simulated"
 
         const newState: RealTimeTelemetry = {
           temp: Math.round(data.temp * 10) / 10,
@@ -100,11 +103,22 @@ async function fetchTelemetry() {
           heartbeat: data.heartbeat ?? null,
           serverReceivedAt: data.serverReceivedAt ?? null,
           freshnessMs: typeof data.freshnessMs === "number" ? data.freshnessMs : 0,
-          stale: data.stale === true,
-          source: demoActive ? "demo" : isEsp32 ? "esp32" : "none",
+          stale: data.stale === true && sourceFromServer === "live",
+          source: sourceFromServer,
         }
 
-        // [TEL] Instrumentacion — estado completo en cada poll exitoso
+        // Source transition events
+        if (sourceFromServer !== prevSource) {
+          if (prevSource === "live" && sourceFromServer === "simulated") {
+            emitOpEvent("telemetry", "Telemetry source lost. Switched to simulation mode.", "warning")
+            emitOpEvent("system", "ESP32 telemetry lost — simulation active", "warning")
+          }
+          if ((prevSource === "simulated" || prevSource === "none") && sourceFromServer === "live") {
+            emitOpEvent("telemetry", "ESP32 telemetry restored. Live data active.", "success")
+            emitOpEvent("system", "Live telemetry reconnected", "success")
+          }
+          prevSource = sourceFromServer
+        }
 
         globalState = newState
 
@@ -117,7 +131,7 @@ async function fetchTelemetry() {
           emitOpEvent("system", "Operational state restored", "success")
         }
 
-        if (!demoActive && hasValidData) {
+        if (hasValidData) {
           history = [
             { time, temperature: globalState.temp, humidity: globalState.hum },
             ...history,
@@ -186,24 +200,15 @@ function stopWatchdog() {
   }
 }
 
-export function setDemoActive(active: boolean) {
-  demoActive = active
-  if (!active && lastSuccessfulFetch === 0) {
-    globalState = { ...globalState, source: "none", stale: false }
-  }
-  if (active) {
-    fetchTelemetry()
-  } else {
-    lastFetchTime = null
-    lastSuccessfulFetch = Date.now()
-    globalState = { ...globalState, online: false, stale: false, source: "none" }
-    notify()
-    fetchTelemetry()
-  }
+export function setDemoActive(_active: boolean) {
+  // Demo mode is now handled server-side.
+  // AutoDemo posts to /api/demo which writes to server store.
+  // The client always polls /api/data which serves real/demo/simulated data.
+  // This function is kept for backward compatibility.
 }
 
 export function getDemoActive(): boolean {
-  return demoActive
+  return false
 }
 
 export function useRealTimeTelemetry(): RealTimeTelemetry {
@@ -278,7 +283,6 @@ export function useDashboardTelemetry(): DashboardTelemetry {
     const tempDelta = tel.temp - prev.temp
     const humDelta = tel.hum - prev.hum
 
-    // Only compute derived metrics when we have real data
     const co2 = hasData
       ? Math.round(400 + Math.max(0, (tel.temp - 22) * 15) + Math.max(0, (tel.hum - 55) * 2))
       : 0

@@ -18,6 +18,11 @@ export const en: LocaleDict = {
   "sidebar.system-logs": "System Logs",
   "sidebar.settings": "Settings",
   "sidebar.about": "About",
+  "sidebar.architecture": "Architecture",
+  "sidebar.applications": "Applications",
+  "sidebar.cost-advantage": "Cost Advantage",
+  "sidebar.roadmap": "Roadmap",
+  "sidebar.technology-stack": "Technology Stack",
 
   "status.online": "ONLINE",
   "status.scenario": "SCENARIO",

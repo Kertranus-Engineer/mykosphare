@@ -6,6 +6,7 @@ import {
   AlertTriangle,
   CloudOff,
   Droplets,
+  FlaskConical,
   RefreshCw,
   ShieldCheck,
   Thermometer,
@@ -222,9 +223,18 @@ function getChamberIndicators(
   ]
 }
 
-function getAiSummary(tel: DashboardTelemetry, state: EnvState, online: boolean): string {
+function getAiSummary(tel: DashboardTelemetry, state: EnvState, online: boolean, simulated: boolean): string {
   if (!online) {
     return "Telemetry stream interrupted. Sensor communication lost. Attempting reconnection."
+  }
+
+  if (simulated) {
+    const temp = tel.temperature.value
+    const hum = tel.humidity.value
+    if (temp <= 0 && hum <= 0) {
+      return "Initializing simulated environmental model. Generating baseline telemetry."
+    }
+    return "Simulated environmental model active. Values represent estimated facility conditions based on statistical models."
   }
 
   const temp = tel.temperature.value
@@ -275,7 +285,8 @@ function getAiSummary(tel: DashboardTelemetry, state: EnvState, online: boolean)
 function getContextAlerts(
   tel: DashboardTelemetry,
   state: EnvState,
-  online: boolean
+  online: boolean,
+  simulated: boolean
 ): ContextAlert[] {
   const alerts: ContextAlert[] = []
   const temp = tel.temperature.value
@@ -291,6 +302,17 @@ function getContextAlerts(
       glow: "shadow-[0_0_10px_-2px] shadow-red-500/20",
     })
     return alerts
+  }
+
+  if (simulated) {
+    alerts.push({
+      icon: FlaskConical,
+      label: "Simulation Active",
+      description: "No ESP32 detected. Showing simulated environmental data.",
+      color: "text-amber-500",
+      bg: "bg-amber-500/10",
+      glow: "shadow-[0_0_10px_-2px] shadow-amber-500/20",
+    })
   }
 
   if (temp > TEMP_CRITICAL) {
@@ -353,7 +375,7 @@ function getContextAlerts(
     })
   }
 
-  if (alerts.length === 0 && temp > 0) {
+  if (alerts.length <= (simulated ? 1 : 0) && temp > 0) {
     alerts.push({
       icon: Wrench,
       label: "Routine Check",
@@ -373,6 +395,7 @@ export function useRealEnvironment(): EnvironmentState {
 
   return useMemo(() => {
     const online = rtTel.online
+    const simulated = rtTel.source === "simulated"
     const hasData = tel.temperature.value > 0
     const state = computeState(tel, online)
     const displayState = !online && !hasData ? "STABLE" : state
@@ -381,15 +404,15 @@ export function useRealEnvironment(): EnvironmentState {
     return {
       state: displayState,
       label: online ? displayMeta.label : hasData ? state : "OFFLINE",
-      color: online ? displayMeta.color : "text-muted-foreground",
-      ringColor: online ? displayMeta.ringColor : "ring-muted-foreground/10",
-      headTitle: online ? displayMeta.headTitle : "Telemetry Lost",
-      headSub: online ? displayMeta.headSub : "No data received from ESP32",
-      icon: online ? displayMeta.icon : CloudOff,
-      iconColor: online ? displayMeta.iconColor : "text-muted-foreground",
+      color: online ? (simulated ? "text-amber-500" : displayMeta.color) : "text-muted-foreground",
+      ringColor: online ? (simulated ? "ring-amber-500/20" : displayMeta.ringColor) : "ring-muted-foreground/10",
+      headTitle: online ? (simulated ? "Simulation Active" : displayMeta.headTitle) : "Telemetry Lost",
+      headSub: online ? (simulated ? "Estimated environmental parameters" : displayMeta.headSub) : "No data received from ESP32",
+      icon: online ? (simulated ? FlaskConical : displayMeta.icon) : CloudOff,
+      iconColor: online ? (simulated ? "text-amber-500" : displayMeta.iconColor) : "text-muted-foreground",
       chamberIndicators: getChamberIndicators(tel, displayState),
-      aiSummary: getAiSummary(tel, state, online),
-      alerts: getContextAlerts(tel, state, online),
+      aiSummary: getAiSummary(tel, state, online, simulated),
+      alerts: getContextAlerts(tel, state, online, simulated),
     }
-  }, [tel, rtTel.online])
+  }, [tel, rtTel.online, rtTel.source])
 }

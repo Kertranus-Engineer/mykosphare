@@ -69,28 +69,29 @@ export function LcdStatus() {
   const fanOn = actuators.find((a) => a.id === "fan")?.state === "on"
   const humOn = actuators.find((a) => a.id === "humidifier")?.state === "on"
   const isOffline = !rtTel.online
+  const isSimulated = rtTel.source === "simulated"
 
   return (
     <Card className={cn(
       "border transition-all duration-200",
       isOffline
         ? "border-amber-500/20 bg-amber-500/[0.02]"
-        : "border-border/30 bg-muted/20"
+        : isSimulated ? "border-amber-500/10 bg-amber-500/[0.01]" : "border-border/30 bg-muted/20"
     )}>
       <CardHeader className="pb-1">
         <CardTitle className="flex items-center gap-2 text-xs">
           <Monitor className={cn(
             "size-3",
-            isOffline ? "text-amber-500/60 animate-pulse" : "text-muted-foreground"
+            isOffline ? "text-amber-500/60 animate-pulse" : isSimulated ? "text-amber-500/50" : "text-muted-foreground"
           )} />
           ESP32 Display
           <span className={cn(
             "ml-auto text-[9px] font-medium transition-all duration-300",
             isOffline
               ? "text-amber-500"
-              : rtTel.online ? "text-emerald-500" : "text-muted-foreground/30"
+              : isSimulated ? "text-amber-500" : rtTel.online ? "text-emerald-500" : "text-muted-foreground/30"
           )}>
-            {isOffline ? "RECONNECTING" : rtTel.online ? "LIVE" : "OFFLINE"}
+            {isOffline ? "RECONNECTING" : isSimulated ? "SIMULATION" : rtTel.online ? "LIVE" : "OFFLINE"}
           </span>
         </CardTitle>
       </CardHeader>
@@ -99,9 +100,9 @@ export function LcdStatus() {
           "rounded-md border bg-background/40 px-1 py-2 font-mono transition-all duration-300",
           isOffline
             ? "border-amber-500/30 animate-[pulse_2s_ease-in-out_infinite]"
-            : "border-border/40"
+            : isSimulated ? "border-amber-500/20" : "border-border/40"
         )}>
-          {lcdLine("STATUS", rtTel.online ? failsafeState === "failsafe_active" ? "FAILSAFE" : env.label : "OFFLINE", true, failsafeState === "failsafe_active" ? "text-red-500" : stateColor, rtTel.online && !failsafeState)}
+          {lcdLine("STATUS", rtTel.online ? failsafeState === "failsafe_active" ? "FAILSAFE" : isSimulated ? "SIMULATION" : env.label : "OFFLINE", true, failsafeState === "failsafe_active" ? "text-red-500" : isSimulated ? "text-amber-500" : stateColor, rtTel.online && !failsafeState)}
           {lcdLine("TEMP", temp > 0 ? `${temp}\u00b0C` : "--", temp > 0, stateColor)}
           {lcdLine("HUM", hum > 0 ? `${hum}%` : "--", hum > 0, hum < 50 ? "text-amber-500" : "text-emerald-500")}
           {lcdLine("FAN", fanOn ? "ACTIVE" : "OFF", fanOn, fanOn ? "text-cyan-400" : "text-muted-foreground/30")}

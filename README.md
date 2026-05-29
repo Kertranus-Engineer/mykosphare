@@ -13,91 +13,112 @@
 
 ---
 
-## Features
+## Project Description
 
-### 🌿 Environmental Chamber
-Real-time atmospheric visualization with reactive glow, heat distortion for high temperature, fog diffusion for humidity, scanline diagnostics, and volumetric breathing core. Reacts to live ESP32 telemetry or simulated data.
+MYKOSPHARE is an environmental intelligence platform designed to collect, analyze and visualize environmental conditions through affordable hardware and modern web technologies. The project focuses on accessibility, scalability and educational value while maintaining a professional operational interface.
 
-### 🧠 AI Operational Intelligence
-Confidence scoring, phase detection, predictive warnings, facility health tracking, and rotating operational narrative. The AI module analyzes environmental trends and suggests autonomous interventions.
+Built around ESP32 microcontrollers and open-source technologies, MYKOSPHARE provides real-time monitoring, AI-driven analytics, and automated alerting for environmental control applications.
 
-### 🕸️ Live Topology Engine
-Canvas-based network visualization with 110+ animated particles, packet flow between nodes, mycelium core with breathing rings, node status halos, and mouse parallax. Renders real network topology from the unified operational state.
+---
 
-### 📊 Real-Time Telemetry Pipeline
+## Key Features
+
+### Environmental Monitoring
+Real-time temperature, humidity, and derived CO2 metrics with animated KPI cards, trend indicators, and threshold-based alerts.
+
+### AI Operational Intelligence
+Confidence scoring, health tracking, predictive warnings, and rotating operational narrative. The AI module analyzes environmental trends and suggests autonomous interventions.
+
+### Live Topology Engine
+Canvas-based network visualization with animated particles, packet flow between nodes, mycelium core with breathing rings, node status halos, and mouse parallax.
+
+### Real-Time Telemetry Pipeline
 ```
-ESP32 → POST /api/data → telemetry store (globalThis) → GET /api/data → useTelemetry() → React hooks → Dashboard
+ESP32 -> POST /api/data -> telemetry store (globalThis) -> GET /api/data -> useTelemetry() -> React hooks -> Dashboard
 ```
 Fully decoupled from build. Survives HMR and module resets. Fallback simulation layer when hardware is unavailable.
 
-### 🎮 Auto-Demo System
-16-step timeline orchestrated across 6 operational phases (NOMINAL → DRIFT → WARNING → CRITICAL → COMPENSATING → STABILIZED). One click runs the full demo cycle. Manual triggers for WARNING, CRITICAL, and RECOVERY states. Press `P` for presentation overlay.
+### Auto-Demo System
+16-step timeline orchestrated across 6 operational phases. One click runs the full demo cycle. Manual triggers for WARNING, CRITICAL, and RECOVERY states.
 
-### 🎨 Operational Profiles (Themes)
-Three distinct operational modes — not just color swaps:
-- **OBSIDIAN** — cinematic dark, cyan accents, deep navy shadows
-- **PURE BLACK** — OLED graphite, emerald glow, cinematic demo mode
-- **LAB LIGHT** — blue-gray scientific, steel cyan accents, laboratory aesthetic
+### Operational Profiles (Themes)
+Three distinct operational modes: Obsidian (dark cinematic), Pure Black (OLED graphite), and Lab Light (scientific laboratory).
 
-### 📐 Collapsible Sidebar
-Icon-only mini mode (72px) with smooth 220ms transition. CSS variable-driven layout recalculation. Resize events dispatched for chart/topology recalculation.
-
-### 📱 Presentation Mode
-Toggle for projector-friendly display: stronger KPI contrast, reduced atmospheric noise, hidden scanlines, slower animations.
+### Cost Advantage
+ESP32-based affordable hardware eliminates proprietary licensing fees and vendor lock-in. Potentially reduces deployment costs compared to traditional proprietary solutions.
 
 ---
 
-## Architecture
+## Architecture Diagram
 
 ```
-┌──────────────────────────────────────────────────┐
-│                    Frontend                       │
-│  Next.js 16 · React 19 · Tailwind v4 · shadcn/ui │
-│  TypeScript · Recharts · framer-motion            │
-├──────────────────────────────────────────────────┤
-│  Features                                         │
-│  ├── Dashboard (Overview, Chamber, KPIs, AI)      │
-│  ├── Topology (Canvas engine, network graph)      │
-│  ├── Intelligence (AI analysis, health scoring)   │
-│  ├── Timeline (Temporal patterns, forecasting)    │
-│  ├── Command Center (Operational terminal)        │
-│  ├── Configuration (System settings)              │
-│  └── Debug Network (LAN diagnostics)              │
-├──────────────────────────────────────────────────┤
-│  Telemetry Pipeline                               │
-│  globalThis.__mykosphare_telemetry_v1             │
-│  ├── writeTelemetry(temp, hum, fan, humidifier)   │
-│  ├── readTelemetry() → {freshnessMs, stale, ...}  │
-│  └── debugDump() → full store snapshot            │
-├──────────────────────────────────────────────────┤
-│  API Routes                                       │
-│  POST /api/data    ← ESP32 telemetry              │
-│  GET  /api/data    → dashboard polling            │
-│  POST /api/demo    ← simulation control           │
-│  GET  /api/debug/telemetry → diagnostics          │
-│  GET  /api/network-info  → LAN detection          │
-│  POST /api/raw     ← raw packet capture           │
-├──────────────────────────────────────────────────┤
-│  Demo Orchestrator                                │
-│  6-phase state machine · 48s loop                 │
-│  Manual triggers: WARNING / CRITICAL / RECOVERY   │
-└──────────────────────────────────────────────────┘
+Environmental Sensors (DHT22)
+        |
+        v
+ESP32 Controller (WiFi)
+        |
+        v
+Wireless Communication (HTTP)
+        |
+        v
+MYKOSPHARE Cloud / Ingestion Layer
+        |
+        v
+Analytics Engine (AI Analysis)
+        |
+        v
+Alert System (Threshold Monitoring)
+        |
+        v
+Operator Dashboard (Next.js)
 ```
+
+Data flows from physical sensors through the ESP32 microcontroller, transmitted over WiFi to the cloud ingestion layer. The analytics engine processes incoming telemetry and generates alerts when parameters exceed defined limits.
 
 ---
 
-## Tech Stack
+## Technology Stack
 
 | Layer | Technology |
 |-------|-----------|
-| Framework | Next.js 16 (App Router) |
-| UI | React 19, Tailwind CSS v4, shadcn/ui, Radix |
-| Charts | Recharts |
-| Animations | framer-motion, CSS keyframes, Canvas 2D |
-| Icons | Lucide React |
-| Networking | Node.js `os`, `http`, globalThis stores |
-| Fonts | Geist Sans, Geist Mono |
-| ESP32 | Arduino, WiFi, HTTPClient, DHT22, LCD I2C |
+| **Frontend** | Next.js 16, React 19, TypeScript, Tailwind CSS v4, shadcn/ui |
+| **Backend** | Node.js, Next.js API Routes, Supabase (optional) |
+| **Hardware** | ESP32, DHT22, LCD I2C, Arduino Framework |
+| **Cloud** | Vercel, Future Cloud Integration |
+| **Charts** | Recharts |
+| **Animations** | Framer Motion, CSS keyframes, Canvas 2D |
+| **Icons** | Lucide React |
+| **Fonts** | Geist Sans, Geist Mono |
+
+---
+
+## Applications
+
+MYKOSPHARE adapts to diverse environments and industries:
+
+| Sector | Use Case |
+|--------|----------|
+| **Education** | Learn sensor integration, IoT networking and environmental analysis |
+| **Environmental Monitoring** | Track temperature, humidity and air quality |
+| **Agriculture** | Precision monitoring of growing conditions |
+| **Research Laboratories** | Maintain precise environmental conditions |
+| **Industrial Facilities** | Monitor production environments and compliance |
+| **Smart Greenhouses** | Automated climate control with remote access |
+| **Mushroom Cultivation** | Specialized monitoring for growing chambers |
+
+---
+
+## Future Roadmap
+
+| Phase | Status |
+|-------|--------|
+| Phase 1 — Prototype Development | Completed |
+| Phase 2 — Environmental Monitoring | Completed |
+| Phase 3 — Multi-node Network | In Progress |
+| Phase 4 — Cloud Integration | Planned |
+| Phase 5 — AI Assisted Analytics | Planned |
+| Phase 6 — Educational Deployment | Planned |
+| Phase 7 — Commercial Deployment | Planned |
 
 ---
 
@@ -112,9 +133,6 @@ npm run dev
 
 # Open dashboard
 open http://localhost:3000
-
-# Network diagnostics (from any device on LAN)
-open http://localhost:3000/debug-network
 ```
 
 ### Environment
@@ -164,15 +182,21 @@ Recommended presentation flow:
 
 | Route | Description |
 |-------|-------------|
-| `/dashboard` | Overview — chamber, KPIs, AI analysis, quick start |
-| `/dashboard/topology` | Live network graph with packet flow and core |
+| `/dashboard` | Overview — chamber, KPIs, AI analysis, mission status |
+| `/dashboard/architecture` | System architecture flow and data pipeline |
+| `/dashboard/applications` | Use cases across education, agriculture, research |
+| `/dashboard/cost-advantage` | Cost comparison vs traditional solutions |
+| `/dashboard/roadmap` | Development timeline and future milestones |
+| `/dashboard/technology-stack` | Technologies used across the full stack |
+| `/dashboard/environment` | Environmental chamber visualization |
+| `/dashboard/analytics` | Charts, metrics, and environmental history |
+| `/dashboard/topology` | Live network graph with packet flow |
 | `/dashboard/intelligence` | AI operational intelligence and health scoring |
 | `/dashboard/timeline` | Temporal patterns, forecasting, drift analysis |
 | `/dashboard/command-center` | Operational terminal and command interface |
 | `/dashboard/configuration` | System settings and configuration |
 | `/dashboard/alerts` | Alert management and incident tracking |
-| `/dashboard/analytics` | Charts, metrics, and environmental history |
-| `/debug-network` | LAN diagnostics, packet capture, ping monitor |
+| `/dashboard/about` | Project information and attribution |
 
 ---
 
