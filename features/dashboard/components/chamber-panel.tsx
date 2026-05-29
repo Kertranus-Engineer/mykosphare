@@ -76,7 +76,7 @@ export function ChamberPanel() {
       </CardHeader>
       <CardContent className="flex flex-col gap-3">
         <div className={cn(
-          "relative flex aspect-[2/1] items-center justify-center overflow-hidden rounded-lg transition-all duration-700 chamber-theme",
+          "relative flex aspect-[2.3/1] items-center justify-center overflow-hidden rounded-lg transition-all duration-700 chamber-theme",
           chamberGlow
         )}>
           {/* ── Vignette edges ─────────────────── */}

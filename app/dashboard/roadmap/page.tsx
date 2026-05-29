@@ -111,7 +111,7 @@ const STATUS_LABELS: Record<Phase["status"], string> = {
 
 export default function RoadmapPage() {
   return (
-    <div className="flex flex-col gap-6 p-6">
+    <div className="flex flex-col gap-4 p-6">
       <div className="flex flex-col gap-2">
         <div className="flex items-center gap-2">
           <div className="size-2 rounded-full bg-emerald-500 shadow-[0_0_8px_2px] shadow-emerald-500/40" />

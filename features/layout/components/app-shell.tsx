@@ -58,7 +58,7 @@ function ShellContent({ children }: { children: React.ReactNode }) {
           {children}
         </main>
       </div>
-      <DemoMode />
+      {process.env.NODE_ENV === "development" && <DemoMode />}
       <PresentationOverlay />
       <OperatorWalkthrough />
     </div>

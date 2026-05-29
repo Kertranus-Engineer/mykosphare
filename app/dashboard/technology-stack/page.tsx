@@ -9,6 +9,7 @@ import {
   Palette,
   CircuitBoard,
   Box,
+  ArrowDown,
 } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { cn } from "@/lib/utils"
@@ -86,7 +87,7 @@ const STACK: TechCategory[] = [
 
 export default function TechnologyStackPage() {
   return (
-    <div className="flex flex-col gap-6 p-6">
+    <div className="flex flex-col gap-4 p-6">
       <div className="flex flex-col gap-2">
         <div className="flex items-center gap-2">
           <div className="size-2 rounded-full bg-emerald-500 shadow-[0_0_8px_2px] shadow-emerald-500/40" />
@@ -148,6 +149,43 @@ export default function TechnologyStackPage() {
         <p className="text-xs leading-relaxed text-muted-foreground/60 text-center">
           The technology stack was chosen to maximize accessibility, reduce costs and enable rapid iteration. Every component is open-source, well-documented and suitable for both educational and production environments.
         </p>
+      </div>
+
+      {/* ── Architecture Flow Diagram ─────────── */}
+      <div className="flex flex-col gap-3 opacity-0 animate-[fade-in-up_0.4s_ease-out_forwards]" style={{ animationDelay: "500ms" }}>
+        <div className="flex items-center gap-2">
+          <div className="size-2 rounded-full bg-emerald-500 shadow-[0_0_8px_2px] shadow-emerald-500/40" />
+          <h2 className="text-base font-semibold tracking-tight text-foreground">System Flow</h2>
+        </div>
+        <Card className="border-emerald-500/10 shadow-[0_0_16px_-4px] shadow-emerald-500/5">
+          <CardContent className="py-4">
+            <div className="flex flex-col items-center gap-1">
+              {[
+                { label: "Frontend", sub: "Next.js · React · TailwindCSS", icon: Globe, color: "text-blue-500", bg: "bg-blue-500/10", border: "border-blue-500/20" },
+                { label: "API Layer", sub: "API Routes · Telemetry Processing", icon: Server, color: "text-emerald-500", bg: "bg-emerald-500/10", border: "border-emerald-500/20" },
+                { label: "Cloud Services", sub: "Vercel · Supabase", icon: Cloud, color: "text-violet-500", bg: "bg-violet-500/10", border: "border-violet-500/20" },
+                { label: "ESP32 Hardware", sub: "WiFi Microcontroller · Arduino Framework", icon: Cpu, color: "text-amber-500", bg: "bg-amber-500/10", border: "border-amber-500/20" },
+                { label: "Environmental Sensors", sub: "DHT22 · Temperature & Humidity", icon: CircuitBoard, color: "text-cyan-500", bg: "bg-cyan-500/10", border: "border-cyan-500/20" },
+              ].map((layer, idx, arr) => (
+                <div key={layer.label} className="flex flex-col items-center w-full max-w-xs">
+                  <div className={cn(
+                    "w-full rounded-lg border px-4 py-2.5 text-center transition-all duration-200 hover:scale-[1.02]",
+                    layer.bg, layer.border,
+                  )}>
+                    <div className="flex items-center justify-center gap-2 mb-0.5">
+                      <layer.icon className={cn("size-3.5", layer.color)} />
+                      <span className={cn("text-xs font-semibold tracking-tight", layer.color)}>{layer.label}</span>
+                    </div>
+                    <p className="text-[9px] text-muted-foreground/50 leading-relaxed">{layer.sub}</p>
+                  </div>
+                  {idx < arr.length - 1 && (
+                    <ArrowDown className="size-3 text-emerald-500/30 my-1" />
+                  )}
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </div>
   )

@@ -51,7 +51,7 @@ export default function AboutPage() {
   const { t } = useLocale()
 
   return (
-    <div className="flex flex-col gap-6 p-6">
+    <div className="flex flex-col gap-4 p-6">
       <div className="flex flex-col gap-2">
         <div className="flex items-center gap-2">
           <div className="size-2 rounded-full bg-emerald-500 shadow-[0_0_8px_2px] shadow-emerald-500/40" />
@@ -75,6 +75,22 @@ export default function AboutPage() {
         </CardContent>
       </Card>
 
+      {/* ── Project Vision ────────────────────── */}
+      <Card className="transition-all duration-200 hover:ring-foreground/20 hover:shadow-[0_0_16px_-6px] hover:shadow-foreground/10 border-cyan-500/10">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-sm">
+            <Eye className="size-4 text-cyan-500" />
+            Project Vision
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-sm leading-relaxed text-muted-foreground/80">
+            MYKOSPHARE aims to democratize environmental monitoring by combining affordable hardware, cloud intelligence and modern web technologies into a single accessible platform.
+          </p>
+        </CardContent>
+      </Card>
+
+      {/* ── Sections ──────────────────────────── */}
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 xl:grid-cols-3">
         {SECTIONS.map((section) => (
           <Card

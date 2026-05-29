@@ -74,7 +74,7 @@ const STATUS_STYLES: Record<FlowBlock["status"], { dot: string; ring: string; la
 
 export default function ArchitecturePage() {
   return (
-    <div className="flex flex-col gap-8 p-6">
+    <div className="flex flex-col gap-4 p-6">
       <div className="flex flex-col gap-2">
         <div className="flex items-center gap-2">
           <div className="size-2 rounded-full bg-emerald-500 shadow-[0_0_8px_2px] shadow-emerald-500/40" />
@@ -84,6 +84,16 @@ export default function ArchitecturePage() {
         </div>
         <p className="text-sm text-muted-foreground/70 max-w-2xl">
           Visual flow of how MYKOSPHARE captures, transmits, processes and visualizes environmental data from sensor to dashboard.
+        </p>
+      </div>
+
+      <div className="flex flex-col gap-3 -mb-2">
+        <div className="flex items-center gap-2">
+          <div className="size-2 rounded-full bg-emerald-500 shadow-[0_0_8px_2px] shadow-emerald-500/40" />
+          <h2 className="text-base font-semibold tracking-tight text-foreground">End-to-End Telemetry Pipeline</h2>
+        </div>
+        <p className="text-xs text-muted-foreground/60 max-w-2xl">
+          Environmental data travels from physical sensors through ESP32 hardware, cloud ingestion services, analytics pipelines and finally into the operational dashboard.
         </p>
       </div>
 
@@ -153,6 +163,62 @@ export default function ArchitecturePage() {
         <p className="text-xs leading-relaxed text-muted-foreground/60 text-center">
           Data flows from physical sensors through the ESP32 microcontroller, transmitted over WiFi to the cloud ingestion layer. The analytics engine continuously processes incoming telemetry, applying anomaly detection and threshold monitoring. Alerts are generated when environmental parameters exceed defined limits, and the operator dashboard provides real-time visualization and control capabilities.
         </p>
+      </div>
+
+      {/* ── End-to-End Flow ──────────────────── */}
+      <div className="flex flex-col gap-3 opacity-0 animate-[fade-in-up_0.4s_ease-out_forwards]" style={{ animationDelay: "700ms" }}>
+        <div className="flex items-center gap-2">
+          <div className="size-2 rounded-full bg-emerald-500 shadow-[0_0_8px_2px] shadow-emerald-500/40" />
+          <h2 className="text-base font-semibold tracking-tight text-foreground">End-to-End Flow</h2>
+        </div>
+        <Card className="border-emerald-500/10 shadow-[0_0_16px_-4px] shadow-emerald-500/5">
+          <CardContent className="py-4">
+            <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3">
+              {[
+                { label: "Sensor", icon: Cpu, color: "text-emerald-500", bg: "bg-emerald-500/10", border: "border-emerald-500/20" },
+                { label: "ESP32", icon: CircuitBoard, color: "text-amber-500", bg: "bg-amber-500/10", border: "border-amber-500/20" },
+                { label: "WiFi", icon: Wifi, color: "text-blue-500", bg: "bg-blue-500/10", border: "border-blue-500/20" },
+                { label: "Cloud", icon: Cloud, color: "text-violet-500", bg: "bg-violet-500/10", border: "border-violet-500/20" },
+                { label: "Analytics", icon: BarChart3, color: "text-cyan-500", bg: "bg-cyan-500/10", border: "border-cyan-500/20" },
+                { label: "Alerts", icon: Bell, color: "text-red-500", bg: "bg-red-500/10", border: "border-red-500/20" },
+                { label: "Dashboard", icon: Monitor, color: "text-emerald-500", bg: "bg-emerald-500/10", border: "border-emerald-500/20" },
+              ].map((step, idx, arr) => (
+                <div key={step.label} className="flex items-center gap-0">
+                  <div className={cn(
+                    "flex flex-col items-center gap-1 rounded-lg border px-3 py-2 transition-all duration-200 hover:scale-[1.05]",
+                    step.bg, step.border
+                  )}>
+                    <step.icon className={cn("size-4", step.color)} />
+                    <span className={cn("text-[9px] font-semibold tracking-wider", step.color)}>{step.label}</span>
+                  </div>
+                  {idx < arr.length - 1 && (
+                    <ChevronDown className="size-3 text-muted-foreground/30 rotate-[-90deg] sm:rotate-0 mx-0.5" />
+                  )}
+                </div>
+              ))}
+            </div>
+            <p className="text-[10px] leading-relaxed text-muted-foreground/50 text-center mt-3">
+              Complete environmental monitoring pipeline from data acquisition to decision making.
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* ── Bottom Flow Summary ────────────────── */}
+      <div className="flex flex-col gap-2 rounded-lg bg-card/50 border border-border/30 p-4 opacity-0 animate-[fade-in-up_0.4s_ease-out_forwards]" style={{ animationDelay: "800ms" }}>
+        <div className="flex items-center gap-2 text-[10px] text-muted-foreground/50 uppercase tracking-wider mb-1">
+          <span>Data Flow</span>
+          <span className="text-muted-foreground/20">·</span>
+          <span className="text-[9px] font-mono font-medium tracking-[0.2em] text-emerald-500/60">End-to-End Telemetry Pipeline</span>
+        </div>
+        <div className="flex flex-wrap items-center gap-1 text-[11px] text-foreground/60">
+          {["Sensor", "ESP32", "WiFi", "Cloud", "Analytics", "Dashboard", "Alerts"].map((step, idx, arr) => (
+            <span key={step} className="flex items-center gap-1">
+              <span className="rounded-md bg-emerald-500/10 border border-emerald-500/15 px-2 py-0.5 font-medium text-emerald-500">{step}</span>
+              {idx < arr.length - 1 && <span className="text-muted-foreground/20">→</span>}
+            </span>
+          ))}
+        </div>
       </div>
     </div>
   )

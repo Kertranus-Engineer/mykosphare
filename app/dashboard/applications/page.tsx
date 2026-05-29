@@ -32,6 +32,15 @@ const APPLICATIONS: AppCard[] = [
     borderAccent: "border-blue-500/20",
   },
   {
+    icon: GraduationCap,
+    title: "Smart Classrooms",
+    description:
+      "Educational environments where students learn IoT, telemetry, environmental monitoring and data analytics using real operational hardware.",
+    accent: "text-cyan-500",
+    bgAccent: "bg-cyan-500/10",
+    borderAccent: "border-cyan-500/20",
+  },
+  {
     icon: Leaf,
     title: "Environmental Monitoring",
     description:
@@ -89,7 +98,7 @@ const APPLICATIONS: AppCard[] = [
 
 export default function ApplicationsPage() {
   return (
-    <div className="flex flex-col gap-6 p-6">
+    <div className="flex flex-col gap-4 p-6">
       <div className="flex flex-col gap-2">
         <div className="flex items-center gap-2">
           <div className="size-2 rounded-full bg-emerald-500 shadow-[0_0_8px_2px] shadow-emerald-500/40" />
@@ -100,6 +109,31 @@ export default function ApplicationsPage() {
         <p className="text-sm text-muted-foreground/70 max-w-2xl">
           MYKOSPHARE adapts to diverse environments and industries. Explore how the platform can be applied across different sectors and use cases.
         </p>
+        <div className="flex items-center gap-2 mt-1">
+          <div className="inline-flex items-center gap-2 rounded-full border border-emerald-500/20 bg-emerald-500/5 px-3 py-1">
+            <div className="size-1.5 rounded-full bg-emerald-500 animate-pulse" />
+            <span className="text-[10px] font-semibold text-emerald-500 tabular-nums">{APPLICATIONS.length}</span>
+            <span className="text-[10px] font-medium text-emerald-500/60 tracking-wide">Supported Use Cases</span>
+          </div>
+        </div>
+      </div>
+
+      {/* ── Supported Deployment Scenarios ─────── */}
+      <div className="flex flex-col gap-2">
+        <span className="text-[10px] font-medium text-muted-foreground/50 uppercase tracking-wider">Supported Deployment Scenarios</span>
+        <div className="flex flex-wrap gap-1.5">
+          {["Education", "Research", "Agriculture", "Industrial", "Greenhouses", "Environmental Monitoring", "IoT Learning", "Mushroom Cultivation"].map((scenario, i) => (
+            <span key={scenario} className={cn(
+              "text-[10px] font-medium px-2 py-0.5 rounded-full border opacity-0 animate-[fade-in-up_0.4s_ease-out_forwards]",
+              i % 4 === 0 ? "bg-blue-500/10 border-blue-500/20 text-blue-500" :
+              i % 4 === 1 ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-500" :
+              i % 4 === 2 ? "bg-amber-500/10 border-amber-500/20 text-amber-500" :
+              "bg-violet-500/10 border-violet-500/20 text-violet-500"
+            )} style={{ animationDelay: `${i * 40}ms` }}>
+              {scenario}
+            </span>
+          ))}
+        </div>
       </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
@@ -134,10 +168,29 @@ export default function ApplicationsPage() {
         ))}
       </div>
 
-      <div className="mt-2 p-4 rounded-lg bg-card/50 border border-border/30 opacity-0 animate-[fade-in-up_0.4s_ease-out_forwards]" style={{ animationDelay: "500ms" }}>
-        <p className="text-xs leading-relaxed text-muted-foreground/60 text-center">
-          Each application leverages the same core platform: affordable ESP32 hardware, open-source software stack, real-time telemetry ingestion, AI-powered analytics, and a professional operational dashboard.
-        </p>
+      <div className="flex flex-col gap-3 opacity-0 animate-[fade-in-up_0.4s_ease-out_forwards]" style={{ animationDelay: "500ms" }}>
+        <div className="flex items-center gap-2">
+          <div className="size-2 rounded-full bg-emerald-500 shadow-[0_0_8px_2px] shadow-emerald-500/40" />
+          <span className="text-xs font-semibold text-foreground">Impact Summary</span>
+        </div>
+        <div className="p-4 rounded-lg bg-card/50 border border-border/30">
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+            {[
+              { value: "8", label: "Supported Use Cases", color: "text-emerald-500" },
+              { value: "Real-Time", label: "Monitoring", color: "text-blue-500" },
+              { value: "Cloud", label: "Analytics", color: "text-violet-500" },
+              { value: "<$100", label: "Low-Cost Hardware", color: "text-amber-500" },
+            ].map((stat) => (
+              <div key={stat.label} className="flex flex-col items-center gap-0.5">
+                <span className={cn("text-sm font-bold tabular-nums", stat.color)}>{stat.value}</span>
+                <span className="text-[10px] text-muted-foreground/50 tracking-wide">{stat.label}</span>
+              </div>
+            ))}
+          </div>
+          <p className="text-xs leading-relaxed text-muted-foreground/60 text-center mt-3">
+            Each application leverages the same core platform: affordable ESP32 hardware, open-source software stack, real-time telemetry ingestion, AI-powered analytics, and a professional operational dashboard.
+          </p>
+        </div>
       </div>
     </div>
   )

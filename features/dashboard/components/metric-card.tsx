@@ -130,7 +130,28 @@ export interface MetricCardProps {
   warning?: boolean
   critical?: boolean
   minWidth?: string
+  compact?: boolean
 }
+
+const CompactMetricValue = memo(function CompactMetricValue({
+  value,
+  unit,
+  decimals,
+  color,
+}: {
+  value: number
+  unit: string
+  decimals: number
+  color: string
+}) {
+  const formatted = value > 0 ? `${value.toFixed(decimals)}` : "--"
+  return (
+    <span className="inline-block text-xl font-bold tracking-tight tabular-nums" style={{ color, lineHeight: "1.2" }}>
+      {formatted}
+      {value > 0 && <span className="text-[0.6em] font-normal text-foreground/40 ml-px">{unit}</span>}
+    </span>
+  )
+})
 
 export const MetricCard = memo(function MetricCard({
   icon: Icon,
@@ -144,10 +165,48 @@ export const MetricCard = memo(function MetricCard({
   warning = false,
   critical = false,
   minWidth = "120px",
+  compact = false,
 }: MetricCardProps) {
   const kpiColor = critical ? "#ef4444" : warning ? "#f59e0b" : "var(--kpi-value)"
   const iconColor = critical ? "text-red-500" : warning ? "text-amber-500" : "text-foreground/60"
   const isLive = live && value > 0
+
+  if (compact) {
+    return (
+      <Card
+        size="sm"
+        className={cn(
+          "flex-1 transition-all duration-300 relative overflow-hidden hover:scale-[1.01]",
+          "hover:ring-foreground/20 hover:shadow-[0_0_16px_-6px] hover:shadow-foreground/10",
+          critical && "ring-1 ring-red-500/20 shadow-[0_0_12px_-4px] shadow-red-500/10",
+          warning && "ring-1 ring-amber-500/10 shadow-[0_0_10px_-4px] shadow-amber-500/10",
+          !critical && !warning && "shadow-[0_0_10px_-4px] shadow-emerald-500/5"
+        )}
+      >
+        <CardContent className="flex items-center gap-3 relative z-10 py-2.5">
+          <div className="relative flex size-8 shrink-0 items-center justify-center rounded-md bg-muted">
+            <Icon className={cn("size-4 transition-all duration-300", iconColor)} />
+            {isLive && (
+              <div className="absolute -right-0.5 -top-0.5">
+                <div className={cn("size-1.5 rounded-full animate-pulse", critical ? "bg-red-500" : warning ? "bg-amber-500" : "bg-emerald-500")} />
+              </div>
+            )}
+          </div>
+          <div className="flex items-baseline gap-2 min-w-0">
+            <CompactMetricValue value={value} unit={unit} decimals={decimals} color={kpiColor} />
+            <span className="text-[11px] font-medium text-foreground/45 tracking-wide">{label}</span>
+          </div>
+          <div className="ml-auto shrink-0">
+            {trend !== "stable" && isLive && (
+              <span className={cn("text-[11px] font-medium tabular-nums", trend === "up" ? "text-emerald-500" : "text-red-500")}>
+                {delta >= 0 ? "+" : ""}{delta.toFixed(1)}{unit}
+              </span>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+    )
+  }
 
   return (
     <Card
@@ -194,6 +253,7 @@ export const MetricCard = memo(function MetricCard({
     prev.trend === next.trend &&
     prev.delta === next.delta &&
     prev.warning === next.warning &&
-    prev.critical === next.critical
+    prev.critical === next.critical &&
+    prev.compact === next.compact
   )
 })

@@ -122,28 +122,31 @@ export function AppHeader() {
             rtTel.source === "simulated" ? "text-amber-500 shadow-amber-500/10" :
             "text-muted-foreground/40 shadow-none"
           )}>
-            {rtTel.source === "live" ? "ESP32 ONLINE" :
-             rtTel.source === "simulated" ? "ESP32 ONLINE" :
-             "DEVICE OFFLINE"}
+            System Source
           </span>
 
-          {/* Telemetry Source Badge */}
+          {/* Unified System Source Indicator */}
           {rtTel.source === "live" && (
             <span
-              title="Data received from physical ESP32 hardware."
+              title="ESP32 connected. Displaying live environmental telemetry."
               className="text-[9px] font-semibold text-emerald-500 tracking-wider border border-emerald-500/30 bg-emerald-500/10 rounded px-2 py-0.5 ml-1 cursor-help transition-all duration-300 shadow-[0_0_8px_-2px] shadow-emerald-500/15"
             >
               <Radio className="size-2.5 inline-block mr-1 -mt-px" />
-              LIVE TELEMETRY
+              LIVE DEVICE
             </span>
           )}
           {rtTel.source === "simulated" && (
             <span
-              title="No ESP32 detected. Showing simulated environmental data."
+              title="No ESP32 detected. Displaying simulated environmental telemetry for demonstration purposes."
               className="text-[9px] font-semibold text-amber-500 tracking-wider border border-amber-500/30 bg-amber-500/10 rounded px-2 py-0.5 ml-1 cursor-help transition-all duration-300 shadow-[0_0_8px_-2px] shadow-amber-500/15"
             >
               <FlaskConical className="size-2.5 inline-block mr-1 -mt-px" />
-              SIMULATION MODE
+              SIMULATION
+            </span>
+          )}
+          {rtTel.source === "none" && (
+            <span className="text-[9px] font-medium text-muted-foreground/40 tracking-wider border border-border/30 rounded px-2 py-0.5 ml-1">
+              NO DEVICE
             </span>
           )}
         </div>

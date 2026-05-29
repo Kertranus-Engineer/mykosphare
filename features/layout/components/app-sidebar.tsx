@@ -23,6 +23,7 @@ import {
   PiggyBank,
   Map,
   Layers,
+  Microscope,
 } from "lucide-react"
 import { NavItem } from "./nav-item"
 import { useUptime } from "@/mock/simulator"
@@ -59,6 +60,7 @@ const navGroups: NavGroup[] = [
       { icon: PiggyBank, label: "Cost Advantage", href: "/dashboard/cost-advantage" },
       { icon: Map, label: "Roadmap", href: "/dashboard/roadmap" },
       { icon: Layers, label: "Technology Stack", href: "/dashboard/technology-stack" },
+      { icon: Microscope, label: "Prototype", href: "/dashboard/prototype" },
     ],
   },
   {

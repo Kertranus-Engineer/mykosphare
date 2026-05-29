@@ -107,10 +107,10 @@ export function AutoDemo() {
             <button
               type="button"
               onClick={run}
-                className="flex items-center gap-1.5 rounded-md border border-emerald-500/20 bg-emerald-500/5 px-2.5 py-1 text-[10px] font-semibold tracking-wide text-emerald-500/80 hover:border-emerald-500/40 hover:bg-emerald-500/10 hover:shadow-[0_0_14px_-4px] hover:shadow-emerald-500/20 active:scale-[0.98] active:shadow-[0_0_8px_-2px] active:shadow-emerald-500/30 transition-all duration-120 animate-pulse"
+                className="flex items-center gap-1.5 rounded-md border border-emerald-500/20 bg-emerald-500/5 px-2.5 py-1 text-[10px] font-semibold tracking-wide text-emerald-500/80 hover:border-emerald-500/40 hover:bg-emerald-500/10 hover:shadow-[0_0_14px_-4px] hover:shadow-emerald-500/20 active:scale-[0.98] active:shadow-[0_0_8px_-2px] active:shadow-emerald-500/30 transition-all duration-120"
             >
               <Play className="size-3" />
-              AUTO DEMO
+              SIMULATION SCENARIOS
             </button>
             {/* Quick triggers */}
             <span className="text-[9px] text-muted-foreground/20">|</span>
