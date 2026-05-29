@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, useRef, useCallback } from "react"
-import { createClient, isSupabaseConfigured } from "@/lib/supabase/client"
+import { createClient, isSupabaseConfigured, disableSupabaseWrites } from "@/lib/supabase/client"
 import { fetchLogs, type ServiceLogEntry } from "@/lib/services/logs-service"
 import { fetchDevices, type ServiceDevice } from "@/lib/services/devices-service"
 import { fetchRecentTelemetry, type TelemetryRow } from "@/lib/services/telemetry-service"
@@ -13,13 +13,25 @@ const DEPLOYMENT_ID = "MYK-CH-001"
 type ConnectionStatus = "connecting" | "live" | "degraded" | "offline"
 
 let channelIdCounter = 0
+let supabaseAccessible = true
+
+function markSupabaseInaccessible() {
+  if (supabaseAccessible) {
+    supabaseAccessible = false
+    disableSupabaseWrites()
+  }
+}
+
+function isSupabaseAccessible(): boolean {
+  return supabaseAccessible && isSupabaseConfigured()
+}
 
 function nextChannelId(base: string) {
   return `${base}-${++channelIdCounter}`
 }
 
 function tryCreateClient(): ReturnType<typeof createClient> | null {
-  if (!isSupabaseConfigured()) return null
+  if (!isSupabaseAccessible()) return null
   try {
     return createClient()
   } catch {
@@ -82,6 +94,11 @@ export function useRealtimeLogs(limit = 50) {
       try {
         const t0 = Date.now()
         const { error } = await supabase.from("logs").select("id", { count: "exact", head: true }).limit(1)
+        if (error && (error as any)?.status >= 401 && (error as any)?.status <= 403) {
+          markSupabaseInaccessible()
+          setStatus("offline")
+          return
+        }
         if (!error) {
           setLatency(Date.now() - t0)
           setStatus((s) => (s === "offline" ? "degraded" : s === "connecting" ? "live" : s))
@@ -164,6 +181,10 @@ export function useRealtimeDevices() {
       try {
         const t0 = Date.now()
         const { error } = await supabase.from("devices").select("id", { count: "exact", head: true }).limit(1)
+        if (error && (error as any)?.status >= 401 && (error as any)?.status <= 403) {
+          markSupabaseInaccessible()
+          setStatus("offline"); clearInterval(pinger); return
+        }
         if (!error) {
           setLatency(Date.now() - t0)
           setStatus((s) => (s === "offline" ? "degraded" : s === "connecting" ? "live" : s))
@@ -252,6 +273,10 @@ export function useRealtimeTelemetry(limit = 200) {
           .from("telemetry")
           .select("id", { count: "exact", head: true })
           .limit(1)
+        if (error && (error as any)?.status >= 401 && (error as any)?.status <= 403) {
+          markSupabaseInaccessible()
+          setStatus("offline"); clearInterval(pinger); return
+        }
         if (!error) {
           setLatency(Date.now() - t0)
           setStatus((s) => (s === "offline" ? "degraded" : s === "connecting" ? "live" : s))
@@ -358,6 +383,10 @@ export function useRealtimeAlerts(limit = 30) {
       try {
         const t0 = Date.now()
         const { error } = await supabase.from("alerts").select("id", { count: "exact", head: true }).limit(1)
+        if (error && (error as any)?.status >= 401 && (error as any)?.status <= 403) {
+          markSupabaseInaccessible()
+          setStatus("offline"); clearInterval(pinger); return
+        }
         if (!error) {
           setLatency(Date.now() - t0)
           setStatus((s) => (s === "offline" ? "degraded" : s === "connecting" ? "live" : s))
@@ -444,6 +473,10 @@ export function useRealtimeSettings() {
       try {
         const t0 = Date.now()
         const { error } = await supabase.from("settings").select("id", { count: "exact", head: true }).limit(1)
+        if (error && (error as any)?.status >= 401 && (error as any)?.status <= 403) {
+          markSupabaseInaccessible()
+          setStatus("offline"); clearInterval(pinger); return
+        }
         if (!error) {
           setLatency(Date.now() - t0)
           setStatus((s) => (s === "offline" ? "degraded" : s === "connecting" ? "live" : s))

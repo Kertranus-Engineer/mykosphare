@@ -75,7 +75,7 @@ export const es: LocaleDict = {
 
   "demo.running": "MODO DEMOSTRACI\u00d3N",
   "demo.complete": "DEMO COMPLETADA",
-  "demo.run": "EJECUTAR SIMULACI\u00d3N OPERATIVA",
+  "demo.run": "Inject Scenario",
 
   "about.title": "Acerca de MYKOSPHARE",
   "about.subtitle": "Plataforma de Inteligencia Operativa",

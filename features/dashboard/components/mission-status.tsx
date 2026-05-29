@@ -157,9 +157,9 @@ export const MissionStatus = memo(function MissionStatus() {
 
         <StatCard
           icon={DollarSign}
-          label="Deployment Cost"
+          label="Deployment"
           value={`$${deployCost}`}
-          subValue="ESP32 + DHT22 + LCD + Power Supply | Prototype Hardware Estimate"
+          subValue=""
           accentColor="text-violet-500"
           accentBg="bg-violet-500/10"
           accentBorder="border-violet-500/20"

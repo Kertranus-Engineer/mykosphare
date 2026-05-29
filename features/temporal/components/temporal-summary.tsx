@@ -1,6 +1,6 @@
 "use client"
 
-import { ScrollText, TrendingUp, TrendingDown, Minus, Wifi, WifiOff } from "lucide-react"
+import { ScrollText, TrendingUp, TrendingDown, Minus, Wifi, WifiOff, Activity } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { cn } from "@/lib/utils"
 import type { TemporalSummary, TrendDirection } from "@/lib/temporal/types"
@@ -19,14 +19,24 @@ const DIR_ICONS: Record<TrendDirection, typeof TrendingUp> = {
   volatile: TrendingUp,
 }
 
+const formatDelta = (value: number, decimals = 1) =>
+  `${value > 0 ? "+" : ""}${value.toFixed(decimals)}`
+
 export function TemporalSummaryCard({ summary, connected }: { summary: TemporalSummary; connected: boolean }) {
+  const forecastConfidence = summary.forecasts.length > 0
+    ? Math.round(summary.forecasts.reduce((s, f) => s + (100 - f.projectedInstability), 0) / summary.forecasts.length)
+    : 96
+
   return (
     <Card className="transition-all duration-200 hover:ring-foreground/20 hover:shadow-[0_0_16px_-6px] hover:shadow-foreground/10">
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-sm">
           <ScrollText className="size-4 text-cyan-500" />
           Temporal Summary
-          {connected ? <Wifi className="size-3 text-emerald-500/60 ml-auto" /> : <WifiOff className="size-3 text-muted-foreground/40 ml-auto" />}
+          <span className="ml-auto flex items-center gap-1 text-[9px] font-medium text-cyan-500/70 border border-cyan-500/20 bg-cyan-500/10 rounded-full px-2 py-0.5">
+            <Activity className="size-2.5" />
+            {forecastConfidence}%
+          </span>
         </CardTitle>
       </CardHeader>
       <CardContent className="flex flex-col gap-3">
@@ -41,7 +51,7 @@ export function TemporalSummaryCard({ summary, connected }: { summary: TemporalS
                 </div>
                 <span className="text-sm font-semibold tabular-nums text-foreground">{t.currentValue}</span>
                 <span className={cn("text-[9px] tabular-nums ml-1", DIR_COLORS[t.direction])}>
-                  {t.changePercent > 0 ? "+" : ""}{t.changePercent}%
+                  {formatDelta(t.changePercent)}%
                 </span>
               </div>
             )
@@ -52,7 +62,7 @@ export function TemporalSummaryCard({ summary, connected }: { summary: TemporalS
           {summary.comparativeWindows.map((w) => (
             <div key={w.window} className="rounded-lg bg-muted/20 px-2 py-1.5 flex items-center justify-between">
               <span className="text-muted-foreground/60">{w.window}</span>
-              <span className="tabular-nums text-foreground">{w.stabilityPct}% stable</span>
+              <span className="tabular-nums text-foreground">{w.stabilityPct.toFixed(1)}% stable</span>
             </div>
           ))}
         </div>

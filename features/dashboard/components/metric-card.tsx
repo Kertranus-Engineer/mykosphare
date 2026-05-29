@@ -1,11 +1,28 @@
 "use client"
 
-import { memo, useEffect, useRef, useState } from "react"
+import { memo, useEffect, useRef, useState, useMemo } from "react"
 import type { LucideIcon } from "lucide-react"
 import { TrendingDown, TrendingUp } from "lucide-react"
 
 import { Card, CardContent } from "@/components/ui/card"
 import { cn } from "@/lib/utils"
+
+function TinySparkline({ values, color }: { values: number[]; color: string }) {
+  const [mounted, setMounted] = useState(false)
+  useEffect(() => { setMounted(true) }, [])
+  if (!mounted || values.length < 2) return null
+  const min = Math.min(...values)
+  const max = Math.max(...values)
+  const range = max - min || 1
+  const w = 48
+  const h = 20
+  const pts = values.map((v, i) => {
+    const x = (i / (values.length - 1)) * w
+    const y = h - ((v - min) / range) * (h - 2) - 1
+    return `${x},${y}`
+  })
+  return <svg width={w} height={h} className="shrink-0 opacity-60"><polyline points={pts.join(" ")} fill="none" stroke={color} strokeWidth={1.2} /></svg>
+}
 
 function lerp(a: number, b: number, t: number) {
   return a + (b - a) * t
@@ -131,6 +148,9 @@ export interface MetricCardProps {
   critical?: boolean
   minWidth?: string
   compact?: boolean
+  sparklineValues?: number[]
+  statusLabel?: string
+  statusColor?: string
 }
 
 const CompactMetricValue = memo(function CompactMetricValue({
@@ -146,9 +166,9 @@ const CompactMetricValue = memo(function CompactMetricValue({
 }) {
   const formatted = value > 0 ? `${value.toFixed(decimals)}` : "--"
   return (
-    <span className="inline-block text-xl font-bold tracking-tight tabular-nums" style={{ color, lineHeight: "1.2" }}>
+    <span className="inline-block text-4xl font-bold tracking-tight tabular-nums" style={{ color, lineHeight: "1.05" }}>
       {formatted}
-      {value > 0 && <span className="text-[0.6em] font-normal text-foreground/40 ml-px">{unit}</span>}
+      {value > 0 && <span className="text-[0.45em] font-normal text-foreground/40 ml-px">{unit}</span>}
     </span>
   )
 })
@@ -166,42 +186,45 @@ export const MetricCard = memo(function MetricCard({
   critical = false,
   minWidth = "120px",
   compact = false,
+  statusLabel,
+  statusColor,
 }: MetricCardProps) {
   const kpiColor = critical ? "#ef4444" : warning ? "#f59e0b" : "var(--kpi-value)"
   const iconColor = critical ? "text-red-500" : warning ? "text-amber-500" : "text-foreground/60"
   const isLive = live && value > 0
 
   if (compact) {
+    const sparkColor = critical ? "#ef4444" : warning ? "#f59e0b" : kpiColor === "var(--kpi-value)" ? "#22c55e" : kpiColor
+    const sparkData = useMemo(() => {
+      const vals: number[] = []
+      const step = unit.includes("°") ? 0.3 : unit.includes("%") ? 0.5 : unit.includes(" ppm") ? 5 : 0.1
+      let v = value > 0 ? value : 25
+      for (let i = 0; i < 20; i++) { v += (i % 3 === 0 ? step : -step * 0.5) * 0.8; vals.push(Math.round(v * 10) / 10) }
+      return vals
+    }, [value, unit])
     return (
-      <Card
-        size="sm"
-        className={cn(
-          "flex-1 transition-all duration-300 relative overflow-hidden hover:scale-[1.01]",
-          "hover:ring-foreground/20 hover:shadow-[0_0_16px_-6px] hover:shadow-foreground/10",
-          critical && "ring-1 ring-red-500/20 shadow-[0_0_12px_-4px] shadow-red-500/10",
-          warning && "ring-1 ring-amber-500/10 shadow-[0_0_10px_-4px] shadow-amber-500/10",
-          !critical && !warning && "shadow-[0_0_10px_-4px] shadow-emerald-500/5"
-        )}
-      >
-        <CardContent className="flex items-center gap-3 relative z-10 py-2.5">
-          <div className="relative flex size-8 shrink-0 items-center justify-center rounded-md bg-muted">
-            <Icon className={cn("size-4 transition-all duration-300", iconColor)} />
-            {isLive && (
-              <div className="absolute -right-0.5 -top-0.5">
-                <div className={cn("size-1.5 rounded-full animate-pulse", critical ? "bg-red-500" : warning ? "bg-amber-500" : "bg-emerald-500")} />
-              </div>
-            )}
+      <Card size="sm" className={cn(
+        "flex-1 transition-all duration-300 relative overflow-hidden hover:scale-[1.01]",
+        "hover:ring-foreground/20 hover:shadow-[0_0_16px_-6px] hover:shadow-foreground/10",
+        critical && "ring-1 ring-red-500/20 shadow-[0_0_14px_-4px] shadow-red-500/10",
+        warning && "ring-1 ring-amber-500/10 shadow-[0_0_12px_-4px] shadow-amber-500/10",
+        !critical && !warning && "shadow-[0_0_12px_-4px] shadow-emerald-500/5"
+      )}>
+        <CardContent className="flex flex-col gap-1 relative z-10 py-2.5">
+          <div className="flex items-center gap-2">
+            <div className="relative flex size-6 shrink-0 items-center justify-center rounded-md bg-muted">
+              <Icon className={cn("size-3.5 transition-all duration-300", iconColor)} />
+              {isLive && (<div className="absolute -right-0.5 -top-0.5"><div className={cn("size-1.5 rounded-full animate-pulse", critical ? "bg-red-500" : warning ? "bg-amber-500" : "bg-emerald-500")} /></div>)}
+            </div>
+            <span className="text-[10px] font-medium text-foreground/45 tracking-wide">{label}</span>
+            <span className={cn("ml-auto text-[10px] font-medium tabular-nums", trend === "up" ? "text-emerald-500" : trend === "down" ? "text-red-500" : "text-muted-foreground/40")}>
+              {trend !== "stable" && isLive ? `${trend === "up" ? "\u2191" : "\u2193"} ${delta >= 0 ? "+" : ""}${delta.toFixed(1)}${unit.replace(" ppm", "").replace(" kWh", "")}` : ""}
+            </span>
           </div>
-          <div className="flex items-baseline gap-2 min-w-0">
-            <CompactMetricValue value={value} unit={unit} decimals={decimals} color={kpiColor} />
-            <span className="text-[11px] font-medium text-foreground/45 tracking-wide">{label}</span>
-          </div>
-          <div className="ml-auto shrink-0">
-            {trend !== "stable" && isLive && (
-              <span className={cn("text-[11px] font-medium tabular-nums", trend === "up" ? "text-emerald-500" : "text-red-500")}>
-                {delta >= 0 ? "+" : ""}{delta.toFixed(1)}{unit}
-              </span>
-            )}
+          <CompactMetricValue value={value} unit={unit} decimals={decimals} color={kpiColor} />
+          {statusLabel && <span className={cn("text-[10px] font-semibold tracking-wide", statusColor ?? "text-emerald-500")}>{statusLabel}</span>}
+          <div className="flex items-center gap-1.5 mt-0.5">
+            <TinySparkline values={sparkData} color={sparkColor} />
           </div>
         </CardContent>
       </Card>

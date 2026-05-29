@@ -60,12 +60,12 @@ export function TrendCard({
               {trend.currentValue}
             </span>
             <span className={cn("text-[10px] tabular-nums", meta.color)}>
-              {trend.changePercent > 0 ? "+" : ""}{trend.changePercent}%
+              {trend.changePercent > 0 ? "+" : ""}{trend.changePercent.toFixed(1)}%
             </span>
           </div>
           <div className="flex items-center gap-2 text-[9px] text-muted-foreground/50">
-            <span>slope: {trend.slope}</span>
-            <span>vol: {trend.volatility}</span>
+            <span>slope: {trend.slope.toFixed(3)}</span>
+            <span>vol: {trend.volatility.toFixed(1)}</span>
             <span>{trend.samples} pts</span>
           </div>
         </div>

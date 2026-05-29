@@ -42,7 +42,7 @@ export function EnvironmentalHistoryCard({ snapshots }: { snapshots: Comparative
   const metrics = snapshots[0] && (
     <div className="grid grid-cols-4 gap-2">
       {(["avgTemperature", "avgHumidity", "avgCo2", "stabilityPct"] as const).map((key, i) => {
-        const labels: Record<string, string> = { avgTemperature: "Temp", avgHumidity: "Hum", avgCo2: "CO₂", stabilityPct: "Stable" }
+        const labels: Record<string, string> = { avgTemperature: "Temperature", avgHumidity: "Humidity", avgCo2: "CO₂", stabilityPct: "Operational Stability" }
         const units: Record<string, string> = { avgTemperature: "°C", avgHumidity: "%", avgCo2: " ppm", stabilityPct: "%" }
         const vals = snapshots.map((s) => s[key])
         const first = vals[0]
@@ -51,9 +51,9 @@ export function EnvironmentalHistoryCard({ snapshots }: { snapshots: Comparative
         return (
           <div key={key} className="rounded-lg bg-muted/20 p-2 text-center">
             <span className="text-[9px] text-muted-foreground/60 block">{labels[key]}</span>
-            <span className="text-sm font-semibold tabular-nums text-foreground block">{first}{units[key]}</span>
+            <span className="text-sm font-semibold tabular-nums text-foreground block">{first !== undefined ? (key === "stabilityPct" ? first.toFixed(1) : first) : "--"}{units[key]}</span>
             <span className={cn("text-[9px] tabular-nums", diff > 0 ? "text-amber-500" : diff < 0 ? "text-emerald-500" : "text-muted-foreground/40")}>
-              {diff > 0 ? "+" : ""}{diff}{units[key]}
+              {diff > 0 ? "+" : ""}{diff.toFixed(1)}{units[key]}
             </span>
           </div>
         )

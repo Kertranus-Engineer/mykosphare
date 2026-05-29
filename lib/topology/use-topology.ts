@@ -44,7 +44,7 @@ export function useTopology(canvasWidth = 640, canvasHeight = 480) {
     }[] = [
       // ── CLOUD LAYER ──
       {
-        id: "cloud-01", nodeType: "cloud", label: "MYKOSPHARE Cloud",
+        id: "cloud-01", nodeType: "cloud", label: "Telemetry Backbone",
         capabilities: [], metadata: { region: "NA-East / DC-02" },
       },
       {
@@ -52,13 +52,13 @@ export function useTopology(canvasWidth = 640, canvasHeight = 480) {
         capabilities: [], metadata: { protocol: "WebSocket", interval: "1.5s" },
       },
       {
-        id: "analytics-01", nodeType: "analytics", label: "Analytics Cluster",
+        id: "analytics-01", nodeType: "analytics", label: "Analytics Engine",
         capabilities: [], metadata: { shards: 4, throughput: "2.1M msg/h" },
       },
 
       // ── INTELLIGENCE LAYER ──
       {
-        id: "ai-01", nodeType: "ai-inference", label: "AI Inference",
+        id: "ai-01", nodeType: "ai-inference", label: "Intelligence Engine",
         capabilities: [], metadata: { model: "MYK-v3", accuracy: "98.2%" },
       },
       {
@@ -70,41 +70,51 @@ export function useTopology(canvasWidth = 640, canvasHeight = 480) {
         capabilities: [], metadata: { queueDepth: 0, throughput: "5k msg/s" },
       },
       {
-        id: "corr-01", nodeType: "correlator", label: "Event Correlator",
+        id: "corr-01", nodeType: "correlator", label: "Alert Engine",
         capabilities: [], metadata: { rulesActive: 42, latency: "18ms" },
       },
 
-      // ── CHAMBER ──
+      // ── ZONES (Sensors) ──
       {
-        id: "MYK-CH-001", nodeType: "chamber", label: "Chamber Alpha",
+        id: "MYK-CH-001", nodeType: "chamber", label: "Zone A",
         capabilities: [
           { type: "environment", label: "Temperature", unit: "°C" },
           { type: "environment", label: "Humidity", unit: "%" },
-          { type: "environment", label: "CO₂", unit: "ppm" },
+          { type: "environment", label: "CO\u2082", unit: "ppm" },
         ],
         metadata: { cluster: "Alpha", region: "NA-East / DC-02" },
       },
+      {
+        id: "zone-b-01", nodeType: "temp-sensor", label: "Zone B",
+        capabilities: [{ type: "temperature_sensor", label: "Temperature", unit: "°C" }],
+        metadata: { model: "SHT31", accuracy: "\u00b10.3\u00b0C" },
+      },
+      {
+        id: "zone-c-01", nodeType: "humidity-sensor", label: "Zone C",
+        capabilities: [{ type: "humidity_sensor", label: "Humidity", unit: "%" }],
+        metadata: { model: "SHT31", accuracy: "\u00b12%" },
+      },
 
-      // ── EDGE LAYER: Sensors ──
+      // ── ESP32 ──
+      {
+        id: "esp32-01", nodeType: "esp32", label: "ESP32 Gateway",
+        capabilities: [
+          { type: "connectivity", label: "WiFi", unit: "" },
+          { type: "connectivity", label: "Bluetooth", unit: "" },
+        ],
+        metadata: { firmware: "MYK-v1.2", uptime: "14d 6h" },
+      },
+
+      // ── EDGE LAYER: Additional Sensors ──
       {
         id: "mesh-01", nodeType: "sensor-mesh", label: "Sensor Mesh",
         capabilities: [{ type: "mesh", label: "Mesh Gateway", unit: "" }],
         metadata: { protocol: "Zigbee", devices: 12 },
       },
       {
-        id: "co2-01", nodeType: "co2-sensor", label: "CO₂ Sensor",
-        capabilities: [{ type: "co2", label: "CO₂", unit: "ppm" }],
+        id: "co2-01", nodeType: "co2-sensor", label: "CO\u2082 Sensor",
+        capabilities: [{ type: "co2", label: "CO\u2082", unit: "ppm" }],
         metadata: { model: "MH-Z19B", range: "0-5000ppm" },
-      },
-      {
-        id: "temp-01", nodeType: "temp-sensor", label: "Temp Sensor",
-        capabilities: [{ type: "temperature_sensor", label: "Temperature", unit: "°C" }],
-        metadata: { model: "SHT31", accuracy: "±0.3°C" },
-      },
-      {
-        id: "hum-01", nodeType: "humidity-sensor", label: "Humidity Sensor",
-        capabilities: [{ type: "humidity_sensor", label: "Humidity", unit: "%" }],
-        metadata: { model: "SHT31", accuracy: "±2%" },
       },
       {
         id: "flow-01", nodeType: "airflow-sensor", label: "Airflow Sensor",
@@ -119,19 +129,19 @@ export function useTopology(canvasWidth = 640, canvasHeight = 480) {
         metadata: { channels: 8, maxCurrent: "10A" },
       },
       {
-        id: "vent-01", nodeType: "ventilation-controller", label: "Ventilation Ctrl",
+        id: "vent-01", nodeType: "ventilation-controller", label: "Ventilation Fan",
         capabilities: [{ type: "fan_actuator", label: "Fan Actuator", unit: "" }],
         metadata: { model: "FAN-01", speed: "0-100%" },
       },
       {
-        id: "hum-act-01", nodeType: "humidity-actuator", label: "Humidity Actuator",
+        id: "hum-act-01", nodeType: "humidity-actuator", label: "Humidifier",
         capabilities: [{ type: "humidifier_actuator", label: "Misting System", unit: "" }],
         metadata: { model: "HUM-01", capacity: "500ml/h" },
       },
       {
         id: "thermal-01", nodeType: "thermal-regulator", label: "Thermal Regulator",
         capabilities: [{ type: "thermal", label: "Thermal Control", unit: "°C" }],
-        metadata: { range: "18-32°C", precision: "±0.2°C" },
+        metadata: { range: "18-32°C", precision: "\u00b10.2\u00b0C" },
       },
 
       // ── INFRASTRUCTURE ──

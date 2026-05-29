@@ -788,3 +788,9 @@ button, a, [role="button"] {
   0% { opacity: 0.6; transform: scale(1); }
   100% { opacity: 0; transform: scale(3); }
 }
+
+/* Scanline sweep for timeline chart */
+@keyframes scanline {
+  0% { transform: translateY(-100%); }
+  100% { transform: translateY(240px); }
+}

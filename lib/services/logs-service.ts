@@ -1,6 +1,6 @@
 "use client"
 
-import { createClient } from "@/lib/supabase/client"
+import { createClient, isSupabaseWritesEnabled, disableSupabaseWrites } from "@/lib/supabase/client"
 
 const DEPLOYMENT_ID = "MYK-CH-001"
 const LOCAL_KEY = "mykosphare_service_logs"
@@ -19,12 +19,17 @@ async function getClient() {
 
 export async function insertLog(message: string, category: string | null = null): Promise<boolean> {
   try {
+    if (!isSupabaseWritesEnabled()) return false
     const supabase = await getClient()
     const { error } = await supabase.from("logs").insert({
       message,
       category,
       deployment_id: DEPLOYMENT_ID,
     })
+    if (error && (error as any)?.status >= 401 && (error as any)?.status <= 403) {
+      disableSupabaseWrites()
+      return false
+    }
     return !error
   } catch {
     return false

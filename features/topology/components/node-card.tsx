@@ -1,6 +1,6 @@
 "use client"
 
-import { X, Activity, Clock, Heart, AlertTriangle, TrendingUp, TrendingDown, Minus, Gauge, Siren, Wrench } from "lucide-react"
+import { X, Activity, Clock, Heart, AlertTriangle, TrendingUp, TrendingDown, Minus, Gauge, Siren, Wrench, Thermometer, Droplets, Wind } from "lucide-react"
 import type { TopologyNode } from "@/lib/topology/types"
 import type { AugmentedNode } from "@/lib/unified/types"
 import { getStatusVisual } from "@/lib/topology/status"
@@ -41,10 +41,16 @@ export function NodeCard({
   node,
   augmented,
   onClose,
+  temp,
+  hum,
+  co2,
 }: {
   node: TopologyNode
   augmented?: AugmentedNode | null
   onClose: () => void
+  temp?: number
+  hum?: number
+  co2?: number
 }) {
   const vis = getStatusVisual(node.status)
   const alertMeta = augmented?.alertSeverity ? ALERT_META[augmented.alertSeverity] : null
@@ -98,6 +104,51 @@ export function NodeCard({
           <span className="text-[10px] text-muted-foreground/60">Sync State</span>
           <span className="font-semibold tabular-nums text-foreground">{node.syncState ?? "—"}</span>
         </div>
+        {node.nodeType === "chamber" && temp !== undefined && (
+          <div className="rounded-md bg-muted/20 px-2 py-1.5">
+            <span className="text-[9px] text-muted-foreground/50 block mb-1">Environmental Readings</span>
+            <div className="grid grid-cols-3 gap-1">
+              <div className="rounded bg-muted/30 px-1.5 py-1">
+                <span className="text-[8px] text-muted-foreground/50 block">Temp</span>
+                <span className="text-xs font-bold tabular-nums text-emerald-500">{temp > 0 ? `${temp.toFixed(1)}\u00b0C` : "--"}</span>
+              </div>
+              <div className="rounded bg-muted/30 px-1.5 py-1">
+                <span className="text-[8px] text-muted-foreground/50 block">Humidity</span>
+                <span className="text-xs font-bold tabular-nums text-blue-500">{hum !== undefined && hum > 0 ? `${hum.toFixed(1)}%` : "--"}</span>
+              </div>
+              <div className="rounded bg-muted/30 px-1.5 py-1">
+                <span className="text-[8px] text-muted-foreground/50 block">CO2</span>
+                <span className="text-xs font-bold tabular-nums text-muted-foreground">{co2 !== undefined && co2 > 0 ? `${co2}` : "--"}<span className="text-[8px] font-normal">ppm</span></span>
+              </div>
+            </div>
+          </div>
+        )}
+        {node.nodeType === "esp32" && (
+          <div className="rounded-md bg-muted/20 px-2 py-1.5">
+            <span className="text-[9px] text-muted-foreground/50 block mb-1">Gateway Status</span>
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] text-muted-foreground/60">Connected Sensors</span>
+              <span className="text-xs font-bold tabular-nums text-blue-500">3</span>
+            </div>
+            <div className="flex items-center justify-between mt-0.5">
+              <span className="text-[10px] text-muted-foreground/60">Latency</span>
+              <span className="text-xs font-bold tabular-nums text-cyan-500">{node.responseLatency ?? 8}ms</span>
+            </div>
+          </div>
+        )}
+        {(node.nodeType === "relay" || node.nodeType === "relay-controller" || node.nodeType === "ventilation-controller" || node.nodeType === "humidity-actuator") && (
+          <div className="rounded-md bg-muted/20 px-2 py-1.5">
+            <span className="text-[9px] text-muted-foreground/50 block mb-1">Actuator Status</span>
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] text-muted-foreground/60">Mode</span>
+              <span className="text-xs font-bold tabular-nums text-foreground">Auto</span>
+            </div>
+            <div className="flex items-center justify-between mt-0.5">
+              <span className="text-[10px] text-muted-foreground/60">Power</span>
+              <span className="text-xs font-bold tabular-nums text-amber-500">12W</span>
+            </div>
+          </div>
+        )}
         <div className="rounded-md bg-muted/30 px-2 py-1.5 flex items-center justify-between">
           <span className="text-[10px] text-muted-foreground/60">Packet Integrity</span>
           <span className="font-semibold tabular-nums text-foreground">{node.packetIntegrity ?? "—"}%</span>

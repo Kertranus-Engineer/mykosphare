@@ -1,5 +1,24 @@
 import { createBrowserClient } from "@supabase/ssr"
 
+let supabaseWritesEnabled = true
+let supabaseDisabledLogged = false
+
+export function isSupabaseWritesEnabled(): boolean {
+  return supabaseWritesEnabled
+}
+
+export function disableSupabaseWrites(): void {
+  if (supabaseWritesEnabled) {
+    supabaseWritesEnabled = false
+    if (!supabaseDisabledLogged) {
+      supabaseDisabledLogged = true
+      if (process.env.NODE_ENV === "development") {
+        console.warn("[SUPABASE] Remote writes disabled. Falling back to local simulation.")
+      }
+    }
+  }
+}
+
 function getSupabaseConfig() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL ?? ""
   const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? ""

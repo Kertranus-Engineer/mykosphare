@@ -36,10 +36,14 @@ function executiveSummaryLabel(state: string): string {
 
 function executiveSummaryText(state: string, temp: number, hum: number, online: boolean): string {
   if (!online) return "Telemetry stream is currently offline. Simulated data is being displayed for demonstration purposes."
-  if (state === "CRITICAL" || state === "ESCALATION") return `Temperature at ${temp.toFixed(1)}°C and humidity at ${hum.toFixed(1)}% have exceeded safe thresholds. Immediate attention recommended.`
-  if (state === "WARNING") return `Temperature at ${temp.toFixed(1)}°C and humidity at ${hum.toFixed(1)}% are approaching threshold limits. Active monitoring in progress.`
-  if (state === "PRE_WARNING" || state === "OPTIMIZING") return `Minor parameter drift detected. Temperature at ${temp.toFixed(1)}°C, humidity at ${hum.toFixed(1)}%. System is compensating automatically.`
-  return `Temperature and humidity remain within expected operational parameters. Telemetry is active and no critical alerts are detected.`
+  const tStr = temp > 0 ? `${temp.toFixed(1)}°C` : "--"
+  const hStr = hum > 0 ? `${hum.toFixed(1)}%` : "--"
+  if (state === "CRITICAL" || state === "ESCALATION") return `Temperature at ${tStr} and humidity at ${hStr} have exceeded safe thresholds. Immediate attention recommended.`
+  if (state === "WARNING") return `Temperature at ${tStr} and humidity at ${hStr} are approaching threshold limits. Active monitoring in progress.`
+  if (state === "PRE_WARNING") return `Minor parameter drift detected. Temperature at ${tStr}, humidity at ${hStr}. System is compensating automatically.`
+  if (state === "RECOVERY") return `Environmental parameters stabilizing toward equilibrium. Temperature at ${tStr}, humidity at ${hStr}. Recovery cycle active.`
+  if (state === "OPTIMIZING") return `Fine-tuning environmental parameters. Temperature at ${tStr}, humidity at ${hStr}. Minor adjustments underway.`
+  return `Environmental conditions remain within operational thresholds. Temperature at ${tStr}, humidity at ${hStr}. Telemetry confidence remains high and no corrective actions are required.`
 }
 
 export function DashboardGrid() {
@@ -49,10 +53,7 @@ export function DashboardGrid() {
   const mem = useOperationalMemory()
   const [initDone, setInitDone] = useState(false)
 
-  useEffect(() => {
-    const t = setTimeout(() => setInitDone(true), 50)
-    return () => clearTimeout(t)
-  }, [])
+  useEffect(() => { const t = setTimeout(() => setInitDone(true), 50); return () => clearTimeout(t) }, [])
 
   const tempVal = tel.temperature.value
   const humVal = tel.humidity.value
@@ -69,100 +70,71 @@ export function DashboardGrid() {
     : rtTel.stale && rtTel.source === "live" ? "TELEMETRY STALE"
     : rtTel.source === "simulated" ? "SIMULATION ACTIVE"
     : rtTel.degraded ? "TELEMETRY DEGRADED"
-    : rtTel.online ? "ESP32 ONLINE"
-    : "DEVICE OFFLINE"
+    : rtTel.online ? "ESP32 ONLINE" : "DEVICE OFFLINE"
 
   const statusColor = booting ? "bg-blue-500 animate-pulse"
     : rtTel.source === "simulated" ? "bg-amber-500 animate-pulse"
     : rtTel.degraded ? "bg-amber-500 animate-pulse"
-    : rtTel.online ? "bg-emerald-500 animate-pulse"
-    : "bg-muted-foreground/30"
+    : rtTel.online ? "bg-emerald-500 animate-pulse" : "bg-muted-foreground/30"
 
   const isDev = typeof process !== "undefined" && process.env.NODE_ENV === "development"
 
   return (
     <div className={`flex flex-col gap-3 p-2 ${initDone ? "dashboard-init" : "dashboard-init-hidden"}`}>
-      {/* ── Header ────────────────────────────── */}
-      <div className="flex flex-col gap-1 py-2">
-        <h1 className="text-lg font-semibold tracking-tight text-foreground">Operational Overview</h1>
-        <p className="text-sm text-muted-foreground/70">Environmental intelligence platform powered by affordable IoT hardware, cloud analytics and real-time monitoring.</p>
-        <div className="flex items-center gap-1.5 flex-wrap mt-1">
-          {["ESP32 Architecture", "Real-Time Telemetry", "Cloud Analytics", "Low-Cost Deployment"].map((badge) => (
-            <span key={badge} className="text-[9px] font-medium text-muted-foreground/40 bg-muted/30 border border-border/20 rounded px-1.5 py-0.5 tracking-wide">{badge}</span>
-          ))}
+      {/* ── HEADER ────────────── minimal ──────── */}
+      <div className="flex items-center justify-between">
+        <h1 className="text-sm font-semibold tracking-tight text-foreground">Operational Overview</h1>
+        <div className="flex items-center gap-1 rounded-md border border-border/30 bg-muted/20 px-1.5 py-0.5">
+          {rtTel.online ? <Wifi className="size-2.5 text-emerald-500/60" /> : <WifiOff className="size-2.5 text-muted-foreground/40" />}
+          <span className="text-[8px] font-medium text-muted-foreground/50">{statusText}</span>
         </div>
+      </div>
+
+      {/* ── Compact Status Bar ─────────────────── */}
+      <div className="flex items-center gap-2 flex-wrap text-[9px] text-muted-foreground/40">
+        <div className={cn("size-1.5 rounded-full animate-pulse", rtTel.source === "live" ? "bg-emerald-500" : "bg-amber-500")} />
+        <span className={cn("text-[9px] font-medium", rtTel.source === "live" ? "text-emerald-500" : "text-amber-500")}>{rtTel.source === "live" ? "LIVE DEVICE" : "SIMULATION ACTIVE"}</span>
+        <span className="text-muted-foreground/20">|</span>
+        <span>3 Zones</span>
+        <span className="text-muted-foreground/20">·</span>
+        <span>3 Sensors</span>
+        <span className="text-muted-foreground/20">·</span>
+        <span>2 Actuators</span>
+        <span className="text-muted-foreground/20">|</span>
+        <span>Cloud <span className="font-medium text-emerald-500">Ready</span></span>
       </div>
 
       {isDev && <TelemetryDebugPanel />}
 
-      {/* ── Status Bar ────────────────────────── */}
-      <div className="flex items-center justify-between">
-        {isDev && <AutoDemo />}
-        <div className="flex items-center gap-2 ml-auto">
-          {rtTel.source === "simulated" && <div className="flex items-center gap-1 rounded-md border border-amber-500/30 bg-amber-500/10 px-2.5 py-1"><FlaskConical className="size-3 text-amber-500" /><span className="text-[10px] font-medium text-amber-500 tracking-wide">SIMULATION</span></div>}
-          {rtTel.stale && <div className="flex items-center gap-1 rounded-md border border-amber-500/20 bg-amber-500/5 px-2.5 py-1"><Clock className="size-3 text-amber-500/60" /><span className="text-[10px] font-medium text-amber-500/60 tracking-wide">STALE DATA</span></div>}
-          <div className="flex items-center gap-1.5 rounded-md border border-border/50 bg-muted/30 px-2.5 py-1">
-            <div className={cn("size-1.5 rounded-full transition-all duration-500", statusColor)} />
-            {rtTel.online ? <Wifi className={cn("size-3", booting ? "text-blue-500/60" : "text-emerald-500/60")} /> : <WifiOff className="size-3 text-muted-foreground/30" />}
-            <span className="text-[10px] font-medium tracking-wide text-muted-foreground/60">{statusText}</span>
-          </div>
-        </div>
+      {/* ═══ ROW 1: TELEMETRY — 40% ─────────────── */}
+      <div className="grid grid-cols-2 gap-3">
+        <MetricCard compact icon={Thermometer} label="Temperature" value={tempVal} unit="°C" decimals={1} trend={tel.temperature.trend} delta={tel.temperature.delta} critical={tempCritical} warning={tempWarning} statusLabel={tempVal > 0 && tempVal < 27 ? "Ideal Range" : tempVal > 27 ? "Elevated" : "Nominal"} statusColor={tempVal > 27 ? "text-amber-500" : "text-emerald-500"} />
+        <MetricCard compact icon={Droplets} label="Humidity" value={humVal} unit="%" decimals={1} trend={tel.humidity.trend} delta={tel.humidity.delta} critical={humCritical} warning={humWarning} statusLabel={humVal > 0 && humVal >= 55 && humVal <= 75 ? "Within Target Range" : humVal > 75 ? "High" : humVal < 40 ? "Low" : "Monitoring"} statusColor={humVal > 75 || humVal < 40 ? "text-amber-500" : "text-emerald-500"} />
+        <MetricCard compact icon={Wind} label="CO₂" value={co2Val} unit=" ppm" decimals={0} trend={tel.co2.trend} delta={tel.co2.delta} statusLabel={co2Val > 0 && co2Val < 450 ? "Air Quality: Excellent" : co2Val < 600 ? "Air Quality: Good" : "Elevated"} statusColor="text-emerald-500" />
+        <MetricCard compact icon={Zap} label="Energy" value={tel.energyUsage.value} unit=" kWh" decimals={1} trend={tel.energyUsage.trend} delta={tel.energyUsage.delta} statusLabel={tel.energyUsage.value > 0 && tel.energyUsage.value < 1 ? "Low Consumption" : "Efficient Operation"} statusColor="text-emerald-500" />
       </div>
 
-      {/* ── Live System Status ────────────────── */}
-      <Card size="sm" className="transition-all duration-300 hover:scale-[1.01] hover:ring-foreground/20 border-emerald-500/15 shadow-[0_0_12px_-4px] shadow-emerald-500/5">
-        <CardContent className="flex flex-col gap-1 py-2">
-          <div className="flex items-center gap-4 flex-wrap">
-            <span className="text-[10px] font-semibold tracking-[0.15em] text-emerald-500/60 uppercase shrink-0">Live System Status</span>
-            <div className="flex items-center gap-3 flex-wrap">
-              <div className="flex items-center gap-1"><div className={cn("size-1.5 rounded-full animate-pulse", rtTel.source === "live" ? "bg-emerald-500" : "bg-amber-500")} /><span className="text-[10px] text-muted-foreground/50">Hardware Source:</span><span className={cn("text-[10px] font-semibold", rtTel.source === "live" ? "text-emerald-500" : "text-amber-500")}>{rtTel.source === "live" ? "Live Device" : "Simulation"}</span></div>
-              <span className="text-muted-foreground/15">|</span>
-              <div className="flex items-center gap-1"><div className="size-1.5 rounded-full bg-emerald-500 animate-pulse" /><span className="text-[10px] text-muted-foreground/50">Telemetry:</span><span className="text-[10px] font-semibold text-emerald-500">ACTIVE</span></div>
-              <span className="text-muted-foreground/15">|</span>
-              <div className="flex items-center gap-1"><div className="size-1.5 rounded-full bg-emerald-500 animate-pulse" /><span className="text-[10px] text-muted-foreground/50">Cloud Link:</span><span className="text-[10px] font-semibold text-emerald-500">ACTIVE</span></div>
-            </div>
-          </div>
-          <div className="flex items-center gap-2 text-[10px]">
-            <span className="text-muted-foreground/40">Current Mode:</span>
-            <span className={cn("font-semibold", rtTel.source === "live" ? "text-emerald-500" : "text-amber-500")}>{rtTel.source === "live" ? "Live ESP32 Telemetry" : "Simulation Demonstration"}</span>
-          </div>
-          <div className="flex items-center gap-2 flex-wrap">
-            <span className="text-[9px] text-muted-foreground/40">Platform Version: 1.0</span>
-            <span className="text-muted-foreground/15">|</span>
-            <span className="text-[9px] font-medium text-cyan-500/60 border border-cyan-500/20 bg-cyan-500/5 rounded px-1.5 py-0.5">Challenge Build</span>
-          </div>
+      {/* ═══ ROW 2: MISSION STATUS — 25% ────────── */}
+      <MissionStatus />
+
+      {/* ═══ ROW 3: LIVE STATUS — compressed ───── */}
+      <Card size="sm" className="border border-border/30 bg-muted/10">
+        <CardContent className="flex items-center gap-3 flex-wrap py-1.5 text-[9px] text-muted-foreground/50">
+          <span className="font-semibold tracking-[0.1em] text-emerald-500/50 uppercase">System Status</span>
+          <span className="text-muted-foreground/15">|</span>
+          <span>Hardware: <span className={cn("font-medium", rtTel.source === "live" ? "text-emerald-500" : "text-amber-500")}>{rtTel.source === "live" ? "Live Device" : "Simulation"}</span></span>
+          <span className="text-muted-foreground/15">|</span>
+          <span>Telemetry: <span className="font-medium text-emerald-500">Active</span></span>
+          <span className="text-muted-foreground/15">|</span>
+          <span>Cloud: <span className="font-medium text-emerald-500">Connected</span></span>
+          <span className="text-muted-foreground/15">|</span>
+          <span>Mode: <span className={cn("font-medium", rtTel.source === "live" ? "text-emerald-500" : "text-amber-500")}>{rtTel.source === "live" ? "Live ESP32" : "Simulation"}</span></span>
+          <span className="text-muted-foreground/15">|</span>
+          <span>Version: 1.0</span>
         </CardContent>
       </Card>
 
-      {/* ── KPI Strip ─────────────────────────── */}
-      <div className="flex items-center gap-1.5 flex-wrap">
-        {[
-          { icon: Thermometer, label: "Temp", value: hasData ? `${tempVal.toFixed(1)}°C` : "--", color: tempCritical ? "text-red-500" : tempWarning ? "text-amber-500" : "text-emerald-500" },
-          { icon: Droplets, label: "Hum", value: hasData ? `${humVal.toFixed(1)}%` : "--", color: humCritical ? "text-red-500" : humWarning ? "text-amber-500" : "text-emerald-500" },
-          { icon: Wind, label: "CO₂", value: hasData ? `${co2Val}` : "--", color: "text-blue-500" },
-          { icon: Heart, label: "Health", value: `${mem.facilityHealth}%`, color: mem.facilityHealth >= 85 ? "text-emerald-500" : mem.facilityHealth >= 60 ? "text-amber-500" : "text-red-500" },
-          { icon: DollarSign, label: "Cost", value: "~$89", color: "text-violet-500" },
-        ].map((kpi, i) => (
-          <div key={kpi.label} className="flex items-center gap-1.5 rounded-md border border-border/30 bg-muted/20 px-2.5 py-1 opacity-0 animate-[fade-in-up_0.4s_ease-out_forwards]" style={{ animationDelay: `${i * 40}ms` }}>
-            <kpi.icon className={cn("size-3", kpi.color)} />
-            <span className="text-[10px] font-semibold tabular-nums text-foreground/70">{kpi.value}</span>
-            <span className="text-[9px] text-muted-foreground/40">{kpi.label}</span>
-          </div>
-        ))}
-      </div>
-
-      {/* ── Mission Status ────────────────────── */}
-      <MissionStatus />
-
-      {/* ── Compact Metrics 2x2 ────────────────── */}
-      <div className="grid grid-cols-2 gap-3">
-        <MetricCard compact icon={Thermometer} label="Temperature" value={tempVal} unit="°C" decimals={1} trend={tel.temperature.trend} delta={tel.temperature.delta} critical={tempCritical} warning={tempWarning} />
-        <MetricCard compact icon={Droplets} label="Humidity" value={humVal} unit="%" decimals={1} trend={tel.humidity.trend} delta={tel.humidity.delta} critical={humCritical} warning={humWarning} />
-        <MetricCard compact icon={Wind} label="CO₂" value={co2Val} unit=" ppm" decimals={0} trend={tel.co2.trend} delta={tel.co2.delta} />
-        <MetricCard compact icon={Zap} label="Energy" value={tel.energyUsage.value} unit=" kWh" decimals={1} trend={tel.energyUsage.trend} delta={tel.energyUsage.delta} />
-      </div>
-
-      {/* ── AI Analysis + Executive Summary ───── */}
+      {/* ═══ ROW 4: AI + EXECUTIVE SUMMARY — 20% ── */}
       <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
         <div className="section-tint-intelligence rounded-lg"><AiAnalysisPanel /></div>
         <Card size="sm" className="transition-all duration-300 hover:scale-[1.01] hover:ring-foreground/20 border-blue-500/10 shadow-[0_0_12px_-4px] shadow-blue-500/5">
@@ -174,49 +146,37 @@ export function DashboardGrid() {
                 {executiveSummaryLabel(env.state)}
               </span>
             </div>
-            <p className="text-xs leading-relaxed text-foreground/55">
-              {executiveSummaryText(env.state, tempVal, humVal, rtTel.online)}
-            </p>
+            <p className="text-xs leading-relaxed text-foreground/55">{executiveSummaryText(env.state, tempVal, humVal, rtTel.online)}</p>
           </CardContent>
         </Card>
       </div>
 
-      {/* ── Explore Platform ──────────────────── */}
+      {/* ═══ ROW 5: CONTROLS + EXPLORE ──────────── */}
+      {isDev && <AutoDemo />}
       <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
         {[
-          { label: "Architecture", desc: "Understand how the platform works.", href: "/dashboard/architecture", color: "text-blue-500", bg: "bg-blue-500/5", border: "border-blue-500/15" },
-          { label: "Prototype", desc: "Inspect the hardware implementation.", href: "/dashboard/prototype", color: "text-amber-500", bg: "bg-amber-500/5", border: "border-amber-500/15" },
-          { label: "Applications", desc: "Discover deployment opportunities.", href: "/dashboard/applications", color: "text-violet-500", bg: "bg-violet-500/5", border: "border-violet-500/15" },
-        ].map((link, i) => (
-          <a key={link.label} href={link.href} className={cn("flex items-center gap-2 rounded-lg border px-3 py-2 transition-all duration-200 hover:scale-[1.01] hover:ring-foreground/10", link.bg, link.border)} style={{ animationDelay: `${i * 60}ms` }}>
+          { label: "Architecture", desc: "How the platform works.", href: "/dashboard/architecture", color: "text-blue-500" },
+          { label: "Prototype", desc: "Hardware implementation.", href: "/dashboard/prototype", color: "text-amber-500" },
+          { label: "Applications", desc: "Deployment opportunities.", href: "/dashboard/applications", color: "text-violet-500" },
+        ].map((link) => (
+          <a key={link.label} href={link.href} className="flex items-center gap-2 rounded-lg border border-border/20 bg-muted/10 px-2.5 py-2 transition-all hover:scale-[1.01]">
             <div className={cn("size-1.5 rounded-full", link.color.replace("text-", "bg-"))} />
-            <div className="flex flex-col min-w-0"><span className={cn("text-[11px] font-semibold tracking-tight", link.color)}>{link.label}</span><span className="text-[9px] text-muted-foreground/50 leading-tight">{link.desc}</span></div>
-            <span className="text-[9px] text-muted-foreground/25 ml-auto shrink-0">→</span>
+            <div className="flex flex-col min-w-0"><span className={cn("text-[10px] font-semibold", link.color)}>{link.label}</span><span className="text-[8px] text-muted-foreground/40">{link.desc}</span></div>
           </a>
         ))}
       </div>
 
       {/* ── Why MYKOSPHARE? ───────────────────── */}
-      <Card size="sm" className={cn("transition-all duration-300 relative overflow-hidden hover:scale-[1.01] hover:ring-foreground/20 border-emerald-500/20 shadow-[0_0_24px_-8px] shadow-emerald-500/15")}>
+      <Card size="sm" className="transition-all duration-300 relative overflow-hidden hover:scale-[1.01] hover:ring-foreground/20 border-emerald-500/20 shadow-[0_0_24px_-8px] shadow-emerald-500/15">
         <div className="pointer-events-none absolute inset-0 opacity-[0.04]" style={{ background: "radial-gradient(ellipse 80% 50% at 50% 50%, rgba(16,185,129,0.5), transparent 70%)" }} />
         <CardContent className="flex items-center gap-4 relative z-10 py-3">
-          <div className="relative flex size-10 shrink-0 items-center justify-center rounded-xl bg-emerald-500/10 border border-emerald-500/20">
-            <Sprout className="size-5 text-emerald-500" />
-            <div className="absolute -right-0.5 -top-0.5"><div className="size-2 rounded-full bg-emerald-500 animate-pulse" /></div>
-          </div>
+          <div className="relative flex size-10 shrink-0 items-center justify-center rounded-xl bg-emerald-500/10 border border-emerald-500/20"><Sprout className="size-5 text-emerald-500" /><div className="absolute -right-0.5 -top-0.5"><div className="size-2 rounded-full bg-emerald-500 animate-pulse" /></div></div>
           <div className="flex flex-col min-w-0 flex-1">
             <span className="text-sm font-semibold tracking-tight text-emerald-400">Why MYKOSPHARE?</span>
-            <p className="text-xs leading-relaxed text-foreground/50 mt-0.5">
-              Traditional environmental monitoring platforms often require expensive proprietary hardware and complex infrastructure.
-            </p>
-            <p className="text-xs leading-relaxed text-foreground/50 mt-1">
-              MYKOSPHARE demonstrates how affordable ESP32-based hardware, cloud telemetry and modern web technologies can provide real-time environmental intelligence at a fraction of traditional deployment costs.
-            </p>
+            <p className="text-xs leading-relaxed text-foreground/50 mt-0.5">Traditional environmental monitoring platforms often require expensive proprietary hardware and complex infrastructure.</p>
+            <p className="text-xs leading-relaxed text-foreground/50 mt-1">MYKOSPHARE demonstrates how affordable ESP32-based hardware, cloud telemetry and modern web technologies can provide real-time environmental intelligence at a fraction of traditional deployment costs.</p>
           </div>
-          <div className="hidden sm:flex shrink-0 flex-col items-center gap-1 rounded-lg bg-emerald-500/5 border border-emerald-500/15 px-4 py-2 ml-auto">
-            <span className="text-[9px] text-emerald-500/50 uppercase tracking-wider font-medium">Prototype Cost</span>
-            <span className="text-sm font-bold text-emerald-500 tabular-nums">&lt; $100 USD</span>
-          </div>
+          <div className="hidden sm:flex shrink-0 flex-col items-center gap-1 rounded-lg bg-emerald-500/5 border border-emerald-500/15 px-4 py-2 ml-auto"><span className="text-[9px] text-emerald-500/50 uppercase tracking-wider font-medium">Prototype Cost</span><span className="text-sm font-bold text-emerald-500 tabular-nums">&lt; $100 USD</span></div>
         </CardContent>
       </Card>
 
@@ -235,32 +195,28 @@ export function DashboardGrid() {
       </div>
 
       {/* ── Low Cost Deployment ───────────────── */}
-      <Card size="sm" className="transition-all duration-300 relative overflow-hidden hover:scale-[1.01] hover:ring-foreground/20 border-emerald-500/15 shadow-[0_0_16px_-4px] shadow-emerald-500/5">
-        <CardContent className="flex items-center gap-3 relative z-10 py-2.5">
-          <div className="relative flex size-8 shrink-0 items-center justify-center rounded-lg bg-emerald-500/10 border border-emerald-500/20"><Sprout className="size-4 text-emerald-500" /><div className="absolute -right-0.5 -top-0.5"><div className="size-1.5 rounded-full bg-emerald-500 animate-pulse" /></div></div>
+      <Card size="sm" className="transition-all duration-300 hover:scale-[1.01] border-emerald-500/15 shadow-[0_0_16px_-4px] shadow-emerald-500/5">
+        <CardContent className="flex items-center gap-3 py-2.5">
+          <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-emerald-500/10 border border-emerald-500/20"><Sprout className="size-4 text-emerald-500" /><div className="absolute -right-0.5 -top-0.5"><div className="size-1.5 rounded-full bg-emerald-500 animate-pulse" /></div></div>
           <div className="flex flex-col min-w-0 flex-1"><span className="text-xs font-semibold tracking-tight text-emerald-400">Low Cost Deployment</span><p className="text-[11px] leading-relaxed text-foreground/50">Traditional monitoring solutions can cost thousands. <span className="text-foreground/65 font-medium">MYKOSPHARE</span> uses affordable ESP32-based hardware and open technologies to drastically reduce implementation costs.</p></div>
           <div className="hidden sm:flex shrink-0 items-center gap-2 rounded-lg bg-emerald-500/5 border border-emerald-500/10 px-3 py-1.5"><span className="text-xs font-semibold text-emerald-500 tabular-nums">~$89</span><span className="text-[9px] text-emerald-500/40 font-medium uppercase tracking-wider">total</span></div>
         </CardContent>
       </Card>
 
+      {/* ── Project Info ──────────────────────── */}
+      <div className="flex items-center gap-2"><div className="h-px flex-1 bg-gradient-to-r from-transparent via-muted-foreground/15 to-transparent" /><span className="text-[9px] font-mono font-medium tracking-[0.2em] text-muted-foreground/40 uppercase">Project Information</span><div className="h-px flex-1 bg-gradient-to-r from-transparent via-muted-foreground/15 to-transparent" /></div>
+
       <QuickStart />
 
-      {/* ── Project Info ──────────────────────── */}
-      <div className="flex items-center gap-2">
-        <div className="h-px flex-1 bg-gradient-to-r from-transparent via-muted-foreground/15 to-transparent" />
-        <span className="text-[9px] font-mono font-medium tracking-[0.2em] text-muted-foreground/40 uppercase">Project Information</span>
-        <div className="h-px flex-1 bg-gradient-to-r from-transparent via-muted-foreground/15 to-transparent" />
-      </div>
-
       <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
-        <Card size="sm" className="transition-all duration-300 hover:scale-[1.01] hover:ring-foreground/20 border-blue-500/10">
-          <CardContent className="flex items-start gap-3 relative z-10 py-2.5">
+        <Card size="sm" className="transition-all duration-300 hover:scale-[1.01] border-blue-500/10">
+          <CardContent className="flex items-start gap-3 py-2.5">
             <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-blue-500/10 border border-blue-500/20 mt-0.5"><Target className="size-4 text-blue-500" /></div>
             <div className="flex flex-col min-w-0"><span className="text-xs font-semibold tracking-tight text-blue-400">System Purpose</span><p className="text-[11px] leading-relaxed text-foreground/50">Environmental intelligence and monitoring platform built around low-cost IoT infrastructure.</p></div>
           </CardContent>
         </Card>
-        <Card size="sm" className="transition-all duration-300 hover:scale-[1.01] hover:ring-foreground/20 border-emerald-500/10">
-          <CardContent className="flex flex-col gap-2 relative z-10 py-2.5">
+        <Card size="sm" className="transition-all duration-300 hover:scale-[1.01] border-emerald-500/10">
+          <CardContent className="flex flex-col gap-2 py-2.5">
             <span className="text-xs font-semibold tracking-tight text-emerald-400">Deployment Readiness</span>
             <div className="flex items-center gap-1.5">
               {[{ label: "Prototype", done: true },{ label: "Testing", done: true },{ label: "Pilot", done: false, active: true },{ label: "Production", done: false }].map((stage, idx, arr) => (
@@ -278,9 +234,9 @@ export function DashboardGrid() {
       </div>
 
       {/* ── Why MYKOSPHARE Matters ────────────── */}
-      <Card size="sm" className="transition-all duration-300 relative overflow-hidden hover:scale-[1.01] hover:ring-foreground/20 border-cyan-500/15 shadow-[0_0_20px_-6px] shadow-cyan-500/5">
+      <Card size="sm" className="transition-all duration-300 relative overflow-hidden hover:scale-[1.01] border-cyan-500/15 shadow-[0_0_20px_-6px] shadow-cyan-500/5">
         <div className="pointer-events-none absolute inset-0 opacity-[0.03]" style={{ background: "radial-gradient(ellipse 80% 50% at 50% 50%, rgba(6,182,212,0.4), transparent 70%)" }} />
-        <CardContent className="flex items-start gap-4 relative z-10 py-3">
+        <CardContent className="flex items-start gap-4 py-3">
           <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-cyan-500/10 border border-cyan-500/20"><Sprout className="size-4 text-cyan-500" /></div>
           <div className="flex flex-col gap-1 min-w-0 flex-1"><span className="text-xs font-semibold tracking-tight text-cyan-400">Why MYKOSPHARE Matters</span><p className="text-xs leading-relaxed text-foreground/55">Environmental monitoring should be accessible. By combining low-cost hardware, cloud analytics and open technologies, MYKOSPHARE reduces barriers to deployment while maintaining professional monitoring capabilities.</p></div>
         </CardContent>

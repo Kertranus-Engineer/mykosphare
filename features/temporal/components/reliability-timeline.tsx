@@ -35,7 +35,7 @@ function MetricRow({ b }: { b: BehaviorMetric }) {
         </div>
         <div className="flex items-center justify-between text-[10px]">
           <span className="text-muted-foreground/60">Uptime</span>
-          <span className={cn("tabular-nums font-medium", TREND_COLORS[b.uptimeTrend])}>{b.uptimeScore}s</span>
+          <span className={cn("tabular-nums font-medium", TREND_COLORS[b.uptimeTrend])}>{b.uptimeScore >= 86400 ? `${(b.uptimeScore / 86400).toFixed(0)}d` : b.uptimeScore >= 3600 ? `${(b.uptimeScore / 3600).toFixed(0)}h` : `${b.uptimeScore}s`}</span>
         </div>
         <div className="flex items-center justify-between text-[10px]">
           <span className="text-muted-foreground/60">Alert Freq</span>

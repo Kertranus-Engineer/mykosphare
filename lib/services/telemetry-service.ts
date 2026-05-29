@@ -1,6 +1,6 @@
 "use client"
 
-import { createClient } from "@/lib/supabase/client"
+import { createClient, isSupabaseWritesEnabled, disableSupabaseWrites } from "@/lib/supabase/client"
 
 const DEPLOYMENT_ID = "MYK-CH-001"
 const LOCAL_KEY = "mykosphare_telemetry_buffer"
@@ -82,8 +82,13 @@ export async function insertTelemetry(
   saveLocalBuffer([localEntry, ...buf])
 
   try {
+    if (!isSupabaseWritesEnabled()) return false
     const supabase = getClient()
     const { error } = await supabase.from("telemetry").insert(row)
+    if (error && (error as any)?.status >= 401 && (error as any)?.status <= 403) {
+      disableSupabaseWrites()
+      return false
+    }
     return !error
   } catch {
     return false
@@ -99,8 +104,13 @@ export async function insertTelemetryBatch(
     deployment_id: DEPLOYMENT_ID,
   }))
   try {
+    if (!isSupabaseWritesEnabled()) return false
     const supabase = getClient()
     const { error } = await supabase.from("telemetry").insert(inserts)
+    if (error && (error as any)?.status >= 401 && (error as any)?.status <= 403) {
+      disableSupabaseWrites()
+      return false
+    }
     return !error
   } catch {
     return false
