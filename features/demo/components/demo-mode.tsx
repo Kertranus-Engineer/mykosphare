@@ -3,6 +3,7 @@
 import { useState, useCallback, useRef, useEffect } from "react"
 import { Play, Square, Activity, RotateCcw } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { useLocale } from "@/lib/locales/locale-context"
 import { setScenario, clearScenarioOverride, resetScenarios } from "@/mock/scenarios"
 import type { ScenarioType } from "@/mock/scenarios"
 
@@ -18,6 +19,7 @@ const DEMO_PHASES: Array<{ label: string; scenario?: ScenarioType; durationMs?: 
 ]
 
 export function DemoMode() {
+  const { t } = useLocale()
   const [running, setRunning] = useState(false)
   const [phase, setPhase] = useState<string | null>(null)
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
@@ -87,9 +89,11 @@ export function DemoMode() {
           )}
           <div className="flex flex-col">
             <span className="text-[10px] font-medium tracking-wider text-amber-500">
-              DEMO MODE
+              {t("demo.running")}
             </span>
-            <span className="text-[11px] text-muted-foreground/70">{phase}</span>
+            <span className="text-[11px] text-muted-foreground/70">
+              {phase === "DEMO COMPLETE" ? t("demo.complete") : phase}
+            </span>
           </div>
           <button
             onClick={stopDemo}
@@ -104,7 +108,7 @@ export function DemoMode() {
           className="flex items-center gap-2 text-[11px] font-medium text-muted-foreground/70 hover:text-amber-500 transition-colors"
         >
           <Play className="size-3.5" />
-          RUN FULL OPERATIONAL SIMULATION
+          {t("demo.run")}
         </button>
       )}
     </div>

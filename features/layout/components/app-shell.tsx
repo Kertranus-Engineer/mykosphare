@@ -1,34 +1,78 @@
 "use client"
 
-import { useState, useCallback } from "react"
+import { useCallback, useEffect } from "react"
 import { AppHeader } from "./app-header"
 import { AppSidebar } from "./app-sidebar"
 import { BootScreen } from "@/features/init/components/boot-screen"
 import { OperationalAmbiance } from "@/features/ambiance/components/operational-ambiance"
 import { DemoMode } from "@/features/demo/components/demo-mode"
 import { PresentationProvider, usePresentationMode } from "@/features/presentation/components/presentation-mode"
+import { WalkthroughProvider, useWalkthrough } from "@/lib/walkthrough/walkthrough-context"
+import { OperatorWalkthrough } from "@/features/onboarding/components/operator-walkthrough"
+import { useRealEnvironment } from "@/lib/useEnvironment"
+
+function WalkthroughAutoStart() {
+  const { start } = useWalkthrough()
+
+  const handleBootComplete = useCallback(() => {
+    const t = setTimeout(() => start(), 400)
+    return () => clearTimeout(t)
+  }, [start])
+
+  return <BootScreen onComplete={handleBootComplete} />
+}
+
+function PresentationOverlay() {
+  const { enabled } = usePresentationMode()
+
+  if (!enabled) return null
+
+  return (
+    <div className="pointer-events-none fixed inset-0 z-30">
+      <div className="absolute inset-0 bg-background/60 backdrop-blur-[1px] transition-all duration-500" />
+      <div className="absolute top-4 left-1/2 -translate-x-1/2 rounded-md border border-emerald-500/30 bg-emerald-500/10 px-4 py-1.5 text-xs font-medium text-emerald-500 tracking-wider shadow-[0_0_20px_-4px] shadow-emerald-500/20 animate-pulse">
+        PRESENTATION MODE
+      </div>
+    </div>
+  )
+}
 
 function ShellContent({ children }: { children: React.ReactNode }) {
-  const { enabled: presentationMode } = usePresentationMode()
+  const env = useRealEnvironment()
+
+  // Contextual mood: set operational state on <html> for CSS-reactive ambient effects
+  useEffect(() => {
+    document.documentElement.setAttribute("data-ops-state", env.state)
+    return () => { document.documentElement.removeAttribute("data-ops-state") }
+  }, [env.state])
 
   return (
     <div className="flex min-h-screen">
       <OperationalAmbiance />
-      <div className={presentationMode ? "hidden" : ""}>
-        <AppSidebar />
-      </div>
-      <div className={`flex flex-1 flex-col ${presentationMode ? "pl-0" : "pl-60"} transition-all duration-500`}>
-        <div className={presentationMode ? "opacity-0 h-0 overflow-hidden transition-all duration-500" : ""}>
-          <AppHeader />
-        </div>
-        <main className={`relative z-10 flex flex-1 flex-col overflow-x-hidden transition-all duration-500 ${presentationMode ? "pt-0" : ""}`}>
+      <AppSidebar />
+      <div className="flex flex-1 flex-col min-w-0">
+        <AppHeader />
+        <main className="relative z-10 flex flex-1 flex-col overflow-x-hidden main-vignette">
+          <div className="system-scanline" />
+          <div className="ambient-texture" />
           {children}
         </main>
       </div>
-      <div className={presentationMode ? "hidden" : ""}>
-        <DemoMode />
-      </div>
+      <DemoMode />
+      <PresentationOverlay />
+      <OperatorWalkthrough />
     </div>
+  )
+}
+
+function ShellWithWalkthrough({ children }: { children: React.ReactNode }) {
+  return (
+    <WalkthroughProvider>
+      <WalkthroughAutoStart />
+      <ShellContent>
+        {children}
+      </ShellContent>
+    </WalkthroughProvider>
   )
 }
 
@@ -37,16 +81,11 @@ interface AppShellProps {
 }
 
 export function AppShell({ children }: AppShellProps) {
-  const handleBootComplete = useCallback(() => {
-    // boot complete, state managed by BootScreen
-  }, [])
-
   return (
     <PresentationProvider>
-      <BootScreen onComplete={handleBootComplete} />
-      <ShellContent>
+      <ShellWithWalkthrough>
         {children}
-      </ShellContent>
+      </ShellWithWalkthrough>
     </PresentationProvider>
   )
 }

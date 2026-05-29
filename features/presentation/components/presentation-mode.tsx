@@ -24,8 +24,7 @@ export function PresentationProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const stored = sessionStorage.getItem(STORAGE_KEY)
     if (stored === "true") {
-      const t = setTimeout(() => setEnabled(true), 0)
-      return () => clearTimeout(t)
+      queueMicrotask(() => setEnabled(true))
     }
   }, [])
 

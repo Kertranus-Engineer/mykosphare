@@ -1,45 +1,61 @@
 "use client"
 
+import { useState, useCallback } from "react"
 import Link from "next/link"
 import {
   Activity,
   AlertTriangle,
   Brain,
-  Camera,
-  Cog,
-  Cpu,
-  Database,
-  Gauge,
-  LayoutDashboard,
-  Radio,
-  ScrollText,
-  Sprout,
-  Share2,
+  ChevronDown,
   Clock,
-  Wrench,
+  Cog,
+  LayoutDashboard,
+  ScrollText,
+  Info,
+  Share2,
+  Sliders,
+  Sprout,
   Terminal,
+  PanelLeftClose,
+  PanelLeft,
 } from "lucide-react"
 import { NavItem } from "./nav-item"
 import { useUptime } from "@/mock/simulator"
-import { DEPLOYMENT_ID, REGION, SOFTWARE_VERSION } from "@/mock/device-registry"
+import { DEPLOYMENT_ID, REGION, SOFTWARE_VERSION, OPERATIONAL_SYSTEM } from "@/mock/device-registry"
+import type { LucideIcon } from "lucide-react"
+import { cn } from "@/lib/utils"
 
-const navItems = [
-  { icon: LayoutDashboard, label: "Overview", href: "/dashboard" },
-  { icon: Gauge, label: "Unified", href: "/dashboard/unified" },
-  { icon: Sprout, label: "Environment", href: "/dashboard/environment" },
-  { icon: Activity, label: "Analytics", href: "/dashboard/analytics" },
-  { icon: Brain, label: "Intelligence", href: "/dashboard/intelligence" },
-  { icon: Wrench, label: "Maintenance", href: "/dashboard/maintenance" },
-  { icon: Share2, label: "Topology", href: "/dashboard/topology" },
-  { icon: Clock, label: "Timeline", href: "/dashboard/timeline" },
-  { icon: Terminal, label: "Command Center", href: "/dashboard/command-center" },
-  { icon: Camera, label: "Camera", href: "/dashboard/camera" },
-  { icon: Database, label: "Ingestion", href: "/dashboard/ingestion" },
-  { icon: Cpu, label: "Protocol", href: "/dashboard/protocol" },
-  { icon: Radio, label: "ESP32", href: "/dashboard/esp32" },
-  { icon: AlertTriangle, label: "Alerts", href: "/dashboard/alerts" },
-  { icon: ScrollText, label: "System Logs", href: "/dashboard/system-logs" },
-  { icon: Cog, label: "Settings", href: "/dashboard/settings" },
+interface NavItemDef { icon: LucideIcon; label: string; href: string; labelKey?: string }
+interface NavGroup { label: string; items: NavItemDef[] }
+
+const navGroups: NavGroup[] = [
+  {
+    label: "CORE",
+    items: [
+      { icon: LayoutDashboard, label: "Overview", href: "/dashboard" },
+      { icon: Sprout, label: "Environment", href: "/dashboard/environment" },
+      { icon: Activity, label: "Analytics", href: "/dashboard/analytics" },
+    ],
+  },
+  {
+    label: "OPERATIONS",
+    items: [
+      { icon: Brain, label: "Intelligence", href: "/dashboard/intelligence" },
+      { icon: Share2, label: "Topology", href: "/dashboard/topology" },
+      { icon: Clock, label: "Timeline", href: "/dashboard/timeline" },
+      { icon: Terminal, label: "Command Center", href: "/dashboard/command-center" },
+    ],
+  },
+  {
+    label: "SYSTEM",
+    items: [
+      { icon: Sliders, label: "Configuration", href: "/dashboard/configuration" },
+      { icon: AlertTriangle, label: "Alerts", href: "/dashboard/alerts" },
+      { icon: ScrollText, label: "System Logs", href: "/dashboard/system-logs" },
+      { icon: Cog, label: "Settings", href: "/dashboard/settings" },
+      { icon: Info, label: "About", href: "/dashboard/about" },
+    ],
+  },
 ]
 
 function fmtDuration(seconds: number): string {
@@ -52,42 +68,111 @@ function fmtDuration(seconds: number): string {
 export function AppSidebar() {
   const uptime = useUptime()
   const uptimeStr = uptime > 0 ? fmtDuration(uptime) : "0m"
+  const [collapsed, setCollapsed] = useState<Record<string, boolean>>({})
+  const [mini, setMini] = useState(false)
+
+  function toggleGroup(label: string) {
+    setCollapsed((prev) => ({ ...prev, [label]: !prev[label] }))
+  }
+
+  const toggleSidebar = useCallback(() => {
+    setMini((prev) => {
+      const next = !prev
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          window.dispatchEvent(new Event("resize"))
+        })
+      })
+      return next
+    })
+  }, [])
 
   return (
-    <aside className="fixed inset-y-0 left-0 z-30 flex w-60 flex-col border-r border-sidebar-border bg-sidebar">
-      <Link href="/dashboard" className="flex h-14 items-center gap-2.5 border-b border-sidebar-border px-5">
-        <div className="flex size-7 items-center justify-center rounded-lg bg-sidebar-primary">
+    <aside className={cn(
+      "sticky top-0 h-screen z-30 flex flex-col border-r border-sidebar-border bg-sidebar transition-all duration-220 sidebar-shell shrink-0",
+      mini ? "w-[4.5rem]" : "w-38"
+    )}>
+      {/* ── Logo ────────────────────────────── */}
+      <Link href="/dashboard" className={cn(
+        "flex h-14 items-center border-b border-sidebar-border transition-all duration-220 shrink-0",
+        mini ? "justify-center px-2" : "gap-2 px-2"
+      )}>
+        <div className="flex size-8 items-center justify-center rounded-lg bg-sidebar-primary shrink-0">
           <Sprout className="size-4 text-sidebar-primary-foreground" />
         </div>
-        <span className="text-sm font-semibold tracking-wide text-sidebar-foreground">
-          MYKOSPHARE
-        </span>
+        {!mini && (
+          <span className="text-[13px] font-semibold tracking-wide text-sidebar-foreground">
+            MYKOSPHARE
+          </span>
+        )}
       </Link>
 
-      <nav className="flex-1 space-y-1 overflow-y-auto p-3">
-        {navItems.map((item) => (
-          <NavItem
-            key={item.label}
-            icon={item.icon}
-            label={item.label}
-            href={item.href}
-          />
+      {/* ── Navigation ──────────────────────── */}
+      <nav className="flex-1 space-y-0.5 overflow-y-auto overflow-x-hidden p-1">
+        {navGroups.map((group) => (
+          <div key={group.label} className={cn("mb-1", mini && "mb-0")}>
+            {!mini && (
+              <button
+                type="button"
+                onClick={() => toggleGroup(group.label)}
+                className="flex w-full items-center gap-1 px-1.5 py-1 text-[9px] font-semibold tracking-[0.15em] text-sidebar-foreground/25 uppercase hover:text-sidebar-foreground/50 transition-colors"
+              >
+                <ChevronDown className={cn("size-2.5 transition-transform duration-200", collapsed[group.label] && "-rotate-90")} />
+                {group.label}
+              </button>
+            )}
+            {(!collapsed[group.label] || mini) && (
+              <div className={cn("space-y-0.5", mini && "flex flex-col items-center gap-0.5 mt-1")}>
+                {group.items.map((item) =>
+                  mini ? (
+                    <Link
+                      key={item.label}
+                      href={item.href}
+                      className="flex size-10 items-center justify-center rounded-lg text-sidebar-foreground/30 hover:text-sidebar-foreground hover:bg-sidebar-accent/50 transition-all duration-200"
+                      title={item.label}
+                    >
+                      <item.icon className="size-[18px]" />
+                    </Link>
+                  ) : (
+                    <NavItem key={item.label} icon={item.icon} label={item.label} href={item.href} labelKey={item.labelKey} />
+                  )
+                )}
+              </div>
+            )}
+          </div>
         ))}
       </nav>
 
-      <div className="border-t border-sidebar-border p-3">
-        <div className="rounded-lg bg-sidebar-accent/50 px-3 py-2">
-          <p className="text-[11px] font-medium text-sidebar-foreground/50">
-            {DEPLOYMENT_ID}
-          </p>
-          <p className="text-[11px] text-sidebar-foreground/40">
-            {REGION} · {SOFTWARE_VERSION}
-          </p>
-          <p className="mt-1 text-[10px] tabular-nums text-sidebar-foreground/30">
-            Session: {uptimeStr}
-          </p>
-        </div>
+      {/* ── Footer ──────────────────────────── */}
+      <div className={cn("border-t border-sidebar-border p-1.5 shrink-0", mini && "p-0")}>
+        {!mini && (
+          <div className="rounded-lg bg-sidebar-accent/50 px-3 py-2">
+            <p className="text-[10px] font-semibold tracking-wider text-sidebar-foreground/30 uppercase">{OPERATIONAL_SYSTEM}</p>
+            <p className="mt-1 text-[11px] font-medium text-sidebar-foreground/50">{DEPLOYMENT_ID}</p>
+            <p className="text-[11px] text-sidebar-foreground/40">{REGION} · {SOFTWARE_VERSION}</p>
+            <p className="mt-1 flex items-center gap-1.5 text-[10px] tabular-nums text-sidebar-foreground/30">
+              <span className="inline-block size-1 rounded-full bg-emerald-500/60" />
+              Session: {uptimeStr}
+            </p>
+          </div>
+        )}
       </div>
+
+      {/* ── Toggle — visible siempre, flotando en el borde ── */}
+      <button
+        type="button"
+        onClick={toggleSidebar}
+        className={cn(
+          "absolute z-50 flex items-center justify-center rounded-full border border-sidebar-border bg-sidebar text-sidebar-foreground/30 hover:text-sidebar-foreground hover:border-sidebar-foreground/20 transition-all duration-300",
+          "shadow-[0_0_6px_-2px] shadow-sidebar-foreground/5 hover:shadow-[0_0_12px_-2px] hover:shadow-sidebar-foreground/10",
+          mini
+            ? "right-0 top-6 -translate-y-1/2 translate-x-1/2 size-7"   // peeks out from collapsed rail
+            : "right-0 top-6 -translate-y-1/2 translate-x-1/2 size-6"   // peeks out from expanded rail
+        )}
+        title={mini ? "Expand sidebar" : "Collapse sidebar"}
+      >
+        {mini ? <PanelLeft className="size-3.5" /> : <PanelLeftClose className="size-3" />}
+      </button>
     </aside>
   )
 }

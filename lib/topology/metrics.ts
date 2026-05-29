@@ -17,7 +17,7 @@ export function computeTopologyMetrics(
     ? Math.round(activeLinks.reduce((s, l) => s + l.latency, 0) / activeLinks.length)
     : 0
 
-  const totalPacketFlow = Math.round(links.reduce((s, l) => s + l.packetRate, 0) * 100) / 100
+  const totalPacketFlow = Math.round(links.reduce((s, l) => s + l.packetRate, 0) * 10) / 10
 
   const nodeHealth = nodes.map((n) => n.health)
   const avgHealth = nodeHealth.length > 0

@@ -2,21 +2,32 @@
 
 import { AlertTriangle } from "lucide-react"
 
-import { useEnvironment } from "@/mock/environment"
+import { useRealEnvironment } from "@/lib/useEnvironment"
+import type { EnvState } from "@/lib/useEnvironment"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { cn } from "@/lib/utils"
 
+function alertIconColor(state: EnvState): string {
+  if (state === "CRITICAL") return "text-red-500 drop-[0_0_3px_rgba(239,68,68,0.3)]"
+  return "text-amber-500 drop-[0_0_3px_rgba(251,191,36,0.3)]"
+}
+
+function alertBadgeStyle(state: EnvState): string {
+  if (state === "CRITICAL") return "bg-red-500/10 text-red-500"
+  return "bg-amber-500/10 text-amber-500"
+}
+
 export function AlertPanel() {
-  const env = useEnvironment()
+  const env = useRealEnvironment()
 
   return (
     <Card className="transition-all duration-200 hover:ring-foreground/20 hover:shadow-[0_0_16px_-6px] hover:shadow-foreground/10">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <AlertTriangle className="size-4 text-amber-500 drop-[0_0_3px_rgba(251,191,36,0.3)]" />
+          <AlertTriangle className={cn("size-4", alertIconColor(env.state))} />
           Alerts
           {env.alerts.length > 0 && (
-            <span className="ml-auto rounded-full bg-amber-500/10 px-1.5 py-0.5 text-[10px] font-medium text-amber-500">
+            <span className={cn("ml-auto rounded-full px-1.5 py-0.5 text-[10px] font-medium", alertBadgeStyle(env.state))}>
               {env.alerts.length}
             </span>
           )}

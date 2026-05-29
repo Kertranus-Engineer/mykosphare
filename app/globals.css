@@ -49,72 +49,278 @@
 }
 
 :root {
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
   --radius: 0.625rem;
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+  --kpi-value: oklch(0.98 0 0);
+  --text-soft: oklch(0.75 0.02 160);
+  --text-dim: oklch(0.55 0.02 160);
 }
 
-.dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
+/* KPI overrides per theme */
+[data-theme="lab-light"] { --kpi-value: oklch(0.05 0.005 260); }
+[data-theme="pure-black"] { --kpi-value: oklch(0.99 0 0); --text-soft: oklch(0.8 0.01 250); --text-dim: oklch(0.6 0.01 250); }
+
+/* Default theme (obsidian) — also the fallback for SSR */
+[data-theme="obsidian"],
+:root {
+  --background: oklch(0.12 0.01 260);
+  --foreground: oklch(0.97 0 0);
+  --card: oklch(0.19 0.01 260);
+  --card-foreground: oklch(0.97 0 0);
+  --popover: oklch(0.19 0.01 260);
+  --popover-foreground: oklch(0.97 0 0);
+  --primary: oklch(0.75 0.12 160);
+  --primary-foreground: oklch(0.12 0.01 260);
+  --secondary: oklch(0.25 0.01 260);
+  --secondary-foreground: oklch(0.97 0 0);
+  --muted: oklch(0.25 0.01 260);
+  --muted-foreground: oklch(0.72 0.02 160);
+  --accent: oklch(0.25 0.01 260);
+  --accent-foreground: oklch(0.97 0 0);
+  --destructive: oklch(0.6 0.2 25);
+  --border: oklch(0.28 0.02 200);
+  --input: oklch(0.28 0.02 200);
+  --ring: oklch(0.55 0.08 160);
+  --chart-1: oklch(0.65 0.15 160);
+  --chart-2: oklch(0.55 0.1 200);
+  --chart-3: oklch(0.45 0.08 260);
+  --chart-4: oklch(0.7 0.12 120);
+  --chart-5: oklch(0.35 0.08 260);
+  --sidebar: oklch(0.15 0.01 260);
+  --sidebar-foreground: oklch(0.97 0 0);
+  --sidebar-primary: oklch(0.75 0.12 160);
+  --sidebar-primary-foreground: oklch(0.12 0.01 260);
+  --sidebar-accent: oklch(0.25 0.01 260);
+  --sidebar-accent-foreground: oklch(0.97 0 0);
+  --sidebar-border: oklch(0.28 0.02 200);
+  --sidebar-ring: oklch(0.55 0.08 160);
+}
+
+/* ── LAB LIGHT — Scientific Laboratory Theme ────
+   Blue-gray surfaces · paper steel · soft cyan accents
+   Medical-grade instrumentation aesthetic. */
+[data-theme="lab-light"] {
+  --background: oklch(0.86 0.012 250);
+  --foreground: oklch(0.08 0.02 260);
+  --card: oklch(0.97 0.004 250);
+  --card-foreground: oklch(0.08 0.02 260);
+  --popover: oklch(0.97 0.004 250);
+  --popover-foreground: oklch(0.08 0.02 260);
+  --primary: oklch(0.42 0.12 210);
+  --primary-foreground: oklch(0.98 0 0);
+  --secondary: oklch(0.83 0.01 248);
+  --secondary-foreground: oklch(0.14 0.03 250);
+  --muted: oklch(0.83 0.01 248);
+  --muted-foreground: oklch(0.42 0.03 248);
+  --accent: oklch(0.78 0.07 200);
+  --accent-foreground: oklch(0.13 0.05 245);
+  --destructive: oklch(0.48 0.24 25);
+  --border: oklch(0.68 0.025 255);
+  --input: oklch(0.68 0.025 255);
+  --ring: oklch(0.52 0.12 210);
+  --chart-1: oklch(0.52 0.18 210);
+  --chart-2: oklch(0.48 0.15 160);
+  --chart-3: oklch(0.40 0.08 260);
+  --chart-4: oklch(0.58 0.1 120);
+  --chart-5: oklch(0.30 0.06 260);
+  --sidebar: oklch(0.82 0.01 252);
+  --sidebar-foreground: oklch(0.08 0.02 260);
+  --sidebar-primary: oklch(0.42 0.12 210);
+  --sidebar-primary-foreground: oklch(0.98 0 0);
+  --sidebar-accent: oklch(0.78 0.02 250);
+  --sidebar-accent-foreground: oklch(0.14 0.03 250);
+  --sidebar-border: oklch(0.66 0.025 255);
+  --sidebar-ring: oklch(0.52 0.12 210);
+}
+
+/* ── PURE BLACK — OLED Deep Graphite ────────────
+   Near-black base with graphite cards. Navy depth layers.
+   Edge-lit, high contrast, cinematic. */
+[data-theme="pure-black"] {
+  --background: oklch(0.03 0.012 250);
+  --foreground: oklch(0.98 0 0);
+  --card: oklch(0.13 0.015 250);
+  --card-foreground: oklch(0.98 0 0);
+  --popover: oklch(0.13 0.015 250);
+  --popover-foreground: oklch(0.98 0 0);
+  --primary: oklch(0.78 0.18 160);
+  --primary-foreground: oklch(0.03 0.012 250);
+  --secondary: oklch(0.17 0.012 250);
+  --secondary-foreground: oklch(0.98 0 0);
+  --muted: oklch(0.17 0.012 250);
+  --muted-foreground: oklch(0.65 0.02 240);
+  --accent: oklch(0.17 0.012 250);
+  --accent-foreground: oklch(0.98 0 0);
+  --destructive: oklch(0.65 0.22 25);
+  --border: oklch(0.22 0.02 250);
+  --input: oklch(0.22 0.02 250);
+  --ring: oklch(0.65 0.12 160);
+  --chart-1: oklch(0.72 0.2 160);
+  --chart-2: oklch(0.62 0.14 200);
+  --chart-3: oklch(0.52 0.1 260);
+  --chart-4: oklch(0.78 0.15 120);
+  --chart-5: oklch(0.42 0.1 260);
+  --sidebar: oklch(0.10 0.012 250);
+  --sidebar-foreground: oklch(0.98 0 0);
+  --sidebar-primary: oklch(0.78 0.18 160);
+  --sidebar-primary-foreground: oklch(0.03 0.012 250);
+  --sidebar-accent: oklch(0.17 0.012 250);
+  --sidebar-accent-foreground: oklch(0.98 0 0);
+  --sidebar-border: oklch(0.22 0.02 250);
+  --sidebar-ring: oklch(0.65 0.12 160);
+}
+
+/* ── Transition ─────────────────────────────── */
+[data-theme] * {
+  transition: background-color 500ms ease, border-color 500ms ease, color 400ms ease, box-shadow 500ms ease;
+}
+
+/* No transition on initial load */
+html:not([data-theme-applied]) * {
+  transition: none !important;
+}
+
+/* ── Presentation Mode ──────────────────────── */
+.presentation-mode {
+  font-size: 1.05em;
+  letter-spacing: 0.01em;
+}
+
+.presentation-mode .presentation-xs {
+  font-size: 10px;
+}
+
+.presentation-mode .presentation-sm {
+  font-size: 11px;
+}
+
+.presentation-mode .presentation-md {
+  font-size: 12px;
+}
+
+.presentation-mode .presentation-reduce-noise {
+  opacity: 0.65;
+}
+
+/* Presentation: hide atmospheric noise for clean projector view */
+.presentation-mode .system-scanline,
+.presentation-mode .main-vignette::before,
+.presentation-mode .main-vignette::after { display: none; }
+.presentation-mode { --kpi-value: oklch(0.995 0 0); }
+.presentation-mode [style*="breathe"] { animation-duration: 12s !important; }
+
+/* ── Chamber Theme Variants ─────────────────── */
+/* OBSIDIAN: brighter center glow, subtle radial gradient */
+[data-theme="obsidian"] .chamber-theme {
+  background:
+    radial-gradient(ellipse 60% 50% at 50% 50%, oklch(0.2 0.03 160 / 25%), transparent 70%),
+    linear-gradient(135deg, oklch(0.18 0.01 260 / 80%), oklch(0.14 0.01 260 / 90%)) !important;
+}
+
+/* PURE BLACK: deeper bg + slow scanlines + brighter center */
+[data-theme="pure-black"] .chamber-theme {
+  background:
+    radial-gradient(ellipse 60% 50% at 50% 50%, oklch(0.28 0.06 200 / 18%), transparent 65%),
+    linear-gradient(135deg, oklch(0.14 0.01 250 / 90%), oklch(0.09 0.008 250 / 95%)) !important;
+}
+
+[data-theme="pure-black"] .chamber-theme::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    oklch(0.6 0.08 230 / 2%) 2px,
+    oklch(0.6 0.08 230 / 2%) 4px
+  );
+  pointer-events: none;
+  animation: scan-lines 8s linear infinite;
+}
+
+/* LAB LIGHT: blueprint grid + glass card effect */
+[data-theme="lab-light"] .chamber-theme {
+  background:
+    radial-gradient(ellipse 70% 50% at 50% 50%, oklch(0.55 0.12 210 / 10%), transparent 70%),
+    linear-gradient(135deg, oklch(0.97 0.005 240 / 85%), oklch(0.93 0.008 240 / 90%)) !important;
+  border-color: oklch(0.65 0.04 220 / 30%) !important;
+  box-shadow: inset 0 0 40px -20px oklch(0.55 0.1 210 / 8%);
+}
+
+[data-theme="lab-light"] .chamber-theme::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(oklch(0.42 0.1 210 / 6%) 1px, transparent 1px),
+    linear-gradient(90deg, oklch(0.42 0.1 210 / 6%) 1px, transparent 1px);
+  background-size: 24px 24px;
+  pointer-events: none;
+  mask-image: radial-gradient(ellipse 70% 50% at 50% 50%, black 30%, transparent 70%);
+}
+
+/* Chamber hover lift */
+[data-theme="obsidian"] .chamber-card:hover {
+  box-shadow: 0 0 28px -8px oklch(0.6 0.15 160 / 14%);
+}
+
+[data-theme="pure-black"] .chamber-card:hover {
+  box-shadow: 0 0 32px -6px oklch(0.65 0.15 200 / 18%);
+}
+
+[data-theme="lab-light"] .chamber-card:hover {
+  box-shadow: 0 4px 24px -8px oklch(0 0 0 / 8%), 0 0 20px -6px oklch(0.42 0.1 210 / 12%);
+}
+
+/* Global card depth per theme */
+[data-theme="pure-black"] .card-depth {
+  box-shadow:
+    0 1px 2px oklch(0 0 0 / 40%),
+    0 4px 8px -4px oklch(0.2 0.015 250 / 35%),
+    0 0 1px oklch(0.5 0.05 230 / 8%);
+}
+
+[data-theme="lab-light"] .card-depth {
+  box-shadow:
+    0 1px 3px oklch(0 0 0 / 5%),
+    0 4px 14px -8px oklch(0 0 0 / 7%),
+    0 0 1px oklch(0.4 0.04 220 / 6%);
+}
+
+/* Hover states more visible */
+[data-theme="obsidian"] .hover-lift:hover {
+  background-color: oklch(0.25 0.02 200 / 50%);
+}
+
+[data-theme="pure-black"] .hover-lift:hover {
+  background-color: oklch(0.19 0.02 240 / 50%);
+}
+
+[data-theme="lab-light"] .hover-lift:hover {
+  background-color: oklch(0.86 0.015 240 / 80%);
+}
+
+/* Particle drift for chamber */
+@keyframes drift-up {
+  0% { transform: translateY(0) translateX(0); opacity: 0.6; }
+  50% { transform: translateY(-12px) translateX(6px); opacity: 0.2; }
+  100% { transform: translateY(-24px) translateX(0); opacity: 0; }
+}
+
+@keyframes drift-right {
+  0% { transform: translateX(0); opacity: 0.5; }
+  50% { transform: translateX(8px); opacity: 0.2; }
+  100% { transform: translateX(16px); opacity: 0; }
+}
+
+@keyframes scan-lines {
+  0% { transform: translateY(0); }
+  100% { transform: translateY(4px); }
+}
+
+@keyframes shift-gradient {
+  0% { background-position: 0 0; }
+  100% { background-position: 0 4px; }
 }
 
 @layer base {
@@ -124,177 +330,110 @@
   body {
     @apply bg-background text-foreground;
   }
-  html {
-    @apply font-sans;
-  }
+html {
+  font-size: 106%;
+  scrollbar-gutter: stable;
+}
+}
+
+/* Sidebar shell: positioning context for handle */
+.sidebar-shell {
+  position: relative;
+}
+
+/* Sidebar handle: integrated into rail, not floating */
+.sidebar-handle {
+  transform: translateX(50%);
+}
+
+[data-theme="obsidian"] .sidebar-handle {
+  box-shadow: 0 0 4px -1px oklch(0.5 0.1 160 / 15%);
+}
+
+[data-theme="pure-black"] .sidebar-handle {
+  box-shadow: 0 0 6px -1px oklch(0.5 0.1 160 / 20%);
 }
 
 @keyframes sweep {
-  0% {
-    transform: translateX(-100%) skewX(-15deg);
-  }
-  100% {
-    transform: translateX(400%) skewX(-15deg);
-  }
+  0% { transform: translateX(-100%) skewX(-15deg); }
+  100% { transform: translateX(400%) skewX(-15deg); }
 }
 
 @keyframes breathe {
-  0%,
-  100% {
-    opacity: 0.3;
-  }
-  50% {
-    opacity: 0.6;
-  }
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 0.6; }
 }
 
 @keyframes node-pulse {
-  0%,
-  100% {
-    box-shadow: 0 0 4px 0px currentColor;
-  }
-  50% {
-    box-shadow: 0 0 8px 2px currentColor;
-  }
+  0%, 100% { box-shadow: 0 0 4px 0px currentColor; }
+  50% { box-shadow: 0 0 8px 2px currentColor; }
 }
 
 @keyframes scan-line {
-  0% {
-    top: -2%;
-  }
-  100% {
-    top: 102%;
-  }
+  0% { top: -2%; }
+  100% { top: 102%; }
 }
 
 @keyframes ambient {
-  0%,
-  100% {
-    transform: translate(0%, 0%) scale(1);
-  }
-  25% {
-    transform: translate(4%, -3%) scale(1.03);
-  }
-  50% {
-    transform: translate(-3%, 2%) scale(0.97);
-  }
-  75% {
-    transform: translate(2%, -2%) scale(1.02);
-  }
+  0%, 100% { transform: translate(0%, 0%) scale(1); }
+  25% { transform: translate(4%, -3%) scale(1.03); }
+  50% { transform: translate(-3%, 2%) scale(0.97); }
+  75% { transform: translate(2%, -2%) scale(1.02); }
 }
 
 @keyframes boot-fade-in {
-  0% {
-    opacity: 0;
-    transform: translateY(8px);
-    filter: blur(2px);
-  }
-  100% {
-    opacity: 1;
-    transform: translateY(0);
-    filter: blur(0);
-  }
+  0% { opacity: 0; transform: translateY(8px); filter: blur(2px); }
+  100% { opacity: 1; transform: translateY(0); filter: blur(0); }
 }
 
 @keyframes boot-fade-out {
-  0% {
-    opacity: 1;
-    filter: blur(0);
-  }
-  100% {
-    opacity: 0;
-    filter: blur(4px);
-    transform: translateY(-4px);
-  }
+  0% { opacity: 1; filter: blur(0); }
+  100% { opacity: 0; filter: blur(4px); transform: translateY(-4px); }
 }
 
 @keyframes telemetry-pulse {
-  0%, 100% {
-    opacity: 0.6;
-    transform: scale(1);
-  }
-  50% {
-    opacity: 1;
-    transform: scale(1.05);
-  }
+  0%, 100% { opacity: 0.6; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.05); }
 }
 
 @keyframes glow-pulse {
-  0%, 100% {
-    filter: brightness(1) drop-shadow(0 0 2px currentColor);
-  }
-  50% {
-    filter: brightness(1.3) drop-shadow(0 0 6px currentColor);
-  }
+  0%, 100% { filter: brightness(1) drop-shadow(0 0 2px currentColor); }
+  50% { filter: brightness(1.3) drop-shadow(0 0 6px currentColor); }
 }
 
 @keyframes signal-travel {
-  0% {
-    stroke-dashoffset: 20;
-  }
-  100% {
-    stroke-dashoffset: 0;
-  }
+  0% { stroke-dashoffset: 20; }
+  100% { stroke-dashoffset: 0; }
 }
 
 @keyframes fade-in-up {
-  0% {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-  100% {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  0% { opacity: 0; transform: translateY(10px); }
+  100% { opacity: 1; transform: translateY(0); }
 }
 
 @keyframes status-glow-warning {
-  0%, 100% {
-    box-shadow: 0 0 8px 2px rgba(245, 158, 11, 0.15);
-  }
-  50% {
-    box-shadow: 0 0 16px 4px rgba(245, 158, 11, 0.25);
-  }
+  0%, 100% { box-shadow: 0 0 8px 2px rgba(245, 158, 11, 0.15); }
+  50% { box-shadow: 0 0 16px 4px rgba(245, 158, 11, 0.25); }
 }
 
 @keyframes status-glow-critical {
-  0%, 100% {
-    box-shadow: 0 0 8px 2px rgba(239, 68, 68, 0.15);
-  }
-  50% {
-    box-shadow: 0 0 18px 6px rgba(239, 68, 68, 0.3);
-  }
+  0%, 100% { box-shadow: 0 0 8px 2px rgba(239, 68, 68, 0.15); }
+  50% { box-shadow: 0 0 18px 6px rgba(239, 68, 68, 0.3); }
 }
 
 @keyframes status-glow-recovery {
-  0%, 100% {
-    box-shadow: 0 0 8px 2px rgba(20, 184, 166, 0.15);
-    opacity: 0.8;
-  }
-  50% {
-    box-shadow: 0 0 14px 4px rgba(20, 184, 166, 0.25);
-    opacity: 1;
-  }
+  0%, 100% { box-shadow: 0 0 8px 2px rgba(20, 184, 166, 0.15); opacity: 0.8; }
+  50% { box-shadow: 0 0 14px 4px rgba(20, 184, 166, 0.25); opacity: 1; }
 }
 
 @keyframes command-pulse {
-  0%, 100% {
-    border-color: rgba(251, 191, 36, 0.2);
-    background: rgba(251, 191, 36, 0.05);
-  }
-  50% {
-    border-color: rgba(251, 191, 36, 0.5);
-    background: rgba(251, 191, 36, 0.1);
-  }
+  0%, 100% { border-color: rgba(251, 191, 36, 0.2); background: rgba(251, 191, 36, 0.05); }
+  50% { border-color: rgba(251, 191, 36, 0.5); background: rgba(251, 191, 36, 0.1); }
 }
 
 @keyframes signal-propagate {
-  0% {
-    stroke-dashoffset: 100;
-  }
-  100% {
-    stroke-dashoffset: 0;
-  }
+  0% { stroke-dashoffset: 100; }
+  100% { stroke-dashoffset: 0; }
 }
 
 @keyframes degrade-flicker {
@@ -309,4 +448,339 @@
   0% { opacity: 0.6; filter: blur(1px); }
   50% { opacity: 0.8; filter: blur(0px); }
   100% { opacity: 1; filter: blur(0); }
+}
+
+/* ── Atmospheric Depth ──────────────────────────
+   Ultra-subtle ambient effects for identity.
+   NOT flashy. NOT gamer. Industrial sci-fi. */
+@keyframes scan-line {
+  0% { top: 10%; opacity: 0; }
+  10% { opacity: 0.6; }
+  90% { opacity: 0.6; }
+  100% { top: 90%; opacity: 0; }
+}
+
+@keyframes ambient-depth {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 0.7; }
+}
+
+@keyframes atmospheric-drift {
+  0% { transform: translateX(0) scale(1); opacity: 0.15; }
+  25% { transform: translateX(2%) scale(1.02); opacity: 0.2; }
+  50% { transform: translateX(-1%) scale(1); opacity: 0.12; }
+  75% { transform: translateX(1%) scale(1.01); opacity: 0.18; }
+  100% { transform: translateX(0) scale(1); opacity: 0.15; }
+}
+
+/* ── Section color identity ────────────────────
+   Each panel gets a localized tint for visual separation. */
+.section-tint-chamber {
+  box-shadow: inset 0 0 60px -20px oklch(0.6 0.15 160 / 4%);
+}
+.section-tint-topology {
+  box-shadow: inset 0 0 50px -20px oklch(0.5 0.12 200 / 3%);
+}
+.section-tint-intelligence {
+  box-shadow: inset 0 0 50px -20px oklch(0.55 0.12 240 / 3%);
+}
+.section-tint-energy {
+  box-shadow: inset 0 0 40px -20px oklch(0.65 0.15 85 / 4%);
+}
+.section-tint-alerts {
+  box-shadow: inset 0 0 50px -20px oklch(0.55 0.2 25 / 2%);
+}
+
+/* ── Vignette overlay for depth ─────────────── */
+.main-vignette::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 5;
+  background: radial-gradient(ellipse 80% 50% at 50% 50%, transparent 50%, var(--background) 95%);
+  opacity: 0.4;
+}
+
+/* ── Global ambient breathing ──────────────────
+   Ultra-subtle rhythm for the entire dashboard. */
+.main-vignette::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 4;
+  background: radial-gradient(ellipse 60% 40% at 50% 45%, oklch(0.6 0.15 160 / 1.5%), transparent 70%);
+  animation: ambient-depth 10s ease-in-out infinite;
+}
+
+/* Slow environmental scanline across the viewport */
+.system-scanline {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 6;
+  background: linear-gradient(0deg, transparent 49.9%, oklch(0.6 0.1 160 / 2%) 50%, transparent 50.1%);
+  background-size: 100% 4px;
+  animation: scanline-drift 20s linear infinite;
+  opacity: 0.4;
+}
+
+@keyframes scanline-drift {
+  0% { background-position: 0 0; }
+  100% { background-position: 0 4px; }
+}
+
+/* ── Contextual Mood States ────────────────────
+   Vignette, ambient glow, and scanline react to operational state. */
+html[data-ops-state="CRITICAL"] .main-vignette::before {
+  background: radial-gradient(ellipse 60% 40% at 50% 45%, oklch(0.55 0.2 25 / 3%), transparent 70%);
+  animation-duration: 6s;
+}
+html[data-ops-state="CRITICAL"] .system-scanline {
+  opacity: 0.8;
+  background: linear-gradient(0deg, transparent 49.9%, oklch(0.55 0.2 25 / 4%) 50%, transparent 50.1%);
+  animation-duration: 10s;
+}
+html[data-ops-state="CRITICAL"] .main-vignette::after {
+  opacity: 0.55;
+}
+
+html[data-ops-state="WARNING"] .main-vignette::before {
+  background: radial-gradient(ellipse 60% 40% at 50% 45%, oklch(0.65 0.15 85 / 2%), transparent 70%);
+  animation-duration: 8s;
+}
+html[data-ops-state="WARNING"] .system-scanline {
+  opacity: 0.6;
+}
+
+html[data-ops-state="RECOVERY"] .main-vignette::before {
+  background: radial-gradient(ellipse 60% 40% at 50% 45%, oklch(0.5 0.12 190 / 2%), transparent 70%);
+  animation-duration: 7s;
+}
+
+/* Volumetric depth overlay for dashboard */
+.atmospheric-overlay::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background:
+    radial-gradient(ellipse 80% 50% at 50% 0%, oklch(0.6 0.15 160 / 2%), transparent 60%),
+    radial-gradient(ellipse 60% 40% at 100% 60%, oklch(0.5 0.1 200 / 1.5%), transparent 55%);
+  animation: ambient-depth 12s ease-in-out infinite;
+}
+
+/* Signal propagation pulse — topology links */
+@keyframes signal-pulse {
+  0% { stroke-dashoffset: 24; opacity: 0.3; }
+  100% { stroke-dashoffset: 0; opacity: 0.7; }
+}
+
+@keyframes node-breathe {
+  0%, 100% { box-shadow: 0 0 4px 0 oklch(0.6 0.15 160 / 20%); }
+  50% { box-shadow: 0 0 8px 2px oklch(0.6 0.15 160 / 35%); }
+}
+
+/* ── Dashboard Initialization Animation ──────────
+   Subtle sequential fade-in when dashboard first loads. */
+@keyframes dashboard-init {
+  0% { opacity: 0; transform: translateY(6px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+.dashboard-init > *:nth-child(1) { animation: dashboard-init 0.4s ease-out 0.05s both; }
+.dashboard-init > *:nth-child(2) { animation: dashboard-init 0.4s ease-out 0.15s both; }
+.dashboard-init > *:nth-child(3) { animation: dashboard-init 0.4s ease-out 0.25s both; }
+.dashboard-init > *:nth-child(4) { animation: dashboard-init 0.4s ease-out 0.35s both; }
+.dashboard-init > *:nth-child(5) { animation: dashboard-init 0.4s ease-out 0.45s both; }
+.dashboard-init > *:nth-child(6) { animation: dashboard-init 0.4s ease-out 0.50s both; }
+.dashboard-init > *:nth-child(7) { animation: dashboard-init 0.4s ease-out 0.55s both; }
+
+/* Prevent flash of unstyled content during init */
+.dashboard-init-hidden {
+  opacity: 0;
+}
+
+/* ── Smooth transitions for all interactive elements ── */
+button, a, [role="button"] {
+  transition: background-color 200ms ease, color 200ms ease, border-color 200ms ease, box-shadow 200ms ease, transform 180ms ease;
+}
+
+/* ── Premium Scrollbar ──────────────────────────
+   Thin, dark, subtle — disappears unless interacted with. */
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: oklch(0.35 0.02 200 / 30%);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: oklch(0.5 0.08 160 / 40%);
+}
+
+/* Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: oklch(0.35 0.02 200 / 30%) transparent;
+}
+
+/* ── Premium Card Illumination ─────────────────
+   Hover glows and depth shadows for card-like elements. */
+[data-theme] .premium-card {
+  transition: box-shadow 300ms ease, border-color 300ms ease, transform 200ms ease;
+}
+[data-theme="obsidian"] .premium-card:hover {
+  box-shadow: 0 0 20px -6px oklch(0.6 0.15 160 / 10%), 0 0 1px oklch(0.6 0.15 160 / 20%);
+  border-color: oklch(0.5 0.1 160 / 25%);
+}
+[data-theme="pure-black"] .premium-card:hover {
+  box-shadow: 0 0 24px -4px oklch(0.65 0.18 160 / 15%), 0 0 1px oklch(0.65 0.18 160 / 25%);
+  border-color: oklch(0.55 0.12 160 / 30%);
+}
+[data-theme="lab-light"] .premium-card:hover {
+  box-shadow: 0 4px 16px -6px oklch(0 0 0 / 6%), 0 0 1px oklch(0.42 0.1 210 / 25%);
+  border-color: oklch(0.5 0.1 210 / 30%);
+}
+
+/* Ambient card surface reflection */
+[data-theme="obsidian"] .premium-card::after,
+[data-theme="pure-black"] .premium-card::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border-radius: inherit;
+  background: linear-gradient(135deg, oklch(1 0 0 / 1.5%) 0%, transparent 40%);
+  opacity: 0;
+  transition: opacity 300ms ease;
+}
+[data-theme="obsidian"] .premium-card:hover::after,
+[data-theme="pure-black"] .premium-card:hover::after {
+  opacity: 1;
+}
+
+/* Theme transition fade */
+@keyframes theme-switch-fade {
+  0% { opacity: 0.7; }
+  100% { opacity: 1; }
+}
+
+[data-theme] body {
+  animation: theme-switch-fade 600ms ease;
+}
+
+/* ── Ambient background texture ────────────────
+   Ultra-subtle noise/grid to soften empty dark space. */
+.main-vignette > .ambient-texture {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 3;
+  opacity: 0.03;
+  background-image:
+    radial-gradient(ellipse 30% 20% at 70% 30%, oklch(0.6 0.15 160 / 30%), transparent),
+    radial-gradient(ellipse 20% 15% at 30% 70%, oklch(0.5 0.1 200 / 20%), transparent),
+    radial-gradient(ellipse 40% 25% at 50% 50%, oklch(0.6 0.08 160 / 15%), transparent);
+}
+
+[data-theme="lab-light"] .main-vignette > .ambient-texture {
+  opacity: 0.02;
+  background-image:
+    radial-gradient(ellipse 30% 20% at 70% 30%, oklch(0.5 0.1 200 / 40%), transparent),
+    radial-gradient(ellipse 40% 25% at 50% 50%, oklch(0.5 0.08 210 / 30%), transparent);
+}
+
+/* ── Topology Network Animations ────────────────
+   Packet travel, latency flicker, reconnect sweeps, ambient drift. */
+
+/* Packet travel along links */
+@keyframes packet-travel {
+  0% { stroke-dashoffset: 100; opacity: 0.7; }
+  100% { stroke-dashoffset: 0; opacity: 0.3; }
+}
+
+/* Latency flicker for degraded links */
+@keyframes link-flicker {
+  0%, 100% { opacity: 0.5; }
+  30% { opacity: 0.25; }
+  50% { opacity: 0.55; }
+  70% { opacity: 0.3; }
+}
+
+/* Critical link instability */
+@keyframes link-critical {
+  0%, 100% { opacity: 0.6; }
+  25% { opacity: 0.8; }
+  50% { opacity: 0.3; }
+  75% { opacity: 0.7; }
+}
+
+/* Reconnect sweep animation */
+@keyframes reconnect-sweep {
+  0% { opacity: 0.6; stroke-dashoffset: 60; }
+  50% { opacity: 0.3; stroke-dashoffset: 30; }
+  100% { opacity: 0; stroke-dashoffset: 0; }
+}
+
+/* Node stabilization pulse during recovery */
+@keyframes node-stabilize {
+  0% { transform: scale(0.92); opacity: 0.5; filter: blur(1px); }
+  60% { transform: scale(1.05); opacity: 0.9; filter: blur(0); }
+  100% { transform: scale(1); opacity: 1; filter: blur(0); }
+}
+
+/* Green restoration sweep */
+@keyframes restore-sweep {
+  0% { opacity: 0; }
+  30% { opacity: 0.4; }
+  60% { opacity: 0.2; }
+  100% { opacity: 0; }
+}
+
+/* Ambient network drift */
+@keyframes network-drift {
+  0%, 100% { transform: translate(0, 0); }
+  25% { transform: translate(2px, -1px); }
+  50% { transform: translate(-1px, 2px); }
+  75% { transform: translate(-2px, -1px); }
+}
+
+/* Core breathing glow */
+@keyframes core-breathe {
+  0%, 100% { opacity: 0.75; }
+  50% { opacity: 1; }
+}
+
+/* Node halo pulse */
+@keyframes halo-pulse {
+  0%, 100% { opacity: 0.3; transform: scale(1); }
+  50% { opacity: 0.6; transform: scale(1.08); }
+}
+
+/* Zone label fade */
+@keyframes zone-label-fade {
+  0%, 100% { opacity: 0.2; }
+  50% { opacity: 0.35; }
+}
+
+/* Tooltip fade-in */
+@keyframes tooltip-in {
+  0% { opacity: 0; transform: translateY(4px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+/* Pulse ring for node events */
+@keyframes pulse-ring {
+  0% { opacity: 0.6; transform: scale(1); }
+  100% { opacity: 0; transform: scale(3); }
 }

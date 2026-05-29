@@ -341,7 +341,7 @@ export function computeUnifiedState(
       standbyNodes: topologyGraph.nodes.filter((n) => n.status === "standby").length,
       avgLatency: 0,
       totalPacketFlow: 0,
-      uptimeQuality: topologyGraph.nodes.filter((n) => n.status === "online").length / Math.max(topologyGraph.nodes.length, 1) * 100,
+      uptimeQuality: Math.round(topologyGraph.nodes.filter((n) => n.status === "online").length / Math.max(topologyGraph.nodes.length, 1) * 100),
       avgHealth: topologyGraph.nodes.length > 0
         ? Math.round(topologyGraph.nodes.reduce((s, n) => s + n.health, 0) / topologyGraph.nodes.length)
         : 100,

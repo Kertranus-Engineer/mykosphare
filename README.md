@@ -1,66 +1,88 @@
 # MYKOSPHARE
 
-**Environmental Intelligence Platform** — realtime environmental automation, vision-assisted monitoring, and intelligent telemetry infrastructure for controlled environment agriculture and industrial biotech.
+**Environmental Intelligence Platform** — autonomous environmental monitoring, AI-driven stabilization, and intelligent telemetry infrastructure for controlled environment agriculture and industrial biotech.
+
+```
+ ███╗   ███╗██╗   ██╗██╗  ██╗ ██████╗ ███████╗██████╗ ██╗  ██╗ █████╗ ██████╗ ███████╗
+ ████╗ ████║╚██╗ ██╔╝██║ ██╔╝██╔═══██╗██╔════╝██╔══██╗██║  ██║██╔══██╗██╔══██╗██╔════╝
+ ██╔████╔██║ ╚████╔╝ █████╔╝ ██║   ██║███████╗██████╔╝███████║███████║██████╔╝█████╗
+ ██║╚██╔╝██║  ╚██╔╝  ██╔═██╗ ██║   ██║╚════██║██╔═══╝ ██╔══██║██╔══██║██╔══██╗██╔══╝
+ ██║ ╚═╝ ██║   ██║   ██║  ██╗╚██████╔╝███████║██║     ██║  ██║██║  ██║██║  ██║███████╗
+ ╚═╝     ╚═╝   ╚═╝   ╚═╝  ╚═╝ ╚═════╝ ╚══════╝╚═╝     ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝  ╚═╝╚══════╝
+```
 
 ---
 
-## Overview
+## Features
 
-MYKOSPHARE is a cinematic operational intelligence platform that transforms environmental monitoring into a living industrial experience. It provides real-time visualization, deterministic simulation, and intelligent control for controlled environment agriculture and biotechnology facilities.
+### 🌿 Environmental Chamber
+Real-time atmospheric visualization with reactive glow, heat distortion for high temperature, fog diffusion for humidity, scanline diagnostics, and volumetric breathing core. Reacts to live ESP32 telemetry or simulated data.
 
-### Key Capabilities
+### 🧠 AI Operational Intelligence
+Confidence scoring, phase detection, predictive warnings, facility health tracking, and rotating operational narrative. The AI module analyzes environmental trends and suggests autonomous interventions.
 
-- **Operational Topology** — SVG-based live network visualization with signal propagation, node health monitoring, and cross-layer integration
-- **Environmental Intelligence** — Real-time telemetry analysis, anomaly detection, drift forecasting, and AI-powered operational summaries
-- **Incident Management** — Automated incident detection, severity scoring, and resolution tracking with full audit history
-- **Predictive Maintenance** — Equipment health monitoring, maintenance scheduling, and reliability analytics
-- **Command & Control** — Operational command center with queue management, emergency controls, and execution timeline
-- **Temporal Analysis** — Behavior patterns, trend forecasting, and timeline-based operational replay
-- **Digital Twin** — Chamber state simulation with contamination risk modeling and operational stress analysis
+### 🕸️ Live Topology Engine
+Canvas-based network visualization with 110+ animated particles, packet flow between nodes, mycelium core with breathing rings, node status halos, and mouse parallax. Renders real network topology from the unified operational state.
+
+### 📊 Real-Time Telemetry Pipeline
+```
+ESP32 → POST /api/data → telemetry store (globalThis) → GET /api/data → useTelemetry() → React hooks → Dashboard
+```
+Fully decoupled from build. Survives HMR and module resets. Fallback simulation layer when hardware is unavailable.
+
+### 🎮 Auto-Demo System
+16-step timeline orchestrated across 6 operational phases (NOMINAL → DRIFT → WARNING → CRITICAL → COMPENSATING → STABILIZED). One click runs the full demo cycle. Manual triggers for WARNING, CRITICAL, and RECOVERY states. Press `P` for presentation overlay.
+
+### 🎨 Operational Profiles (Themes)
+Three distinct operational modes — not just color swaps:
+- **OBSIDIAN** — cinematic dark, cyan accents, deep navy shadows
+- **PURE BLACK** — OLED graphite, emerald glow, cinematic demo mode
+- **LAB LIGHT** — blue-gray scientific, steel cyan accents, laboratory aesthetic
+
+### 📐 Collapsible Sidebar
+Icon-only mini mode (72px) with smooth 220ms transition. CSS variable-driven layout recalculation. Resize events dispatched for chart/topology recalculation.
+
+### 📱 Presentation Mode
+Toggle for projector-friendly display: stronger KPI contrast, reduced atmospheric noise, hidden scanlines, slower animations.
 
 ---
 
 ## Architecture
 
 ```
-mykosphare/
-├── app/                        # Next.js App Router
-│   ├── dashboard/              # Protected operational pages
-│   └── api/                    # Ingestion & protocol endpoints
-├── features/                   # Feature-sliced component modules
-│   ├── topology/               # Network visualization
-│   ├── dashboard/              # Overview metrics & charts
-│   ├── command-center/         # Operational controls
-│   ├── ambiance/               # Cinematic state effects
-│   ├── init/                   # Boot sequence
-│   ├── presentation/           # Presentation mode
-│   ├── snapshot/               # System snapshot
-│   ├── demo/                   # Demo simulation
-│   ├── incidents/              # Incident management
-│   ├── maintenance/            # Maintenance scheduling
-│   ├── intelligence/           # AI analysis
-│   └── temporal/               # Time-series analysis
-├── lib/                        # Pure business logic
-│   ├── topology/               # Graph engine, signal routing
-│   ├── unified/                # Cross-layer orchestration
-│   ├── commands/               # Command execution engine
-│   ├── incidents/              # Incident scoring engine
-│   ├── maintenance/            # Maintenance analytics
-│   └── realtime/               # Supabase subscriptions
-└── mock/                       # Deterministic simulation
-    ├── simulator.ts            # Main simulation loop
-    ├── scenarios.ts            # Scenario orchestration
-    ├── environment.ts          # Environmental state engine
-    └── device-registry.ts      # Virtual device definitions
+┌──────────────────────────────────────────────────┐
+│                    Frontend                       │
+│  Next.js 16 · React 19 · Tailwind v4 · shadcn/ui │
+│  TypeScript · Recharts · framer-motion            │
+├──────────────────────────────────────────────────┤
+│  Features                                         │
+│  ├── Dashboard (Overview, Chamber, KPIs, AI)      │
+│  ├── Topology (Canvas engine, network graph)      │
+│  ├── Intelligence (AI analysis, health scoring)   │
+│  ├── Timeline (Temporal patterns, forecasting)    │
+│  ├── Command Center (Operational terminal)        │
+│  ├── Configuration (System settings)              │
+│  └── Debug Network (LAN diagnostics)              │
+├──────────────────────────────────────────────────┤
+│  Telemetry Pipeline                               │
+│  globalThis.__mykosphare_telemetry_v1             │
+│  ├── writeTelemetry(temp, hum, fan, humidifier)   │
+│  ├── readTelemetry() → {freshnessMs, stale, ...}  │
+│  └── debugDump() → full store snapshot            │
+├──────────────────────────────────────────────────┤
+│  API Routes                                       │
+│  POST /api/data    ← ESP32 telemetry              │
+│  GET  /api/data    → dashboard polling            │
+│  POST /api/demo    ← simulation control           │
+│  GET  /api/debug/telemetry → diagnostics          │
+│  GET  /api/network-info  → LAN detection          │
+│  POST /api/raw     ← raw packet capture           │
+├──────────────────────────────────────────────────┤
+│  Demo Orchestrator                                │
+│  6-phase state machine · 48s loop                 │
+│  Manual triggers: WARNING / CRITICAL / RECOVERY   │
+└──────────────────────────────────────────────────┘
 ```
-
-### Core Design Principles
-
-- **Deterministic-first** — All system behavior is reproducible and predictable
-- **Modular architecture** — Each subsystem is independently testable and replaceable
-- **Industrial aesthetic** — Premium dark-themed interface with subtle animations and cinematic transitions
-- **Realtime by default** — Live telemetry, instant state updates, responsive feedback
-- **No external rendering dependencies** — SVG-only topology visualization, no Three.js
 
 ---
 
@@ -69,129 +91,103 @@ mykosphare/
 | Layer | Technology |
 |-------|-----------|
 | Framework | Next.js 16 (App Router) |
-| Language | TypeScript 5 (strict) |
-| Styling | Tailwind CSS 4 + shadcn/ui |
-| Animation | Tailwind CSS animations + Framer Motion |
+| UI | React 19, Tailwind CSS v4, shadcn/ui, Radix |
 | Charts | Recharts |
-| Backend | Supabase (PostgreSQL, Realtime, Auth) |
-| Simulation | Custom deterministic engine |
-| Deployment | Vercel |
+| Animations | framer-motion, CSS keyframes, Canvas 2D |
+| Icons | Lucide React |
+| Networking | Node.js `os`, `http`, globalThis stores |
+| Fonts | Geist Sans, Geist Mono |
+| ESP32 | Arduino, WiFi, HTTPClient, DHT22, LCD I2C |
 
 ---
 
-## Getting Started
-
-### Prerequisites
-
-- Node.js 20+
-- npm, pnpm, or bun
-- Supabase project (optional, local simulation works without)
-
-### Installation
+## Quick Start
 
 ```bash
-git clone https://github.com/yourusername/mykosphare.git
-cd mykosphare
+# Install dependencies
 npm install
-```
 
-### Development
-
-```bash
+# Start dev server (binds to 0.0.0.0 for LAN access)
 npm run dev
+
+# Open dashboard
+open http://localhost:3000
+
+# Network diagnostics (from any device on LAN)
+open http://localhost:3000/debug-network
 ```
 
-Open [http://localhost:3000](http://localhost:3000). The platform runs in simulation mode by default — no external services required.
+### Environment
 
-### Supabase Setup (Optional)
-
-For production realtime features:
-
-1. Create a Supabase project at [supabase.com](https://supabase.com)
-2. Run the schema from `supabase/schema.sql`
-3. Configure environment variables:
-
-```env
-NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+Copy `.env.local`:
+```
+NEXT_PUBLIC_SUPABASE_URL=
+NEXT_PUBLIC_SUPABASE_ANON_KEY=
 ```
 
-### Production Build
+Supabase is optional — the telemetry store runs entirely in memory via `globalThis`.
 
-```bash
-npm run build
-npm start
+### ESP32 Setup
+
+1. Open `ESP32_NETWORK_TEST.ino`
+2. Set `WIFI_SSID`, `WIFI_PASS`, and `SERVER_HOST` (from `/debug-network` PRIMARY LAN)
+3. Upload to ESP32
+4. Open Serial Monitor (115200 baud)
+5. Verify `[HTTP] code=200`
+
+### Windows Firewall
+
+```powershell
+# Run as Administrator
+New-NetFirewallRule -DisplayName "Next.js Dev (3000)" -Direction Inbound -LocalPort 3000 -Protocol TCP -Action Allow
 ```
 
 ---
 
-## Features
+## Demo Script
 
-### Operational Boot Sequence
-Full-screen cinematic initialization with sequential system checks — sensor fabric, incident memory, topology graph, realtime channels, and operational state loading.
+Recommended presentation flow:
 
-### Live Topology Visualization
-SVG-based network graph showing all connected devices with real-time signal propagation, node health status, packet flow animations, and cross-layer alert correlation.
-
-### Environmental Intelligence
-AI-powered analysis of telemetry data with health scoring, stability indices, drift detection, and automated operational summaries.
-
-### Incident & Maintenance Management
-Automated incident detection with severity scoring, resolution tracking, predictive maintenance scheduling, and reliability analytics.
-
-### Command Center
-Unified operational control with command queue management, emergency isolation protocols, system health monitoring, and execution timeline.
-
-### Presentation Mode
-Cinematic fullscreen mode that reduces UI noise, smooths transitions, and optimizes the platform for demonstrations, recordings, and investor presentations.
-
-### System Snapshot
-Capture operational state snapshots with frozen telemetry and stabilized topology — ideal for screenshots, documentation, and reporting.
-
-### Operational Simulation
-Built-in demo mode that orchestrates complete operational scenarios — drift detection, alert cascades, incident escalation, and recovery cycles.
+1. **Boot** — dashboard initialization sequence
+2. **Overview** — show chamber, KPIs, AI analysis in NOMINAL state
+3. **Topology** — showcase live network visualization
+4. **Trigger WARNING** — humidity drift, amber escalation
+5. **Trigger CRITICAL** — thermal spike, autonomous compensation
+6. **RECOVERY** — equilibrium restored
+7. **Auto Demo** — full 48s orchestrated cycle
+8. **Themes** — switch between Obsidian / Pure Black / Lab Light
+9. **Presentation Mode** — projector-friendly view (press `P`)
 
 ---
 
-## Routes
+## Pages
 
-| Route | Page |
-|-------|------|
-| `/` | Landing |
-| `/dashboard` | Overview — metrics, chamber, telemetry |
-| `/dashboard/unified` | Cross-layer operational intelligence |
-| `/dashboard/topology` | Live network visualization |
-| `/dashboard/command-center` | Operational command & control |
-| `/dashboard/environment` | Multi-zone monitoring |
-| `/dashboard/analytics` | Charts and KPIs |
-| `/dashboard/intelligence` | AI analysis |
-| `/dashboard/maintenance` | Equipment health |
-| `/dashboard/timeline` | Temporal operations |
-| `/dashboard/alerts` | Alert management |
-| `/dashboard/settings` | System configuration |
+| Route | Description |
+|-------|-------------|
+| `/dashboard` | Overview — chamber, KPIs, AI analysis, quick start |
+| `/dashboard/topology` | Live network graph with packet flow and core |
+| `/dashboard/intelligence` | AI operational intelligence and health scoring |
+| `/dashboard/timeline` | Temporal patterns, forecasting, drift analysis |
+| `/dashboard/command-center` | Operational terminal and command interface |
+| `/dashboard/configuration` | System settings and configuration |
+| `/dashboard/alerts` | Alert management and incident tracking |
+| `/dashboard/analytics` | Charts, metrics, and environmental history |
+| `/debug-network` | LAN diagnostics, packet capture, ping monitor |
 
 ---
 
-## Philosophy
+## Operational Modes
 
-MYKOSPHARE was built to feel like a living industrial intelligence platform rather than a traditional dashboard. Every visual detail — from the boot sequence to the signal propagation animations — is designed to reinforce the sense of operating a real environmental control system.
-
-The deterministic simulation engine ensures that the platform works identically in demo, development, and production environments. This makes it suitable for both real-world deployment and compelling presentations.
-
----
-
-## Roadmap
-
-- [ ] Real hardware integration (ESP32, SHT31, MH-Z19B)
-- [ ] Camera vision module with AI growth stage analysis
-- [ ] Multi-chamber fleet management
-- [ ] Mobile companion app
-- [ ] API marketplace for third-party integrations
-- [ ] Energy optimization engine
-- [ ] Protocol compliance reporting
+| State | Chamber | Topology | AI | Vignette |
+|-------|---------|----------|----|----|
+| NOMINAL | Cyan breathing | Green nodes, stable flow | "Environmental equilibrium holding" | Soft cyan |
+| WARNING | Amber pulse | Warning nodes | "Humidity threshold approaching" | Amber tint |
+| CRITICAL | Red glow + scanlines | Critical routes | "Thermal anomaly detected" | Red diffusion |
+| RECOVERY | Teal stabilization | Healing connections | "Equilibrium restoring" | Teal fade |
+| COMPENSATING | Intense airflow glow | Rerouting | "Compensation protocols active" | Bright cyan |
 
 ---
 
 ## License
 
-MIT — see [LICENSE](LICENSE) for details.
+MIT

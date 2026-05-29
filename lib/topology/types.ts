@@ -2,6 +2,8 @@ import type { NodeType, NodeStatus, DeviceCapability } from "./node-types"
 
 export type { NodeType, NodeStatus, DeviceCapability }
 
+export type ConnectionState = "nominal" | "warning" | "critical" | "offline"
+
 export interface TopologyNode {
   id: string
   nodeType: NodeType
@@ -16,6 +18,10 @@ export interface TopologyNode {
   telemetryQuality: number
   uptime: number
   health: number
+  packetIntegrity: number
+  syncState: string
+  responseLatency: number
+  telemetryLoad: string
 }
 
 export interface SignalLink {
@@ -27,11 +33,22 @@ export interface SignalLink {
   active: boolean
   latency: number
   packetRate: number
+  connectionState: ConnectionState
+}
+
+export interface ZoneLabel {
+  id: string
+  label: string
+  x: number
+  y: number
+  width: number
+  height: number
 }
 
 export interface TopologyGraph {
   nodes: TopologyNode[]
   links: SignalLink[]
+  zones?: ZoneLabel[]
 }
 
 export interface TopologyMetrics {

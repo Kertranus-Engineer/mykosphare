@@ -3,12 +3,13 @@
 import { useState, useEffect, useCallback, useRef } from "react"
 
 const BOOT_STEPS = [
-  { message: "INITIALIZING SENSOR FABRIC", duration: 800 },
-  { message: "RESTORING INCIDENT MEMORY", duration: 700 },
-  { message: "VERIFYING TOPOLOGY GRAPH", duration: 900 },
-  { message: "SYNCING REALTIME CHANNELS", duration: 600 },
-  { message: "LOADING OPERATIONAL STATE", duration: 800 },
-  { message: "SYSTEM READY", duration: 1200 },
+  { message: "INITIALIZING CORE", duration: 600 },
+  { message: "LINKING TELEMETRY", duration: 700 },
+  { message: "SYNCING ENVIRONMENT", duration: 800 },
+  { message: "VERIFYING RELAYS", duration: 700 },
+  { message: "LOADING TOPOLOGY", duration: 800 },
+  { message: "CALIBRATING SENSORS", duration: 600 },
+  { message: "MYKOSPHARE ONLINE", duration: 1200 },
 ]
 
 const SESSION_KEY = "mykosphare_boot_complete"
@@ -39,8 +40,10 @@ export function BootScreen({ onComplete }: { onComplete: () => void }) {
       onCompleteRef.current()
       return () => clearTimeout(t)
     }
-    setVisible(true)
-    const t1 = setTimeout(() => setStepIndex(0), 100)
+    const t1 = setTimeout(() => {
+      setVisible(true)
+      setStepIndex(0)
+    }, 50)
     return () => clearTimeout(t1)
   }, [])
 

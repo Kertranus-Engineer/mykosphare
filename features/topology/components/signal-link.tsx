@@ -1,48 +1,32 @@
 "use client"
 
-import { useMemo } from "react"
-import type { SignalLink as SignalLinkType, SignalActivity } from "@/lib/topology/types"
-import { cn } from "@/lib/utils"
+import { useMemo, memo } from "react"
+import type { SignalLink as SignalLinkType, SignalActivity, ConnectionState } from "@/lib/topology/types"
 
-const LINK_COLORS: Record<string, string> = {
-  telemetry: "stroke-emerald-500/30",
-  heartbeat: "stroke-blue-500/30",
-  control: "stroke-violet-500/30",
-  event: "stroke-amber-500/30",
+const TYPE_TO_BASE: Record<string, string> = {
+  telemetry: "#10b981",
+  heartbeat: "#3b82f6",
+  control: "#8b5cf6",
+  event: "#f59e0b",
 }
 
-const LINK_ACTIVE_COLORS: Record<string, string> = {
-  telemetry: "stroke-emerald-500/70",
-  heartbeat: "stroke-blue-500/70",
-  control: "stroke-violet-500/70",
-  event: "stroke-amber-500/70",
+const STATE_MODIFIERS: Record<ConnectionState, { opacity: number; dash: string; width: number }> = {
+  nominal: { opacity: 0.55, dash: "none", width: 1.5 },
+  warning: { opacity: 0.45, dash: "4 4", width: 1.2 },
+  critical: { opacity: 0.5, dash: "3 3", width: 1.5 },
+  offline: { opacity: 0.12, dash: "2 8", width: 0.5 },
 }
 
-const LINK_GLOW: Record<string, string> = {
-  telemetry: "drop-shadow-[0_0_3px_rgba(16,185,129,0.3)]",
-  heartbeat: "drop-shadow-[0_0_3px_rgba(59,130,246,0.3)]",
-  control: "drop-shadow-[0_0_3px_rgba(139,92,246,0.3)]",
-  event: "drop-shadow-[0_0_3px_rgba(245,158,11,0.3)]",
+function hashToOffset(seed: number, t: number): number {
+  return (((seed * 7919 + t * 31) % 10000) / 10000)
 }
 
-function deterministicOffset(timestamp: number, seed: number): number {
-  return ((timestamp * 13 + seed * 7) % 100 - 50) / 50 * 20
-}
-
-export function SignalLink({
-  link,
-  activities,
-  sourceX,
-  sourceY,
-  targetX,
-  targetY,
+export function SignalLinkImpl({
+  link, activities, sourceX, sourceY, targetX, targetY, time, mounted,
 }: {
-  link: SignalLinkType
-  activities: SignalActivity[]
-  sourceX: number
-  sourceY: number
-  targetX: number
-  targetY: number
+  link: SignalLinkType; activities: SignalActivity[]
+  sourceX: number; sourceY: number; targetX: number; targetY: number
+  time: number; mounted: boolean
 }) {
   const matchingActivities = useMemo(
     () => activities.filter((a) => a.linkId === link.id),
@@ -50,100 +34,98 @@ export function SignalLink({
   )
 
   const isActive = matchingActivities.length > 0 && link.active
-  const color = isActive
-    ? LINK_ACTIVE_COLORS[link.type] ?? "stroke-muted-foreground/60"
-    : LINK_COLORS[link.type] ?? "stroke-muted-foreground/20"
+  const baseColor = TYPE_TO_BASE[link.type] ?? "#6b7280"
+  const mod = STATE_MODIFIERS[link.connectionState] ?? STATE_MODIFIERS.offline
 
-  const midX = (sourceX + targetX) / 2
-  const midY = (sourceY + targetY) / 2
+  const effectiveColor = link.connectionState === "offline" ? "#4b5563" : baseColor
+  const effectiveOpacity = isActive ? mod.opacity : mod.opacity * 0.6
+  const effectiveDash = isActive && link.connectionState === "nominal" ? "none" : mod.dash
 
   const dx = targetX - sourceX
   const dy = targetY - sourceY
   const length = Math.sqrt(dx * dx + dy * dy)
 
-  const travelActivities = useMemo(() => {
-    return matchingActivities.filter((_, i) => i < 2)
-  }, [matchingActivities])
+  const particles = useMemo(() => {
+    if (!mounted || length < 10) return []
+    const count = isActive ? (link.connectionState === "nominal" ? 3 : link.connectionState === "critical" ? 4 : 2) : 0
+    const pts: { key: number; offset: number; size: number }[] = []
+    for (let i = 0; i < count; i++) {
+      const phase = hashToOffset(i, Math.floor(time / 1000))
+      const offset = ((time % 4000) / 4000 + phase) % 1
+      pts.push({ key: i, offset, size: 2 + (i % 2) * 1.5 })
+    }
+    return pts
+  }, [time, length, isActive, link.connectionState, mounted])
 
   return (
-    <g className={cn(isActive && LINK_GLOW[link.type])}>
-      <line
-        x1={sourceX}
-        y1={sourceY}
-        x2={targetX}
-        y2={targetY}
-        className={cn("transition-all duration-500", color)}
-        strokeWidth={isActive ? 1.5 : 1}
-        strokeDasharray={isActive ? "none" : "4 3"}
-      />
-
-      {isActive && !link.active && (
+    <g>
+      {link.connectionState === "offline" ? (
         <line
-          x1={sourceX}
-          y1={sourceY}
-          x2={targetX}
-          y2={targetY}
-          className="stroke-emerald-500/20"
-          strokeWidth={1}
-          strokeDasharray="4 6"
+          x1={sourceX} y1={sourceY} x2={targetX} y2={targetY}
+          className="stroke-muted-foreground/15"
+          strokeWidth={0.5} strokeDasharray="2 8"
         />
+      ) : (
+        <>
+          {isActive && (
+            <line
+              x1={sourceX} y1={sourceY} x2={targetX} y2={targetY}
+              stroke={effectiveColor} strokeWidth={mod.width + 6}
+              opacity={effectiveOpacity * 0.06} strokeDasharray={effectiveDash}
+            />
+          )}
+          <line
+            x1={sourceX} y1={sourceY} x2={targetX} y2={targetY}
+            stroke={effectiveColor} strokeWidth={mod.width}
+            strokeDasharray={effectiveDash}
+            opacity={effectiveOpacity * (link.connectionState === "critical" ? 0.5 + Math.sin(time * 0.008) * 0.3 : 1)}
+          />
+          {isActive && link.connectionState === "nominal" && (
+            <line
+              x1={sourceX} y1={sourceY} x2={targetX} y2={targetY}
+              stroke={effectiveColor} strokeWidth={mod.width + 2}
+              opacity={effectiveOpacity * 0.15}
+            />
+          )}
+        </>
       )}
 
-      {travelActivities.map((a, i) => {
-        const progress = ((a.timestamp % 2000) / 2000) * length
-        const offset = deterministicOffset(a.timestamp, i + 1)
-        const px = sourceX + (dx / length) * ((progress + offset) % length)
-        const py = sourceY + (dy / length) * ((progress + offset) % length)
+      {particles.map((p) => {
+        const px = sourceX + dx * p.offset
+        const py = sourceY + dy * p.offset
+        const particleColor = link.connectionState === "critical" ? "#ef4444"
+          : link.connectionState === "warning" ? "#f59e0b" : baseColor
 
         return (
-          <g key={`travel-${a.timestamp}-${a.linkId}`}>
-            <circle
-              cx={px}
-              cy={py}
-              r={2.5}
-              className={cn(
-                "opacity-80",
-                a.type === "telemetry"
-                  ? "fill-emerald-500 drop-shadow-[0_0_4px_rgba(16,185,129,0.6)]"
-                  : a.type === "heartbeat"
-                    ? "fill-blue-500 drop-shadow-[0_0_4px_rgba(59,130,246,0.6)]"
-                    : "fill-violet-500 drop-shadow-[0_0_4px_rgba(139,92,246,0.6)]"
-              )}
-            />
-            <circle
-              cx={px}
-              cy={py}
-              r={5}
-              className={cn(
-                "opacity-30 animate-ping",
-                a.type === "telemetry"
-                  ? "fill-emerald-500/30"
-                  : a.type === "heartbeat"
-                    ? "fill-blue-500/30"
-                    : "fill-violet-500/30"
-              )}
-            />
+          <g key={p.key}>
+            <defs>
+              <radialGradient id={`gl-${link.id}-${p.key}`}>
+                <stop offset="0%" stopColor={particleColor} stopOpacity={0.6} />
+                <stop offset="100%" stopColor={particleColor} stopOpacity={0} />
+              </radialGradient>
+            </defs>
+            <circle cx={px} cy={py} r={p.size * 3} fill={`url(#gl-${link.id}-${p.key})`} className="opacity-50" />
+            <circle cx={px} cy={py} r={p.size} fill={particleColor} className="opacity-90" />
           </g>
         )
       })}
 
-      {isActive &&
-        matchingActivities.slice(0, 2).map((a) => (
-          <circle
-            key={`${a.timestamp}-${a.linkId}`}
-            cx={midX + deterministicOffset(a.timestamp, 1)}
-            cy={midY + deterministicOffset(a.timestamp, 2)}
-            r={1.5 + a.strength * 2}
-            className={cn(
-              "opacity-60",
-              a.type === "telemetry"
-                ? "fill-emerald-500"
-                : a.type === "heartbeat"
-                  ? "fill-blue-500"
-                  : "fill-violet-500"
-            )}
-          />
-        ))}
+  {isActive &&
+        matchingActivities.slice(0, 2).map((a, i) => {
+          const midX = (sourceX + targetX) / 2
+          const midY = (sourceY + targetY) / 2
+          return (
+            <circle
+              key={`md-${a.timestamp}-${i}`}
+              cx={midX + ((a.timestamp * 13 + i * 7) % 100 - 50) / 50 * 15}
+              cy={midY + ((a.timestamp * 17 + i * 11) % 100 - 50) / 50 * 15}
+              r={1.5 + a.strength * 2}
+              className={a.type === "telemetry" ? "fill-emerald-500/60" : a.type === "heartbeat" ? "fill-blue-500/60" : "fill-violet-500/60"}
+            />
+          )
+        })}
     </g>
   )
 }
+
+export const SignalLink = memo(SignalLinkImpl)

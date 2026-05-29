@@ -1,18 +1,16 @@
-import { redirect } from "next/navigation"
-import { createClient } from "@/lib/supabase/server"
-import { AppShell } from "@/features/layout/components/app-shell"
+"use client"
 
-export default async function DashboardLayout({
+import { AppShell } from "@/features/layout/components/app-shell"
+import { PageTransition } from "@/features/layout/components/page-transition"
+
+export default function DashboardLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
-  const supabase = await createClient()
-  const { data } = await supabase.auth.getUser()
-
-  if (!data.user) {
-    redirect("/auth/login")
-  }
-
-  return <AppShell>{children}</AppShell>
+  return (
+    <AppShell>
+      <PageTransition>{children}</PageTransition>
+    </AppShell>
+  )
 }

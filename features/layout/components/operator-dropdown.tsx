@@ -5,9 +5,12 @@ import {
   LogOut,
   ShieldCheck,
   Fingerprint,
+  Check,
 } from "lucide-react"
 import { useUser } from "@/lib/auth/hooks"
 import { signOut } from "@/lib/auth/actions"
+import { useLocale } from "@/lib/locales/locale-context"
+import type { Language } from "@/lib/locales/types"
 
 function formatTimestamp(date: Date): string {
   const now = new Date()
@@ -20,8 +23,14 @@ function formatTimestamp(date: Date): string {
   })
 }
 
+const LANGUAGES: { value: Language; label: string }[] = [
+  { value: "en", label: "English" },
+  { value: "es", label: "Espa\u00f1ol" },
+]
+
 export function OperatorDropdown() {
   const { operatorInfo, loading } = useUser()
+  const { language, setLanguage, t } = useLocale()
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
 
@@ -88,7 +97,7 @@ export function OperatorDropdown() {
                     : operatorInfo.role}
                 </p>
                 <p className="text-[9px] text-muted-foreground/40 tracking-wider uppercase">
-                  Role
+                  {t("operator.role")}
                 </p>
               </div>
             </div>
@@ -105,6 +114,29 @@ export function OperatorDropdown() {
             </div>
           </div>
 
+          <div className="border-t border-border/30 px-4 py-2.5">
+            <p className="mb-2 text-[10px] font-semibold tracking-wider uppercase text-muted-foreground/50">
+              {t("operator.language")}
+            </p>
+            <div className="flex gap-1.5">
+              {LANGUAGES.map((lang) => (
+                <button
+                  key={lang.value}
+                  type="button"
+                  onClick={() => setLanguage(lang.value)}
+                  className={`flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[11px] font-medium transition-all duration-150 ${
+                    language === lang.value
+                      ? "bg-emerald-500/15 text-emerald-500 ring-1 ring-emerald-500/30"
+                      : "text-muted-foreground/60 hover:bg-muted/50 hover:text-muted-foreground"
+                  }`}
+                >
+                  {language === lang.value && <Check className="size-3" />}
+                  {lang.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
           <div className="border-t border-border/30 p-1.5">
             <form action={signOut}>
               <button
@@ -112,7 +144,7 @@ export function OperatorDropdown() {
                 className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-xs text-muted-foreground/70 transition-colors hover:bg-destructive/10 hover:text-destructive"
               >
                 <LogOut className="size-3.5" />
-                Sign Out
+                {t("operator.sign-out")}
               </button>
             </form>
           </div>

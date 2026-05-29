@@ -4,6 +4,7 @@ import { X, Activity, Clock, Heart, AlertTriangle, TrendingUp, TrendingDown, Min
 import type { TopologyNode } from "@/lib/topology/types"
 import type { AugmentedNode } from "@/lib/unified/types"
 import { getStatusVisual } from "@/lib/topology/status"
+import { getNodeTypeMeta } from "@/lib/topology/node-types"
 import { cn } from "@/lib/utils"
 
 function formatTime(ts: string | null): string {
@@ -48,13 +49,17 @@ export function NodeCard({
   const vis = getStatusVisual(node.status)
   const alertMeta = augmented?.alertSeverity ? ALERT_META[augmented.alertSeverity] : null
   const combinedMeta = augmented ? STATUS_META[augmented.combinedStatus] : null
+  const nodeMeta = getNodeTypeMeta(node.nodeType)
 
   return (
-    <div className="absolute bottom-3 left-3 z-40 w-72 rounded-xl border border-border/60 bg-card p-4 shadow-lg">
+    <div className="absolute bottom-3 left-3 z-40 w-80 rounded-xl border border-border/60 bg-card p-4 shadow-lg backdrop-blur-sm">
       <div className="flex items-start justify-between mb-3">
         <div className="flex items-center gap-2">
-          <div className={cn("size-2 rounded-full", vis.dotColor, vis.glowColor, vis.animClass)} />
-          <span className="text-sm font-medium text-foreground">{node.label}</span>
+          <div className={cn("size-2.5 rounded-full ring-1 ring-offset-1 ring-offset-card", vis.dotColor, vis.glowColor, vis.animClass)} />
+          <div>
+            <span className="text-sm font-semibold text-foreground block leading-tight">{node.label}</span>
+            <span className="text-[10px] text-muted-foreground/50">{nodeMeta.label} · {node.id}</span>
+          </div>
           {augmented?.activeAlertCount ? (
             <span className={cn("rounded-full px-1.5 py-0.5 text-[9px] font-semibold", alertMeta?.bg, alertMeta?.color)}>
               {augmented.activeAlertCount}
@@ -69,21 +74,41 @@ export function NodeCard({
       <div className="space-y-1.5 text-[11px]">
         <div className="flex items-center justify-between rounded-md bg-muted/30 px-2 py-1.5">
           <span className="text-muted-foreground/70">Status</span>
-          <span className={cn("font-medium", vis.color)}>{vis.label}</span>
+          <span className={cn("font-semibold", vis.color)}>{vis.label}</span>
         </div>
         <div className="flex items-center justify-between rounded-md bg-muted/30 px-2 py-1.5">
           <span className="text-muted-foreground/70">Type</span>
-          <span className="font-medium text-foreground capitalize">{node.nodeType}</span>
+          <span className="font-medium text-foreground">{nodeMeta.description}</span>
         </div>
         <div className="grid grid-cols-2 gap-1.5">
           <div className="rounded-md bg-muted/30 px-2 py-1.5">
             <span className="text-[9px] text-muted-foreground/60 block">Health</span>
-            <span className="font-medium tabular-nums text-foreground">{node.health}%</span>
+            <span className="font-semibold tabular-nums text-foreground">{node.health}%</span>
           </div>
           <div className="rounded-md bg-muted/30 px-2 py-1.5">
             <span className="text-[9px] text-muted-foreground/60 block">Telemetry</span>
-            <span className="font-medium tabular-nums text-foreground">{node.telemetryQuality}%</span>
+            <span className="font-semibold tabular-nums text-foreground">{node.telemetryQuality}%</span>
           </div>
+        </div>
+        <div className="rounded-md bg-muted/30 px-2 py-1.5 flex items-center justify-between">
+          <span className="text-[10px] text-muted-foreground/60">Uptime</span>
+          <span className="font-semibold tabular-nums text-foreground">{node.uptime}s</span>
+        </div>
+        <div className="rounded-md bg-muted/30 px-2 py-1.5 flex items-center justify-between">
+          <span className="text-[10px] text-muted-foreground/60">Sync State</span>
+          <span className="font-semibold tabular-nums text-foreground">{node.syncState ?? "—"}</span>
+        </div>
+        <div className="rounded-md bg-muted/30 px-2 py-1.5 flex items-center justify-between">
+          <span className="text-[10px] text-muted-foreground/60">Packet Integrity</span>
+          <span className="font-semibold tabular-nums text-foreground">{node.packetIntegrity ?? "—"}%</span>
+        </div>
+        <div className="rounded-md bg-muted/30 px-2 py-1.5 flex items-center justify-between">
+          <span className="text-[10px] text-muted-foreground/60">Telemetry Load</span>
+          <span className="font-semibold tabular-nums text-foreground">{node.telemetryLoad ?? "—"}</span>
+        </div>
+        <div className="rounded-md bg-muted/30 px-2 py-1.5 flex items-center justify-between">
+          <span className="text-[10px] text-muted-foreground/60">Response Latency</span>
+          <span className="font-semibold tabular-nums text-foreground">{node.responseLatency ?? "—"}ms</span>
         </div>
       </div>
 
@@ -92,7 +117,7 @@ export function NodeCard({
           <div className="flex items-center justify-between rounded-md bg-muted/20 px-2 py-1">
             <span className="text-[10px] text-muted-foreground/60 flex items-center gap-1">
               <Gauge className="size-2.5" />
-              Combined
+              Combined Status
             </span>
             <span className={cn("text-[11px] font-semibold tabular-nums capitalize", combinedMeta?.color)}>
               {augmented.combinedStatus} ({Math.round(

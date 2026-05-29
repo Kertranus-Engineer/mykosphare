@@ -1,6 +1,6 @@
 "use client"
 
-import { Activity, Cpu, Gauge, Wifi, Zap, AlertTriangle, Shield } from "lucide-react"
+import { Activity, Cpu, Gauge, Wifi, Zap, AlertTriangle, Shield, Signal } from "lucide-react"
 import type { TopologyMetrics as TM } from "@/lib/topology/types"
 import { cn } from "@/lib/utils"
 
@@ -35,11 +35,11 @@ export function TopologyMetrics({ metrics }: { metrics: TM }) {
       <StatCard icon={Cpu} label="Total Nodes" value={`${metrics.totalNodes}`} color="text-violet-500/70" />
       <StatCard icon={Wifi} label="Active" value={`${metrics.activeNodes}`} sub={`${metrics.offlineNodes} offline`} color="text-emerald-500/70" />
       <StatCard icon={Gauge} label="Avg Latency" value={`${metrics.avgLatency}ms`} color="text-blue-500/70" />
-      <StatCard icon={Zap} label="Packet Flow" value={`${metrics.totalPacketFlow}/s`} color="text-amber-500/70" />
-      <StatCard icon={Activity} label="Uptime Quality" value={`${metrics.uptimeQuality}%`} color="text-emerald-500/70" />
-      <StatCard icon={Cpu} label="Avg Health" value={`${metrics.avgHealth}%`} color="text-cyan-500/70" />
+      <StatCard icon={Zap} label="Packet Flow" value={`${metrics.totalPacketFlow}/s`} color="text-cyan-500/70" />
+      <StatCard icon={Signal} label="Link Quality" value={`${metrics.uptimeQuality}%`} color="text-emerald-500/70" />
+      <StatCard icon={Shield} label="Avg Health" value={`${metrics.avgHealth}%`} color="text-cyan-500/70" />
       <StatCard icon={AlertTriangle} label="Degraded" value={`${metrics.degradedNodes + metrics.warningNodes}`} sub={`${metrics.syncingNodes} syncing`} color="text-amber-500/70" />
-      <StatCard icon={Shield} label="Standby" value={`${metrics.standbyNodes}`} color="text-muted-foreground/60" />
+      <StatCard icon={Activity} label="Standby" value={`${metrics.standbyNodes}`} color="text-muted-foreground/60" />
     </div>
   )
 }

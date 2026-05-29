@@ -24,6 +24,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { cn } from "@/lib/utils"
 import { useTelemetryHistory } from "@/lib/hooks/use-telemetry-history"
+import { useRealTimeTelemetry } from "@/lib/useTelemetry"
 
 function TrendIcon({ trend }: { trend: "rising" | "falling" | "stable" }) {
   return (
@@ -43,8 +44,9 @@ function TrendIcon({ trend }: { trend: "rising" | "falling" | "stable" }) {
 }
 
 export default function AnalyticsPage() {
-  const { rollingAverages, trends, stability, variance, recentHistory, connected, latency, rows } =
+  const { rollingAverages, trends, stability, variance, recentHistory, rows } =
     useTelemetryHistory()
+  const rtTel = useRealTimeTelemetry()
 
   const dataPoints = rows.length || Math.floor(
     (typeof window !== "undefined"
@@ -112,13 +114,13 @@ export default function AnalyticsPage() {
           </p>
         </div>
         <div className="flex shrink-0 items-center gap-1.5 rounded-md border border-border/50 bg-muted/30 px-2.5 py-1">
-          {connected ? (
+          {rtTel.online ? (
             <Wifi className="size-3 text-emerald-500" />
           ) : (
             <WifiOff className="size-3 text-muted-foreground/40" />
           )}
           <span className="text-[10px] font-medium tracking-wide text-muted-foreground/60">
-            {connected ? `LIVE ${latency !== null ? `${latency}ms` : ""}` : "LOCAL DATA"}
+            {rtTel.online ? "ESP32 LIVE" : "ESP32 OFFLINE"}
           </span>
         </div>
       </div>
@@ -154,7 +156,7 @@ export default function AnalyticsPage() {
             <CardTitle className="flex items-center gap-2 text-sm">
               <Activity className="size-4 text-muted-foreground" />
               Temperature & CO\u2082 Trends
-              {connected && (
+              {rtTel.online && (
                 <span className="ml-auto text-[10px] text-emerald-500/60">realtime</span>
               )}
             </CardTitle>

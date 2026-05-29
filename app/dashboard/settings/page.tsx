@@ -19,6 +19,7 @@ import { DEPLOYMENT_ID, CLUSTER, REGION, SOFTWARE_VERSION, getUptime } from "@/m
 import { useSettings, type AppSettings } from "@/lib/services/settings-service"
 import { useRealtimeSettings } from "@/lib/realtime/subscriptions"
 import { RealtimeBadge } from "@/lib/realtime/status"
+import { useLocale } from "@/lib/locales/locale-context"
 
 function Toggle({
   label,
@@ -115,15 +116,16 @@ export default function SettingsPage() {
   const mounted = useMounted()
   const { settings, updateSetting, loading, online } = useSettings()
   const { status: rtStatus, latency: rtLatency } = useRealtimeSettings()
+  const { t } = useLocale()
   const uptime = useUptime()
   const uptimeStr = mounted ? (uptime > 0 ? getUptime() : "0m") : "—"
 
   const identityItems = [
-    { label: "Chamber ID", value: DEPLOYMENT_ID },
-    { label: "Deployment", value: REGION },
-    { label: "Software", value: `MYKOSPHARE ${SOFTWARE_VERSION}` },
-    { label: "Session Uptime", value: uptimeStr },
-    { label: "Cluster", value: CLUSTER },
+    { label: t("settings.chamber-id"), value: DEPLOYMENT_ID },
+    { label: t("settings.deployment"), value: REGION },
+    { label: t("settings.software"), value: `MYKOSPHARE ${SOFTWARE_VERSION}` },
+    { label: t("settings.session-uptime"), value: uptimeStr },
+    { label: t("settings.cluster"), value: CLUSTER },
   ]
 
   if (loading) {

@@ -57,10 +57,18 @@ export function getSessionElapsed(): number {
   return Math.floor((Date.now() - sessionStart) / 1000)
 }
 
-export const DEPLOYMENT_ID = "MYK-CH-001"
-export const CLUSTER = "Alpha"
+export const DEPLOYMENT_ID = "MYK-ALPHA-001"
+export const CLUSTER = "ALPHA NODE"
 export const REGION = "NA-East / DC-02"
 export const SOFTWARE_VERSION = "v0.1.0"
+export const BUILD_NUMBER = "b20260601"
+export const OPERATIONAL_SYSTEM = "Operational Intelligence Platform"
+export const ENVIRONMENTAL_LAYER = "Environmental Systems Layer"
+export const DEPLOYMENT_REGION = "North America · East Coast"
+export const SYSTEM_DESIGNATION = "Controlled Environment Orchestration Engine"
+export const CREATOR_ATTRIBUTION = "Designed, orchestrated & brought online by"
+export const CREATOR_NAME = "SERGIO RODRÍGUEZ"
+export const CREATOR_TAGLINE = "Experimental autonomous environmental systems"
 
 let uptimeCounter = 0
 let uptimeSeconds = 0

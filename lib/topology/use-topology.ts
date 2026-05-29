@@ -42,17 +42,41 @@ export function useTopology(canvasWidth = 640, canvasHeight = 480) {
       capabilities: DeviceCapability[]
       metadata: Record<string, string | number | boolean | null>
     }[] = [
+      // ── CLOUD LAYER ──
       {
-        id: "cloud-01",
-        nodeType: "cloud",
-        label: "MYKOSPHARE Cloud",
-        capabilities: [],
-        metadata: { region: "NA-East / DC-02" },
+        id: "cloud-01", nodeType: "cloud", label: "MYKOSPHARE Cloud",
+        capabilities: [], metadata: { region: "NA-East / DC-02" },
       },
       {
-        id: "MYK-CH-001",
-        nodeType: "chamber",
-        label: "Chamber Alpha",
+        id: "sync-01", nodeType: "remote-sync", label: "Remote Sync",
+        capabilities: [], metadata: { protocol: "WebSocket", interval: "1.5s" },
+      },
+      {
+        id: "analytics-01", nodeType: "analytics", label: "Analytics Cluster",
+        capabilities: [], metadata: { shards: 4, throughput: "2.1M msg/h" },
+      },
+
+      // ── INTELLIGENCE LAYER ──
+      {
+        id: "ai-01", nodeType: "ai-inference", label: "AI Inference",
+        capabilities: [], metadata: { model: "MYK-v3", accuracy: "98.2%" },
+      },
+      {
+        id: "pred-01", nodeType: "predictive", label: "Predictive Engine",
+        capabilities: [], metadata: { horizon: "24h", confidence: "96%" },
+      },
+      {
+        id: "broker-01", nodeType: "broker", label: "Telemetry Broker",
+        capabilities: [], metadata: { queueDepth: 0, throughput: "5k msg/s" },
+      },
+      {
+        id: "corr-01", nodeType: "correlator", label: "Event Correlator",
+        capabilities: [], metadata: { rulesActive: 42, latency: "18ms" },
+      },
+
+      // ── CHAMBER ──
+      {
+        id: "MYK-CH-001", nodeType: "chamber", label: "Chamber Alpha",
         capabilities: [
           { type: "environment", label: "Temperature", unit: "°C" },
           { type: "environment", label: "Humidity", unit: "%" },
@@ -60,12 +84,80 @@ export function useTopology(canvasWidth = 640, canvasHeight = 480) {
         ],
         metadata: { cluster: "Alpha", region: "NA-East / DC-02" },
       },
+
+      // ── EDGE LAYER: Sensors ──
       {
-        id: "MYK-SIM-001",
-        nodeType: "simulator",
-        label: "Local Simulator",
-        capabilities: [],
-        metadata: { source: "browser" },
+        id: "mesh-01", nodeType: "sensor-mesh", label: "Sensor Mesh",
+        capabilities: [{ type: "mesh", label: "Mesh Gateway", unit: "" }],
+        metadata: { protocol: "Zigbee", devices: 12 },
+      },
+      {
+        id: "co2-01", nodeType: "co2-sensor", label: "CO₂ Sensor",
+        capabilities: [{ type: "co2", label: "CO₂", unit: "ppm" }],
+        metadata: { model: "MH-Z19B", range: "0-5000ppm" },
+      },
+      {
+        id: "temp-01", nodeType: "temp-sensor", label: "Temp Sensor",
+        capabilities: [{ type: "temperature_sensor", label: "Temperature", unit: "°C" }],
+        metadata: { model: "SHT31", accuracy: "±0.3°C" },
+      },
+      {
+        id: "hum-01", nodeType: "humidity-sensor", label: "Humidity Sensor",
+        capabilities: [{ type: "humidity_sensor", label: "Humidity", unit: "%" }],
+        metadata: { model: "SHT31", accuracy: "±2%" },
+      },
+      {
+        id: "flow-01", nodeType: "airflow-sensor", label: "Airflow Sensor",
+        capabilities: [{ type: "airflow_sensor", label: "Airflow", unit: "m/s" }],
+        metadata: { model: "AIRFLOW-01", range: "0-10m/s" },
+      },
+
+      // ── CONTROL LAYER ──
+      {
+        id: "relay-ctrl-01", nodeType: "relay-controller", label: "Relay Controller",
+        capabilities: [{ type: "relay", label: "Relay Driver", unit: "" }],
+        metadata: { channels: 8, maxCurrent: "10A" },
+      },
+      {
+        id: "vent-01", nodeType: "ventilation-controller", label: "Ventilation Ctrl",
+        capabilities: [{ type: "fan_actuator", label: "Fan Actuator", unit: "" }],
+        metadata: { model: "FAN-01", speed: "0-100%" },
+      },
+      {
+        id: "hum-act-01", nodeType: "humidity-actuator", label: "Humidity Actuator",
+        capabilities: [{ type: "humidifier_actuator", label: "Misting System", unit: "" }],
+        metadata: { model: "HUM-01", capacity: "500ml/h" },
+      },
+      {
+        id: "thermal-01", nodeType: "thermal-regulator", label: "Thermal Regulator",
+        capabilities: [{ type: "thermal", label: "Thermal Control", unit: "°C" }],
+        metadata: { range: "18-32°C", precision: "±0.2°C" },
+      },
+
+      // ── INFRASTRUCTURE ──
+      {
+        id: "edge-comp-01", nodeType: "edge-compute", label: "Edge Compute",
+        capabilities: [], metadata: { cores: 4, ram: "8GB" },
+      },
+      {
+        id: "archive-01", nodeType: "archive", label: "Archive Node",
+        capabilities: [], metadata: { retention: "90d", size: "128GB" },
+      },
+      {
+        id: "failover-01", nodeType: "failover", label: "Failover Node",
+        capabilities: [], metadata: { mode: "hot-standby", failoverTime: "3s" },
+      },
+      {
+        id: "recovery-01", nodeType: "recovery", label: "Recovery Engine",
+        capabilities: [], metadata: { mode: "standby", rto: "45s" },
+      },
+      {
+        id: "MYK-SIM-001", nodeType: "simulator", label: "Local Simulator",
+        capabilities: [], metadata: { source: "browser" },
+      },
+      {
+        id: "power-01", nodeType: "power", label: "Power Supply",
+        capabilities: [], metadata: { voltage: "5V", maxCurrent: "2A" },
       },
     ]
 
@@ -90,21 +182,13 @@ export function useTopology(canvasWidth = 640, canvasHeight = 480) {
       })
     }
 
-    nodeDefs.push({
-      id: "power-01",
-      nodeType: "power",
-      label: "Power Supply",
-      capabilities: [],
-      metadata: { voltage: "5V", maxCurrent: "2A" },
-    })
-
     return buildTopologyGraph(
       nodeDefs,
       healthMap,
       heartbeatMap,
       telemetryMap,
       latencyMap,
-      { canvasWidth, canvasHeight }
+      { canvasWidth, canvasHeight, centerX: canvasWidth / 2, centerY: canvasHeight / 2 }
     )
   }, [devices, telemetry, canvasWidth, canvasHeight])
 
