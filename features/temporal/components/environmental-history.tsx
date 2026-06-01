@@ -71,8 +71,8 @@ export function EnvironmentalHistoryCard({ snapshots }: { snapshots: Comparative
       </CardHeader>
       <CardContent className="flex flex-col gap-4">
         {metrics}
-        <div className="h-36 w-full min-w-0">
-          <ResponsiveContainer width="100%" height="100%">
+        <div style={{ height: "160px", width: "100%" }}>
+          <ResponsiveContainer width="100%" height={160}>
             <BarChart data={chartData}>
               <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
               <XAxis dataKey="window" tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} axisLine={false} tickLine={false} />

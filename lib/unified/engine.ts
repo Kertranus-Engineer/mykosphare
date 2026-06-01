@@ -5,7 +5,7 @@ import type { AlertSeverity } from "@/lib/alerts/types"
 import { scoreToStatus } from "@/lib/intelligence/types"
 import type { Incident, IncidentSummary } from "@/lib/incidents/types"
 import type { MaintenanceRecommendation, MaintenanceSummary, MttrMetrics, ReliabilityAnalytics } from "@/lib/maintenance/types"
-import type { ChamberTwinState, TwinHealth } from "@/lib/twin/types"
+import type { ChamberTwinState, ChamberHealth } from "@/lib/twin/types"
 import type { Command } from "@/lib/commands/types"
 import type { AugmentedNode, SystemHealth, CrossLayerSummary, UnifiedOperationalState } from "./types"
 
@@ -320,7 +320,7 @@ export function computeUnifiedState(
   maintenanceMttr: MttrMetrics,
   maintenanceReliability: ReliabilityAnalytics,
   twinState: ChamberTwinState | null,
-  twinHealth: TwinHealth | null,
+  twinHealth: ChamberHealth | null,
   commands: Command[],
   activeCommandCount: number,
   connected: boolean

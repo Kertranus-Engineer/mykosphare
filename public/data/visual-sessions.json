@@ -1,0 +1,21 @@
+[
+  {
+    "id": "session-demo-001",
+    "name": "Blue Oyster Batch A",
+    "createdAt": "2026-05-25T07:00:00.000Z",
+    "captures": [
+      "snap-0001",
+      "snap-0002",
+      "snap-0003",
+      "snap-0004",
+      "snap-0005",
+      "snap-0006",
+      "snap-0007",
+      "snap-0008",
+      "snap-0009",
+      "snap-0010",
+      "snap-0011",
+      "snap-0012"
+    ]
+  }
+]

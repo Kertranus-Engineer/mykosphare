@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
-import { createClient } from "@/lib/supabase/client"
+import { createClient, isSupabaseWritesEnabled, disableSupabaseWrites } from "@/lib/supabase/client"
 import type { Setting } from "@/types/database"
 
 const DEPLOYMENT_ID = "MYK-CH-001"
@@ -101,6 +101,7 @@ async function fetchRemote(): Promise<AppSettings | null> {
 
 async function upsertRemote(settings: AppSettings): Promise<boolean> {
   try {
+    if (!isSupabaseWritesEnabled()) return false
     const supabase = createClient()
     const { error } = await supabase.from("settings").upsert(
       {
@@ -113,6 +114,7 @@ async function upsertRemote(settings: AppSettings): Promise<boolean> {
       },
       { onConflict: "deployment_id" }
     )
+    if (error && (error as any)?.status >= 401 && (error as any)?.status <= 403) { disableSupabaseWrites() }
     return !error
   } catch {
     return false

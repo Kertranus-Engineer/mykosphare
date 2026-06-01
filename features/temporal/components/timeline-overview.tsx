@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo, useState } from "react"
+import { useMemo, useState, useEffect } from "react"
 import { History, Wifi, WifiOff, Siren, Thermometer, Droplets, Wind, Zap } from "lucide-react"
 import { useTemporalIntelligence } from "@/lib/temporal/use-temporal"
 import { useIncidents } from "@/lib/incidents/use-incidents"
@@ -75,10 +75,10 @@ function generateSimulatedSummary() {
       { id: "evt-03", timestamp: new Date(Date.now() - 180000).toISOString(), type: "state_change" as const, label: "Actuator compensation active", description: "Humidifier adjusted to 60%", severity: "info" as const },
       { id: "evt-04", timestamp: new Date(Date.now() - 240000).toISOString(), type: "state_change" as const, label: "Control response initiated", description: "Automation protocol engaged for Zone B", severity: "info" as const },
       { id: "evt-05", timestamp: new Date(Date.now() - 300000).toISOString(), type: "alert" as const, label: "Humidity drift detected", description: "Zone B humidity rising above threshold", severity: "warning" as const },
-      { id: "evt-06", timestamp: new Date(Date.now() - 360000).toISOString(), type: "threshold_breach" as const, label: "Temperature deviation", description: "Zone A temperature +0.6\u00b0C above setpoint", severity: "warning" as const },
+      { id: "evt-06", timestamp: new Date(Date.now() - 360000).toISOString(), type: "threshold_breach" as const, label: "Temperature deviation", description: "Zone A temperature +0.6°C above setpoint", severity: "warning" as const },
       { id: "evt-07", timestamp: new Date(Date.now() - 420000).toISOString(), type: "device_event" as const, label: "Ventilation cycle completed", description: "Air exchange rate returned to nominal", severity: "info" as const },
       { id: "evt-08", timestamp: new Date(Date.now() - 480000).toISOString(), type: "state_change" as const, label: "Automation cycle complete", description: "All actuators in standby mode", severity: "info" as const },
-      { id: "evt-09", timestamp: new Date(Date.now() - 540000).toISOString(), type: "alert" as const, label: "CO\u2082 levels normalized", description: "Concentration returned to 410 ppm", severity: "info" as const },
+      { id: "evt-09", timestamp: new Date(Date.now() - 540000).toISOString(), type: "alert" as const, label: "CO₂ levels normalized", description: "Concentration returned to 410 ppm", severity: "info" as const },
       { id: "evt-10", timestamp: new Date(Date.now() - 600000).toISOString(), type: "device_event" as const, label: "ESP32 heartbeat received", description: "Sensor mesh synchronized, 3 zones online", severity: "info" as const },
     ],
     behavior: [
@@ -102,11 +102,17 @@ const METRIC_TABS = [
   { key: "all", label: "ALL", icon: null },
   { key: "temperature", label: "TEMPERATURE", icon: Thermometer, color: "#22c55e" },
   { key: "humidity", label: "HUMIDITY", icon: Droplets, color: "#3b82f6" },
-  { key: "co2", label: "CO\u2082", icon: Wind, color: "#a78bfa" },
+  { key: "co2", label: "CO₂", icon: Wind, color: "#a78bfa" },
   { key: "energy", label: "ENERGY", icon: Zap, color: "#f59e0b" },
 ] as const
 
 type MetricKey = (typeof METRIC_TABS)[number]["key"]
+
+function useHydrated() {
+  const [hydrated, setHydrated] = useState(false)
+  useEffect(() => { setHydrated(true) }, [])
+  return hydrated
+}
 
 export function TimelineOverview() {
   const [selectedMetric, setSelectedMetric] = useState<MetricKey>("all")
@@ -114,23 +120,34 @@ export function TimelineOverview() {
   const { data: rtData } = useRealtimeTelemetry(200)
   const incidents = useIncidents()
   const connected = summary.connected
+  const hydrated = useHydrated()
+
+  const simulatedData = useMemo(() =>
+    hydrated && rtData.length === 0 ? generateSimulatedRealtime(200) : null,
+  [hydrated, rtData])
+
+  const simulatedSummary = useMemo(() => {
+    const hasReal = summary.trends.some((t) => t.samples > 0)
+    if (hasReal || !hydrated) return null
+    return generateSimulatedSummary()
+  }, [hydrated, summary.trends])
 
   const effectiveData = useMemo(() => {
     if (rtData.length > 0) return rtData
-    return generateSimulatedRealtime(200)
-  }, [rtData])
+    return simulatedData ?? []
+  }, [rtData, simulatedData])
 
   const effectiveTrends = useMemo(() => {
     const hasReal = summary.trends.some((t) => t.samples > 0)
     if (hasReal) return summary.trends
-    return generateSimulatedSummary().trends
-  }, [summary.trends])
+    return simulatedSummary?.trends ?? summary.trends
+  }, [summary.trends, simulatedSummary])
 
   const effectiveSummary = useMemo(() => {
     const hasReal = summary.trends.some((t) => t.samples > 0)
     if (hasReal) return summary
-    return generateSimulatedSummary()
-  }, [summary.trends])
+    return simulatedSummary ?? summary
+  }, [summary.trends, simulatedSummary])
 
   const chartData = useMemo(() => {
     const sliced = effectiveData.slice(0, 60).reverse()

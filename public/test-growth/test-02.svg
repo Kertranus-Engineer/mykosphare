@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" fill="none">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="50%" r="60%"><stop offset="0%" stop-color="#0f172a"/><stop offset="100%" stop-color="#020617"/></radialGradient>
+    <radialGradient id="substrate" cx="50%" cy="75%" r="40%"><stop offset="0%" stop-color="#1a301a"/><stop offset="100%" stop-color="#0a120a"/></radialGradient>
+    <filter id="glow"><feGaussianBlur stdDeviation="2" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+  </defs>
+  <rect width="800" height="600" fill="url(#bg)"/>
+  <ellipse cx="400" cy="420" rx="300" ry="130" fill="url(#substrate)"/>
+  <circle cx="340" cy="380" r="8" fill="#22c55e" opacity="0.4" filter="url(#glow)"/>
+  <circle cx="400" cy="370" r="7" fill="#22c55e" opacity="0.35" filter="url(#glow)"/>
+  <circle cx="460" cy="390" r="6" fill="#22c55e" opacity="0.3" filter="url(#glow)"/>
+  <path d="M340 380 Q370 360 400 370 Q430 380 460 390" stroke="#22c55e" stroke-width="1" opacity="0.15" fill="none"/>
+  <text x="30" y="30" fill="#166534" font-family="monospace" font-size="14">TEST 02 — Day 3</text>
+  <text x="30" y="50" fill="#14532d" font-family="monospace" font-size="11">Colonization · 24.4°C · 61.2% RH · 406 ppm CO₂</text>
+</svg>

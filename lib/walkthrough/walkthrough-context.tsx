@@ -15,7 +15,7 @@ const STEPS: WalkthroughStep[] = [
     target: "Overview",
     title: "Unified Overview",
     description:
-      "Centralized view of all environmental metrics, chamber status, and system health. Monitor temperature, humidity, CO\u2082, and energy in real time.",
+      "Centralized view of all environmental metrics, chamber status, and system health. Monitor temperature, humidity, CO₂, and energy in real time.",
   },
   {
     id: "topology",

@@ -1,12 +1,13 @@
 "use client"
 
 import { useMemo, useState, useEffect } from "react"
-import { Thermometer, Droplets, Wind, Wifi, WifiOff, Clock, FlaskConical, Sprout, CheckCircle2, Circle, Target, Heart, DollarSign, ShieldCheck, Zap } from "lucide-react"
+import { Thermometer, Droplets, Wind, Wifi, WifiOff, Clock, FlaskConical, Sprout, CheckCircle2, Circle, Target, Heart, DollarSign, ShieldCheck, Zap, Cpu } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 import { useDashboardTelemetry, useRealTimeTelemetry } from "@/lib/useTelemetry"
 import { useRealEnvironment } from "@/lib/useEnvironment"
 import { useOperationalMemory } from "@/lib/operational/memory"
+import { useOperationalMode } from "@/lib/operational/mode"
 import { ActuatorBar } from "./actuator-bar"
 import { AiAnalysisPanel } from "./ai-analysis-panel"
 import { AlertPanel } from "./alert-panel"
@@ -21,6 +22,10 @@ import { AutoDemo } from "./auto-demo"
 import { MissionStatus } from "./mission-status"
 import { QuickStart } from "@/features/quick-start/components/quick-start"
 import { Card, CardContent } from "@/components/ui/card"
+import { ModeSelector } from "./mode-selector"
+import { CaptureStatus } from "./capture-status"
+import { DatasetHealth } from "./dataset-health"
+import { AutonomousPlaceholder } from "@/features/live/autonomous-placeholder"
 
 function executiveSummaryLabel(state: string): string {
   switch (state) {
@@ -51,6 +56,7 @@ export function DashboardGrid() {
   const rtTel = useRealTimeTelemetry()
   const env = useRealEnvironment()
   const mem = useOperationalMemory()
+  const { isLive, isDemo, isAutonomous } = useOperationalMode()
   const [initDone, setInitDone] = useState(false)
 
   useEffect(() => { const t = setTimeout(() => setInitDone(true), 50); return () => clearTimeout(t) }, [])
@@ -84,16 +90,21 @@ export function DashboardGrid() {
       {/* ── HEADER ────────────── minimal ──────── */}
       <div className="flex items-center justify-between">
         <h1 className="text-sm font-semibold tracking-tight text-foreground">Operational Overview</h1>
-        <div className="flex items-center gap-1 rounded-md border border-border/30 bg-muted/20 px-1.5 py-0.5">
-          {rtTel.online ? <Wifi className="size-2.5 text-emerald-500/60" /> : <WifiOff className="size-2.5 text-muted-foreground/40" />}
-          <span className="text-[8px] font-medium text-muted-foreground/50">{statusText}</span>
+        <div className="flex items-center gap-2">
+          <ModeSelector />
+          <div className="flex items-center gap-1 rounded-md border border-border/30 bg-muted/20 px-1.5 py-0.5">
+            {rtTel.online ? <Wifi className="size-2.5 text-emerald-500/60" /> : <WifiOff className="size-2.5 text-muted-foreground/40" />}
+            <span className="text-[8px] font-medium text-muted-foreground/50">{statusText}</span>
+          </div>
         </div>
       </div>
 
       {/* ── Compact Status Bar ─────────────────── */}
       <div className="flex items-center gap-2 flex-wrap text-[9px] text-muted-foreground/40">
-        <div className={cn("size-1.5 rounded-full animate-pulse", rtTel.source === "live" ? "bg-emerald-500" : "bg-amber-500")} />
-        <span className={cn("text-[9px] font-medium", rtTel.source === "live" ? "text-emerald-500" : "text-amber-500")}>{rtTel.source === "live" ? "LIVE DEVICE" : "SIMULATION ACTIVE"}</span>
+        <div className={cn("size-1.5 rounded-full animate-pulse", isAutonomous ? "bg-violet-500" : rtTel.source === "live" ? "bg-emerald-500" : "bg-amber-500")} />
+        <span className={cn("text-[9px] font-medium", isAutonomous ? "text-violet-500" : rtTel.source === "live" ? "text-emerald-500" : "text-amber-500")}>
+          {isAutonomous ? "AUTONOMOUS MODE" : isLive ? "LIVE MONITORING" : "DEMO PLATFORM"}
+        </span>
         <span className="text-muted-foreground/20">|</span>
         <span>3 Zones</span>
         <span className="text-muted-foreground/20">·</span>
@@ -106,8 +117,51 @@ export function DashboardGrid() {
 
       {isDev && <TelemetryDebugPanel />}
 
-      {/* ═══ ROW 1: TELEMETRY — 40% ─────────────── */}
-      <div className="grid grid-cols-2 gap-3">
+      {/* ── Autonomous Mode Placeholder ────────── */}
+      {isAutonomous && <AutonomousPlaceholder />}
+
+      {/* ── Non-Autonomous Dashboard Content ───── */}
+      {!isAutonomous && (
+        <>
+          {/* ── Capture & Dataset Status ──────────── */}
+          <div className="flex flex-col gap-3">
+            {isLive && (
+              <>
+                <div className="flex items-center gap-2">
+                  <div className="h-px flex-1 bg-gradient-to-r from-transparent via-sky-500/20 to-transparent" />
+                  <span className="text-[9px] font-mono font-medium tracking-[0.2em] text-sky-500/60 uppercase">Capture Status</span>
+                  <div className="h-px flex-1 bg-gradient-to-r from-transparent via-sky-500/20 to-transparent" />
+                </div>
+                <CaptureStatus lastCapture={null} expectedInterval={24} />
+                <div className="flex items-center gap-2">
+                  <div className="h-px flex-1 bg-gradient-to-r from-transparent via-violet-500/20 to-transparent" />
+                  <span className="text-[9px] font-mono font-medium tracking-[0.2em] text-violet-500/60 uppercase">Dataset Health</span>
+                  <div className="h-px flex-1 bg-gradient-to-r from-transparent via-violet-500/20 to-transparent" />
+                </div>
+                <DatasetHealth />
+              </>
+            )}
+
+            {isDemo && (
+              <>
+                <div className="flex items-center gap-2">
+                  <div className="h-px flex-1 bg-gradient-to-r from-transparent via-emerald-500/20 to-transparent" />
+                  <span className="text-[9px] font-mono font-medium tracking-[0.2em] text-emerald-500/60 uppercase">Capture Status</span>
+                  <div className="h-px flex-1 bg-gradient-to-r from-transparent via-emerald-500/20 to-transparent" />
+                </div>
+                <CaptureStatus />
+                <div className="flex items-center gap-2">
+                  <div className="h-px flex-1 bg-gradient-to-r from-transparent via-emerald-500/20 to-transparent" />
+                  <span className="text-[9px] font-mono font-medium tracking-[0.2em] text-emerald-500/60 uppercase">Dataset Health</span>
+                  <div className="h-px flex-1 bg-gradient-to-r from-transparent via-emerald-500/20 to-transparent" />
+                </div>
+                <DatasetHealth />
+              </>
+            )}
+          </div>
+
+          {/* ═══ ROW 1: TELEMETRY — 40% ─────────────── */}
+          <div className="grid grid-cols-2 gap-3">
         <MetricCard compact icon={Thermometer} label="Temperature" value={tempVal} unit="°C" decimals={1} trend={tel.temperature.trend} delta={tel.temperature.delta} critical={tempCritical} warning={tempWarning} statusLabel={tempVal > 0 && tempVal < 27 ? "Ideal Range" : tempVal > 27 ? "Elevated" : "Nominal"} statusColor={tempVal > 27 ? "text-amber-500" : "text-emerald-500"} />
         <MetricCard compact icon={Droplets} label="Humidity" value={humVal} unit="%" decimals={1} trend={tel.humidity.trend} delta={tel.humidity.delta} critical={humCritical} warning={humWarning} statusLabel={humVal > 0 && humVal >= 55 && humVal <= 75 ? "Within Target Range" : humVal > 75 ? "High" : humVal < 40 ? "Low" : "Monitoring"} statusColor={humVal > 75 || humVal < 40 ? "text-amber-500" : "text-emerald-500"} />
         <MetricCard compact icon={Wind} label="CO₂" value={co2Val} unit=" ppm" decimals={0} trend={tel.co2.trend} delta={tel.co2.delta} statusLabel={co2Val > 0 && co2Val < 450 ? "Air Quality: Excellent" : co2Val < 600 ? "Air Quality: Good" : "Elevated"} statusColor="text-emerald-500" />
@@ -251,6 +305,8 @@ export function DashboardGrid() {
         <span>{env.state === "CRITICAL" ? "escalation risk elevated" : env.state === "WARNING" ? "deviation probability monitoring" : env.state === "RECOVERY" ? "equilibrium restoration in progress" : "environmental confidence holding"}</span>
         <span className="text-muted-foreground/10">·</span><span className="text-muted-foreground/20">OPR L2 · {initDone ? mem.systemAge : "--"} · {mem.facilityReputation.label}</span>
       </div>
+        </>
+      )}
     </div>
   )
 }

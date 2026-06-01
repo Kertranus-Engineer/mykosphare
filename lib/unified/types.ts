@@ -4,7 +4,7 @@ import type { TemporalSummary, TrendDirection } from "@/lib/temporal/types"
 import type { AlertSeverity } from "@/lib/alerts/types"
 import type { Incident, IncidentSummary } from "@/lib/incidents/types"
 import type { MaintenanceRecommendation, MaintenanceSummary, MttrMetrics, ReliabilityAnalytics } from "@/lib/maintenance/types"
-import type { ChamberTwinState, TwinHealth } from "@/lib/twin/types"
+import type { ChamberTwinState, ChamberHealth } from "@/lib/twin/types"
 import type { Command } from "@/lib/commands/types"
 
 export interface AugmentedNode {
@@ -58,7 +58,7 @@ export interface UnifiedOperationalState {
   maintenanceMttr: MttrMetrics
   maintenanceReliability: ReliabilityAnalytics
   twinState: ChamberTwinState | null
-  twinHealth: TwinHealth | null
+  twinHealth: ChamberHealth | null
   commands: Command[]
   activeCommandCount: number
   systemHealth: SystemHealth[]

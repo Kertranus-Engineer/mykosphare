@@ -1,5 +1,6 @@
 "use client"
 
+import { useState, useEffect } from "react"
 import { ScrollText, TrendingUp, TrendingDown, Minus, Wifi, WifiOff, Activity } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { cn } from "@/lib/utils"
@@ -26,6 +27,12 @@ export function TemporalSummaryCard({ summary, connected }: { summary: TemporalS
   const forecastConfidence = summary.forecasts.length > 0
     ? Math.round(summary.forecasts.reduce((s, f) => s + (100 - f.projectedInstability), 0) / summary.forecasts.length)
     : 96
+
+  const [hydrated, setHydrated] = useState(false)
+  useEffect(() => { setHydrated(true) }, [])
+  const generatedTime = hydrated
+    ? new Date(summary.generatedAt).toLocaleTimeString()
+    : ""
 
   return (
     <Card className="transition-all duration-200 hover:ring-foreground/20 hover:shadow-[0_0_16px_-6px] hover:shadow-foreground/10">
@@ -73,7 +80,7 @@ export function TemporalSummaryCard({ summary, connected }: { summary: TemporalS
         </div>
 
         <div className="flex items-center justify-between text-[9px] text-muted-foreground/40">
-          <span>Generated {new Date(summary.generatedAt).toLocaleTimeString()}</span>
+          <span>Generated {generatedTime}</span>
         </div>
       </CardContent>
     </Card>

@@ -1,13 +1,13 @@
 "use client"
 
 import { useMemo, useCallback, useState, useEffect, useRef } from "react"
-import { createInitialTwinState, evolveTwinState, computeTwinHealth, switchOperationalMode } from "./engine"
-import type { ChamberTwinState, OperationalMode, TwinHealth } from "./types"
+import { createInitialTwinState, evolveTwinState, computeChamberHealth, switchOperationalMode } from "./engine"
+import type { ChamberTwinState, OperationalMode, ChamberHealth } from "./types"
 import { useRealtimeTelemetry, useRealtimeAlerts, useRealtimeDevices } from "@/lib/realtime/subscriptions"
 
 export interface UseTwinResult {
   chamberState: ChamberTwinState
-  health: TwinHealth
+  health: ChamberHealth
   mode: OperationalMode
   switchMode: (mode: OperationalMode) => void
 }
@@ -65,14 +65,14 @@ export function useTwin(externalData?: TwinExternalData): UseTwinResult {
     const interval = setInterval(() => {
       setChamberState((prev) => {
         const evolved = evolveTwinState(prev, latestTelemetry, activeAlerts, activeIncidents, maintenanceTasks, avgDeviceHealth)
-        const health = computeTwinHealth(evolved, latestTelemetry)
+        const health = computeChamberHealth(evolved, latestTelemetry)
         return { ...evolved, healthScore: health.overallScore }
       })
     }, 3000)
     return () => clearInterval(interval)
   }, [latestTelemetry, activeAlerts, activeIncidents, maintenanceTasks, avgDeviceHealth])
 
-  const health = useMemo(() => computeTwinHealth(chamberState, latestTelemetry), [chamberState, latestTelemetry])
+  const health = useMemo(() => computeChamberHealth(chamberState, latestTelemetry), [chamberState, latestTelemetry])
 
   const switchMode = useCallback((newMode: OperationalMode) => {
     setChamberState((prev) => switchOperationalMode(prev, newMode))

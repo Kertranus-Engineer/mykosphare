@@ -1,4 +1,4 @@
-import type { TopologyNode, SignalLink, TopologyGraph, ZoneLabel, ConnectionState } from "./types"
+import type { TopologyNode, SignalLink, TopologyGraph, LayerInfo, ConnectionState } from "./types"
 import type { NodeType, NodeStatus, DeviceCapability } from "./node-types"
 
 interface NodeDef {
@@ -9,22 +9,12 @@ interface NodeDef {
   metadata: Record<string, string | number | boolean | null>
 }
 
-interface LayoutConfig {
-  canvasWidth: number
-  canvasHeight: number
-  centerX: number
-  centerY: number
-}
-
 function determineStatus(
   health: number,
   lastHeartbeat: string | null,
   lastTelemetry: string | null,
-  nodeType: NodeType
 ): NodeStatus {
-  if (nodeType === "cloud" || nodeType === "remote-sync" || nodeType === "analytics") return "online"
-  if (nodeType === "chamber") return "online"
-  if (!lastHeartbeat && !lastTelemetry && nodeType !== "simulator") return "standby"
+  if (!lastHeartbeat && !lastTelemetry) return "standby"
   const now = Date.now()
   const heartbeatAge = lastHeartbeat ? now - new Date(lastHeartbeat).getTime() : Infinity
   const telemetryAge = lastTelemetry ? now - new Date(lastTelemetry).getTime() : Infinity
@@ -46,21 +36,15 @@ function computeTelemetryQuality(lastTelemetry: string | null): number {
   return 10
 }
 
-function computeConnectionState(link: { active: boolean; quality: number }, sourceStatus: NodeStatus, targetStatus: NodeStatus): ConnectionState {
+function computeConnectionState(
+  link: { active: boolean; quality: number },
+  sourceStatus: NodeStatus,
+  targetStatus: NodeStatus,
+): ConnectionState {
   if (!link.active || sourceStatus === "offline" || targetStatus === "offline") return "offline"
   if (link.quality < 50) return "critical"
   if (link.quality < 75 || sourceStatus === "degraded" || targetStatus === "degraded") return "warning"
   return "nominal"
-}
-
-function placeOnLine(ids: string[], x1: number, y1: number, x2: number, y2: number): Map<string, { x: number; y: number }> {
-  const m = new Map<string, { x: number; y: number }>()
-  const n = ids.length
-  for (let i = 0; i < n; i++) {
-    const t = n === 1 ? 0.5 : i / (n - 1)
-    m.set(ids[i], { x: x1 + (x2 - x1) * t, y: y1 + (y2 - y1) * t })
-  }
-  return m
 }
 
 function hashRandom(seed: number): number {
@@ -70,130 +54,95 @@ function hashRandom(seed: number): number {
 
 export function getNodeRadius(nodeType: NodeType): number {
   switch (nodeType) {
+    case "esp32": return 14
+    case "sensor": case "relay": return 10
+    case "poco-c75": case "snapshot": return 12
+    case "supabase-storage": case "supabase-db": return 14
+    case "capture-processing": return 16
+    case "correlation-engine": case "event-engine":
+    case "observation-engine": case "trend-engine":
+    case "recommendation-engine": case "validation": case "knowledge":
+      return 12
+    case "visual-intelligence": case "dashboard": case "analytics": return 14
     case "chamber": return 28
-    case "cloud": case "remote-sync": case "analytics": return 16
+    case "cloud": case "remote-sync": return 16
     case "ai-inference": case "predictive": case "broker": case "correlator": return 15
-    case "esp32": case "edge-compute": return 14
+    case "edge-compute": return 14
     case "archive": case "failover": case "recovery": return 10
     case "power": case "simulator": return 9
     default: return 8
   }
 }
 
-export function getNodeLabelSize(nodeType: NodeType): number {
-  if (nodeType === "chamber") return 11
-  if (nodeType === "cloud" || nodeType === "ai-inference" || nodeType === "predictive") return 8
-  return 7
-}
+const LAYER_DEFS = [
+  {
+    id: "layer-application", label: "APPLICATION", color: "#10b981",
+    y: 50, h: 75, nodeY: 88,
+    nodePositions: [
+      { id: "app-visual-intelligence", x: 170 },
+      { id: "app-dashboard", x: 400 },
+      { id: "app-analytics", x: 630 },
+    ],
+  },
+  {
+    id: "layer-reasoning", label: "REASONING", color: "#8b5cf6",
+    y: 140, h: 170, nodeY: 0,
+    nodePositions: [
+      { id: "rea-processing", x: 135, row: 0 },
+      { id: "rea-correlation", x: 295, row: 0 },
+      { id: "rea-events", x: 455, row: 0 },
+      { id: "rea-observations", x: 615, row: 0 },
+      { id: "rea-trends", x: 135, row: 1 },
+      { id: "rea-recommendations", x: 295, row: 1 },
+      { id: "rea-validation", x: 455, row: 1 },
+      { id: "rea-knowledge", x: 615, row: 1 },
+    ],
+  },
+  {
+    id: "layer-storage", label: "STORAGE", color: "#3b82f6",
+    y: 320, h: 70, nodeY: 355,
+    nodePositions: [
+      { id: "sto-supabase-storage", x: 250 },
+      { id: "sto-supabase-db", x: 550 },
+    ],
+  },
+  {
+    id: "layer-capture", label: "CAPTURE", color: "#eab308",
+    y: 400, h: 75, nodeY: 438,
+    nodePositions: [
+      { id: "cap-poco", x: 250 },
+      { id: "cap-snapshots", x: 550 },
+    ],
+  },
+  {
+    id: "layer-physical", label: "PHYSICAL", color: "#f59e0b",
+    y: 490, h: 60, nodeY: 520,
+    nodePositions: [
+      { id: "phy-esp32", x: 170 },
+      { id: "phy-sensors", x: 400 },
+      { id: "phy-actuators", x: 630 },
+    ],
+  },
+] as const
 
 export function buildTopologyGraph(
   nodeDefs: NodeDef[],
   deviceHealthMap: Map<string, number>,
   heartbeatMap: Map<string, string>,
   telemetryMap: Map<string, string>,
-  latencyMap: Map<string, number>,
-  config?: Partial<LayoutConfig>
 ): TopologyGraph {
-  const layout: LayoutConfig = {
-    canvasWidth: config?.canvasWidth ?? 800,
-    canvasHeight: config?.canvasHeight ?? 560,
-    centerX: config?.centerX ?? 400,
-    centerY: config?.centerY ?? 280,
-  }
-
-  const { centerX, centerY, canvasWidth, canvasHeight } = layout
-  const margin = 50
-  const usableW = canvasWidth - margin * 2
-  const left = margin
-  const right = canvasWidth - margin
-  const top = margin
-  const bottom = canvasHeight - margin
-
   const positions = new Map<string, { x: number; y: number }>()
-  const nodeById = new Map(nodeDefs.map((d) => [d.id, d]))
 
-  // ── LINEAR LEFT-TO-RIGHT FLOW LAYOUT ─────────
-  //   Sensors (left) → ESP32 → Backbone → Intelligence → Actuators (right)
-  //
-  //     Zone A ─┐
-  //     Zone B ──┤→ ESP32 Gateway → Telemetry Backbone → Intelligence Engine → Ventilation Fan
-  //     Zone C ─┘                                                    → Humidifier
-  //                                                                   → Alert Engine
-
-  // Col 1: SENSORS (left) — x = 120, vertical stack
-  {
-    const sensorIds = nodeDefs.filter((d) =>
-      d.nodeType === "chamber" || d.nodeType === "sensor" || d.nodeType === "sensor-mesh" ||
-      d.nodeType === "temp-sensor" || d.nodeType === "humidity-sensor" || d.nodeType === "co2-sensor"
-    ).map((d) => d.id)
-    const yStart = top + 60
-    const yEnd = bottom - 60
-    sensorIds.forEach((id, i) => {
-      const t = sensorIds.length > 1 ? i / (sensorIds.length - 1) : 0.5
-      positions.set(id, { x: 130, y: yStart + (yEnd - yStart) * t })
-    })
+  for (const layer of LAYER_DEFS) {
+    for (const np of layer.nodePositions) {
+      const row = (np as { row?: number }).row ?? 0
+      const y = layer.nodeY > 0 ? layer.nodeY : layer.y + 55 + row * 70
+      positions.set(np.id, { x: np.x, y })
+    }
   }
 
-  // Col 2: ESP32 GATEWAY — x = 290, center
-  {
-    const espIds = nodeDefs.filter((d) => d.nodeType === "esp32").map((d) => d.id)
-    espIds.forEach((id) => positions.set(id, { x: 290, y: centerY }))
-  }
-
-  // Col 3: TELEMETRY BACKBONE — x = 440
-  {
-    const backboneIds = nodeDefs.filter((d) =>
-      d.nodeType === "cloud" || d.nodeType === "remote-sync" || d.nodeType === "analytics" ||
-      d.nodeType === "broker"
-    ).map((d) => d.id)
-    backboneIds.forEach((id, i) => {
-      const t = backboneIds.length > 1 ? i / (backboneIds.length - 1) : 0.5
-      positions.set(id, { x: 440, y: top + 100 + (bottom - top - 200) * t })
-    })
-  }
-
-  // Col 4: INTELLIGENCE LAYER — x = 560
-  {
-    const intelIds = nodeDefs.filter((d) =>
-      d.nodeType === "ai-inference" || d.nodeType === "predictive" || d.nodeType === "correlator"
-    ).map((d) => d.id)
-    intelIds.forEach((id, i) => {
-      const t = intelIds.length > 1 ? i / (intelIds.length - 1) : 0.5
-      positions.set(id, { x: 560, y: top + 80 + (bottom - top - 160) * t })
-    })
-  }
-
-  // Col 5: ACTUATORS — x = 680, vertical stack
-  {
-    const actuatorIds = nodeDefs.filter((d) =>
-      d.nodeType === "relay" || d.nodeType === "relay-controller" ||
-      d.nodeType === "ventilation-controller" || d.nodeType === "humidity-actuator" ||
-      d.nodeType === "thermal-regulator"
-    ).map((d) => d.id)
-    const yStart = top + 80
-    const yEnd = bottom - 80
-    actuatorIds.forEach((id, i) => {
-      const t = actuatorIds.length > 1 ? i / (actuatorIds.length - 1) : 0.5
-      positions.set(id, { x: 680, y: yStart + (yEnd - yStart) * t })
-    })
-  }
-
-  // Other infrastructure — bottom area
-  {
-    const otherIds = nodeDefs.filter((d) =>
-      d.nodeType === "power" || d.nodeType === "edge-compute" ||
-      d.nodeType === "archive" || d.nodeType === "failover" || d.nodeType === "recovery" ||
-      d.nodeType === "simulator" || d.nodeType === "camera"
-    ).map((d) => d.id)
-    otherIds.forEach((id, i) => {
-      const t = otherIds.length > 1 ? i / (otherIds.length - 1) : 0.5
-      positions.set(id, { x: 400 + (t - 0.5) * 300, y: bottom - 10 })
-    })
-  }
-
-  // ── Build nodes ──
   const nodes: TopologyNode[] = nodeDefs.map((d, idx) => {
-    const pos = positions.get(d.id) ?? { x: centerX, y: centerY }
+    const pos = positions.get(d.id) ?? { x: 400, y: 280 }
     const health = deviceHealthMap.get(d.id) ?? 100
     const lastHeartbeat = heartbeatMap.get(d.id) ?? null
     const lastTelemetry = telemetryMap.get(d.id) ?? null
@@ -201,17 +150,17 @@ export function buildTopologyGraph(
     const telemetryLoad = tq >= 85 ? "Low" : tq >= 60 ? "Moderate" : tq >= 30 ? "Elevated" : "Critical"
     const h1 = hashRandom(idx * 7 + 13)
     const h2 = hashRandom(idx * 11 + 31)
-    const packetIntegrity = d.nodeType === "chamber" ? 100 : Math.round(85 + h1 * 14)
+    const packetIntegrity = Math.round(85 + h1 * 14)
     let syncState = "Synchronized"
     if (tq < 60) syncState = "Partial"
     if (tq < 30) syncState = "Lagging"
-    const responseLatency = d.nodeType === "chamber" ? 5 : Math.round(8 + h2 * 35)
+    const responseLatency = Math.round(8 + h2 * 35)
 
     return {
       id: d.id,
       nodeType: d.nodeType,
       label: d.label,
-      status: determineStatus(health, lastHeartbeat, lastTelemetry, d.nodeType),
+      status: determineStatus(health, lastHeartbeat, lastTelemetry),
       x: pos.x,
       y: pos.y,
       capabilities: d.capabilities,
@@ -228,11 +177,14 @@ export function buildTopologyGraph(
     }
   })
 
-  // ── Build links (linear flow: Sensors → ESP32 → Backbone → Intelligence → Actuators) ──
-  const links: SignalLink[] = []
   const nodeObjById = new Map(nodes.map((n) => [n.id, n]))
 
-  function mkLink(srcId: string, tgtId: string, type: SignalLink["type"], q: number, seed: number): void {
+  const links: SignalLink[] = []
+
+  function mkLink(
+    srcId: string, tgtId: string,
+    type: SignalLink["type"], q: number, seed: number,
+  ): void {
     const src = nodeObjById.get(srcId)
     const tgt = nodeObjById.get(tgtId)
     if (!src || !tgt) return
@@ -241,7 +193,7 @@ export function buildTopologyGraph(
     const cs = computeConnectionState({ active, quality }, src.status, tgt.status)
     const h = hashRandom(seed)
     links.push({
-      id: `${srcId}->${tgtId}`,
+      id: `${srcId}->${tgtId}--${type}`,
       sourceId: srcId, targetId: tgtId, type,
       quality, active,
       latency: active ? Math.round(3 + h * 30) : 0,
@@ -250,66 +202,58 @@ export function buildTopologyGraph(
     })
   }
 
-  // Main flow: Sensors → ESP32
-  const sensorNodeIds = nodes.filter((n) =>
-    n.nodeType === "chamber" || n.nodeType === "temp-sensor" || n.nodeType === "humidity-sensor" || n.nodeType === "co2-sensor"
-  ).map((n) => n.id)
-  const espNodeIds = nodes.filter((n) => n.nodeType === "esp32").map((n) => n.id)
-  for (const sid of sensorNodeIds) {
-    for (const eid of espNodeIds) {
-      mkLink(sid, eid, "telemetry", 85, 100 + sid.charCodeAt(0))
-    }
-  }
+  // Physical → Capture
+  mkLink("phy-esp32", "cap-poco", "telemetry", 88, 100)
+  mkLink("phy-sensors", "cap-snapshots", "telemetry", 90, 110)
+  mkLink("phy-actuators", "cap-snapshots", "telemetry", 82, 120)
 
-  // ESP32 → Backbone (cloud/analytics/broker)
-  const backboneIds = nodes.filter((n) =>
-    n.nodeType === "cloud" || n.nodeType === "analytics" || n.nodeType === "broker"
-  ).map((n) => n.id)
-  for (const eid of espNodeIds) {
-    for (const bid of backboneIds) {
-      mkLink(eid, bid, "telemetry", 90, 200 + bid.charCodeAt(0))
-    }
-  }
+  // Capture → Storage
+  mkLink("cap-poco", "sto-supabase-storage", "telemetry", 92, 200)
+  mkLink("cap-snapshots", "sto-supabase-db", "telemetry", 90, 210)
 
-  // Backbone → Intelligence
-  const intelIds = nodes.filter((n) => n.nodeType === "ai-inference" || n.nodeType === "predictive" || n.nodeType === "correlator").map((n) => n.id)
-  for (const bid of backboneIds) {
-    for (const iid of intelIds) {
-      mkLink(bid, iid, "telemetry", 92, 300 + iid.charCodeAt(1))
-    }
-  }
+  // Storage → Reasoning (Processing)
+  mkLink("sto-supabase-storage", "rea-processing", "telemetry", 94, 300)
+  mkLink("sto-supabase-db", "rea-processing", "telemetry", 92, 310)
 
-  // Intelligence → Actuators
-  const actIds = nodes.filter((n) =>
-    n.nodeType === "relay" || n.nodeType === "relay-controller" ||
-    n.nodeType === "ventilation-controller" || n.nodeType === "humidity-actuator"
-  ).map((n) => n.id)
-  for (const iid of intelIds) {
-    for (const aid of actIds) {
-      mkLink(iid, aid, "control", 85, 400 + aid.charCodeAt(2))
-    }
-  }
+  // Processing → Reasoning engines
+  mkLink("rea-processing", "rea-correlation", "event", 90, 400)
+  mkLink("rea-processing", "rea-events", "event", 92, 410)
+  mkLink("rea-processing", "rea-observations", "event", 88, 420)
 
-  // Backbone ↔ Intelligence (bidirectional analytics)
-  const coreIntelIds = nodes.filter((n) => n.nodeType === "ai-inference" || n.nodeType === "predictive").map((n) => n.id)
-  const coreBackboneIds = nodes.filter((n) => n.nodeType === "analytics").map((n) => n.id)
-  for (const ci of coreIntelIds) {
-    for (const cb of coreBackboneIds) {
-      mkLink(cb, ci, "event", 94, 500)
-      mkLink(ci, cb, "event", 94, 600)
-    }
-  }
+  // Internal reasoning flow (row 1 → row 2)
+  mkLink("rea-correlation", "rea-trends", "event", 86, 500)
+  mkLink("rea-correlation", "rea-recommendations", "event", 84, 510)
+  mkLink("rea-events", "rea-observations", "event", 90, 520)
+  mkLink("rea-observations", "rea-trends", "event", 88, 530)
+  mkLink("rea-observations", "rea-validation", "event", 86, 540)
+  mkLink("rea-processing", "rea-knowledge", "event", 92, 550)
+  mkLink("rea-knowledge", "rea-trends", "event", 88, 560)
+  mkLink("rea-knowledge", "rea-recommendations", "event", 86, 570)
+  mkLink("rea-knowledge", "rea-validation", "event", 84, 580)
 
-  // ── Zone labels ──
-  const zones: ZoneLabel[] = [
-    { id: "zone-sensors", label: "ENVIRONMENTAL SENSORS", x: 30, y: 5, width: 130, height: 20 },
-    { id: "zone-gateway", label: "ESP32 GATEWAY", x: 215, y: centerY - 40, width: 110, height: 20 },
-    { id: "zone-backbone", label: "TELEMETRY BACKBONE", x: 370, y: 5, width: 120, height: 20 },
-    { id: "zone-intel", label: "ANALYTICS ENGINE", x: 500, y: 5, width: 110, height: 20 },
-    { id: "zone-actuators", label: "ACTUATOR NETWORK", x: 625, y: 5, width: 120, height: 20 },
-  ]
+  // Reasoning → Application
+  mkLink("rea-trends", "app-dashboard", "event", 90, 600)
+  mkLink("rea-trends", "app-analytics", "event", 88, 610)
+  mkLink("rea-recommendations", "app-dashboard", "event", 86, 620)
+  mkLink("rea-validation", "app-visual-intelligence", "event", 88, 630)
+  mkLink("rea-validation", "app-dashboard", "event", 84, 640)
+  mkLink("rea-knowledge", "app-visual-intelligence", "event", 90, 650)
+  mkLink("rea-knowledge", "app-analytics", "event", 86, 660)
 
-  return { nodes, links, zones }
+  // Build layer info
+  const layerNodeIds = LAYER_DEFS.map((l) => l.nodePositions.map((np) => np.id))
+  const layers: LayerInfo[] = LAYER_DEFS.map((l, i) => ({
+    id: l.id,
+    label: l.label,
+    x: 0,
+    y: l.y,
+    width: 800,
+    height: l.h,
+    color: l.color,
+    nodeIds: layerNodeIds[i],
+  }))
+
+  return { nodes, links, layers }
 }
 
 export function findNodeById(graph: TopologyGraph, id: string): TopologyNode | undefined {

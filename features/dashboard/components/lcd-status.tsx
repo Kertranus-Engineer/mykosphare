@@ -1,5 +1,6 @@
 "use client"
 
+import { useState, useEffect } from "react"
 import { Monitor } from "lucide-react"
 
 import { useRealEnvironment } from "@/lib/useEnvironment"
@@ -63,6 +64,9 @@ export function LcdStatus() {
   const rtTel = useRealTimeTelemetry()
   const { actuators, failsafeState, relayMode } = useAutomation()
 
+  const [hydrated, setHydrated] = useState(false)
+  useEffect(() => { setHydrated(true) }, [])
+
   const temp = rtTel.temp
   const hum = rtTel.hum
   const stateColor = lcdStateColor(env.state)
@@ -103,12 +107,12 @@ export function LcdStatus() {
             : isSimulated ? "border-amber-500/20" : "border-border/40"
         )}>
           {lcdLine("STATUS", rtTel.online ? failsafeState === "failsafe_active" ? "FAILSAFE" : isSimulated ? "SIMULATION" : env.label : "OFFLINE", true, failsafeState === "failsafe_active" ? "text-red-500" : isSimulated ? "text-amber-500" : stateColor, rtTel.online && !failsafeState)}
-          {lcdLine("TEMP", temp > 0 ? `${temp}\u00b0C` : "--", temp > 0, stateColor)}
+          {lcdLine("TEMP", temp > 0 ? `${temp}°C` : "--", temp > 0, stateColor)}
           {lcdLine("HUM", hum > 0 ? `${hum}%` : "--", hum > 0, hum < 50 ? "text-amber-500" : "text-emerald-500")}
           {lcdLine("FAN", fanOn ? "ACTIVE" : "OFF", fanOn, fanOn ? "text-cyan-400" : "text-muted-foreground/30")}
           {lcdLine("HUMIDIFIER", humOn ? "ACTIVE" : "OFF", humOn, humOn ? "text-blue-400" : "text-muted-foreground/30")}
-          {lcdLine("UPDATED", formatAge(rtTel.updatedAt), true, isOffline ? "text-amber-500/60" : "text-muted-foreground/30")}
-          {lcdLine("LATENCY", rtTel.online ? computeLatency(rtTel.updatedAt) : "--", rtTel.online, "text-muted-foreground/40")}
+          {lcdLine("UPDATED", hydrated ? formatAge(rtTel.updatedAt) : "--", true, isOffline ? "text-amber-500/60" : "text-muted-foreground/30")}
+          {lcdLine("LATENCY", rtTel.online && hydrated ? computeLatency(rtTel.updatedAt) : "--", rtTel.online, "text-muted-foreground/40")}
           {lcdLine("MODE", relayMode === "active_high" ? "RLY HIGH" : "RLY LOW", true, "text-muted-foreground/40")}
         </div>
       </CardContent>

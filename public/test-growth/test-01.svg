@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" fill="none">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="50%" r="60%"><stop offset="0%" stop-color="#0f172a"/><stop offset="100%" stop-color="#020617"/></radialGradient>
+    <radialGradient id="substrate" cx="40%" cy="75%" r="35%"><stop offset="0%" stop-color="#1a2a1a"/><stop offset="100%" stop-color="#0a120a"/></radialGradient>
+    <filter id="glow"><feGaussianBlur stdDeviation="1.5" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+  </defs>
+  <rect width="800" height="600" fill="url(#bg)"/>
+  <ellipse cx="400" cy="430" rx="280" ry="120" fill="url(#substrate)"/>
+  <circle cx="370" cy="400" r="5" fill="#22c55e" opacity="0.3" filter="url(#glow)"/>
+  <circle cx="430" cy="410" r="4" fill="#22c55e" opacity="0.25" filter="url(#glow)"/>
+  <text x="30" y="30" fill="#166534" font-family="monospace" font-size="14">TEST 01 — Day 1</text>
+  <text x="30" y="50" fill="#14532d" font-family="monospace" font-size="11">Inoculation · 24.2°C · 62% RH · 402 ppm CO₂</text>
+</svg>

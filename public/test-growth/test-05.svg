@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" fill="none">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="50%" r="60%"><stop offset="0%" stop-color="#0f172a"/><stop offset="100%" stop-color="#020617"/></radialGradient>
+    <radialGradient id="substrate" cx="50%" cy="75%" r="48%"><stop offset="0%" stop-color="#1a4a1a"/><stop offset="100%" stop-color="#0a120a"/></radialGradient>
+    <filter id="glow"><feGaussianBlur stdDeviation="3.5" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+    <filter id="glow2"><feGaussianBlur stdDeviation="5" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+  </defs>
+  <rect width="800" height="600" fill="url(#bg)"/>
+  <ellipse cx="400" cy="405" rx="330" ry="145" fill="url(#substrate)"/>
+  <circle cx="290" cy="330" r="13" fill="#4ade80" opacity="0.45" filter="url(#glow2)"/>
+  <circle cx="350" cy="310" r="12" fill="#4ade80" opacity="0.4" filter="url(#glow)"/>
+  <circle cx="480" cy="320" r="13" fill="#4ade80" opacity="0.45" filter="url(#glow2)"/>
+  <circle cx="560" cy="355" r="10" fill="#22c55e" opacity="0.5" filter="url(#glow)"/>
+  <circle cx="230" cy="370" r="11" fill="#22c55e" opacity="0.45" filter="url(#glow)"/>
+  <circle cx="380" cy="400" r="9" fill="#22c55e" opacity="0.5" filter="url(#glow)"/>
+  <circle cx="510" cy="420" r="9" fill="#22c55e" opacity="0.4" filter="url(#glow)"/>
+  <circle cx="640" cy="390" r="8" fill="#22c55e" opacity="0.35" filter="url(#glow)"/>
+  <path d="M290 330 Q320 310 350 310 Q420 310 480 320" stroke="#4ade80" stroke-width="1.5" opacity="0.3" fill="none"/>
+  <path d="M230 370 Q280 400 380 400 Q440 400 510 420" stroke="#22c55e" stroke-width="1.5" opacity="0.25" fill="none"/>
+  <path d="M480 320 Q520 340 560 355" stroke="#22c55e" stroke-width="1.2" opacity="0.2" fill="none"/>
+  <path d="M560 355 Q600 375 640 390" stroke="#22c55e" stroke-width="1" opacity="0.15" fill="none"/>
+  <circle cx="420" cy="430" r="3" fill="#4ade80" opacity="0.7" filter="url(#glow2)"/>
+  <circle cx="380" cy="440" r="2.5" fill="#4ade80" opacity="0.6" filter="url(#glow)"/>
+  <text x="30" y="30" fill="#166534" font-family="monospace" font-size="14">TEST 05 — Day 9</text>
+  <text x="30" y="50" fill="#14532d" font-family="monospace" font-size="11">Fruiting · 23.9°C · 58.4% RH · 428 ppm CO₂</text>
+</svg>

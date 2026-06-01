@@ -1,0 +1,74 @@
+[
+  {
+    "id": "snap-0001",
+    "imageUrl": "/demo-growth/day-01.svg",
+    "timestamp": "2026-05-25T07:00:00.000Z",
+    "source": "manual"
+  },
+  {
+    "id": "snap-0002",
+    "imageUrl": "/demo-growth/day-03.svg",
+    "timestamp": "2026-05-27T07:00:00.000Z",
+    "source": "manual"
+  },
+  {
+    "id": "snap-0003",
+    "imageUrl": "/demo-growth/day-03.svg",
+    "timestamp": "2026-05-28T07:00:00.000Z",
+    "source": "manual"
+  },
+  {
+    "id": "snap-0004",
+    "imageUrl": "/demo-growth/day-05.svg",
+    "timestamp": "2026-05-29T07:00:00.000Z",
+    "source": "manual"
+  },
+  {
+    "id": "snap-0005",
+    "imageUrl": "/demo-growth/day-05.svg",
+    "timestamp": "2026-05-30T07:00:00.000Z",
+    "source": "manual"
+  },
+  {
+    "id": "snap-0006",
+    "imageUrl": "/demo-growth/day-07.svg",
+    "timestamp": "2026-05-31T07:00:00.000Z",
+    "source": "manual"
+  },
+  {
+    "id": "snap-0007",
+    "imageUrl": "/demo-growth/day-07.svg",
+    "timestamp": "2026-06-01T07:00:00.000Z",
+    "source": "manual"
+  },
+  {
+    "id": "snap-0008",
+    "imageUrl": "/demo-growth/day-09.svg",
+    "timestamp": "2026-06-02T07:00:00.000Z",
+    "source": "manual"
+  },
+  {
+    "id": "snap-0009",
+    "imageUrl": "/demo-growth/day-09.svg",
+    "timestamp": "2026-06-03T07:00:00.000Z",
+    "source": "manual"
+  },
+  {
+    "id": "snap-0010",
+    "imageUrl": "/demo-growth/day-12.svg",
+    "timestamp": "2026-06-04T07:00:00.000Z",
+    "source": "manual"
+  },
+  {
+    "id": "snap-0011",
+    "imageUrl": "/demo-growth/day-12.svg",
+    "timestamp": "2026-06-05T07:00:00.000Z",
+    "source": "manual"
+  },
+  {
+    "id": "snap-0012",
+    "imageUrl": "/demo-growth/day-12.svg",
+    "timestamp": "2026-06-06T07:00:00.000Z",
+    "source": "manual"
+  }
+]

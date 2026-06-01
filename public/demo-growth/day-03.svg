@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" fill="none">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="50%" r="60%"><stop offset="0%" stop-color="#0f172a"/><stop offset="100%" stop-color="#020617"/></radialGradient>
+    <filter id="glow"><feGaussianBlur stdDeviation="2" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+  </defs>
+  <rect width="800" height="600" fill="url(#bg)"/>
+  <ellipse cx="400" cy="410" rx="310" ry="145" fill="#0f1a1f"/>
+  <circle cx="330" cy="370" r="12" fill="#10b981" opacity="0.45" filter="url(#glow)"/>
+  <circle cx="380" cy="380" r="9" fill="#10b981" opacity="0.4" filter="url(#glow)"/>
+  <circle cx="440" cy="360" r="11" fill="#10b981" opacity="0.35" filter="url(#glow)"/>
+  <circle cx="400" cy="400" r="10" fill="#10b981" opacity="0.3" filter="url(#glow)"/>
+  <circle cx="350" cy="420" r="7" fill="#10b981" opacity="0.3" filter="url(#glow)"/>
+  <path d="M330 370 Q360 350 380 380 Q400 410 440 360" stroke="#10b981" stroke-width="1" opacity="0.15" fill="none"/>
+  <text x="400" y="300" text-anchor="middle" fill="#334155" font-family="system-ui,sans-serif" font-size="72" font-weight="700">DAY 03</text>
+  <text x="400" y="340" text-anchor="middle" fill="#1e293b" font-family="system-ui,sans-serif" font-size="16" font-weight="400">Early Colonization</text>
+</svg>

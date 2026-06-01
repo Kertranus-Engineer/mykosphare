@@ -1,14 +1,17 @@
 "use client"
 
 import { X, Activity, Clock, Heart, AlertTriangle, TrendingUp, TrendingDown, Minus, Gauge, Siren, Wrench, Thermometer, Droplets, Wind } from "lucide-react"
+import { useState, useEffect } from "react"
 import type { TopologyNode } from "@/lib/topology/types"
 import type { AugmentedNode } from "@/lib/unified/types"
 import { getStatusVisual } from "@/lib/topology/status"
 import { getNodeTypeMeta } from "@/lib/topology/node-types"
 import { cn } from "@/lib/utils"
 
-function formatTime(ts: string | null): string {
-  if (!ts) return "—"
+function useTimeAgo(ts: string | null): string {
+  const [hydrated, setHydrated] = useState(false)
+  useEffect(() => { setHydrated(true) }, [])
+  if (!hydrated || !ts) return "—"
   const diff = Date.now() - new Date(ts).getTime()
   if (diff < 1000) return "just now"
   if (diff < 60_000) return `${Math.floor(diff / 1000)}s ago`
@@ -56,6 +59,8 @@ export function NodeCard({
   const alertMeta = augmented?.alertSeverity ? ALERT_META[augmented.alertSeverity] : null
   const combinedMeta = augmented ? STATUS_META[augmented.combinedStatus] : null
   const nodeMeta = getNodeTypeMeta(node.nodeType)
+  const hbAgo = useTimeAgo(node.lastHeartbeat)
+  const telAgo = useTimeAgo(node.lastTelemetry)
 
   return (
     <div className="absolute bottom-3 left-3 z-40 w-80 rounded-xl border border-border/60 bg-card p-4 shadow-lg backdrop-blur-sm">
@@ -110,7 +115,7 @@ export function NodeCard({
             <div className="grid grid-cols-3 gap-1">
               <div className="rounded bg-muted/30 px-1.5 py-1">
                 <span className="text-[8px] text-muted-foreground/50 block">Temp</span>
-                <span className="text-xs font-bold tabular-nums text-emerald-500">{temp > 0 ? `${temp.toFixed(1)}\u00b0C` : "--"}</span>
+                <span className="text-xs font-bold tabular-nums text-emerald-500">{temp > 0 ? `${temp.toFixed(1)}°C` : "--"}</span>
               </div>
               <div className="rounded bg-muted/30 px-1.5 py-1">
                 <span className="text-[8px] text-muted-foreground/50 block">Humidity</span>
@@ -236,11 +241,11 @@ export function NodeCard({
         </span>
         <span className="flex items-center gap-1">
           <Clock className="size-3" />
-          HB: {formatTime(node.lastHeartbeat)}
+          HB: {hbAgo}
         </span>
         <span className="flex items-center gap-1">
           <Activity className="size-3" />
-          {formatTime(node.lastTelemetry)}
+          {telAgo}
         </span>
       </div>
     </div>

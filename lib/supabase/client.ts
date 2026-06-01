@@ -1,10 +1,14 @@
 import { createBrowserClient } from "@supabase/ssr"
 
-let supabaseWritesEnabled = true
+let supabaseWritesEnabled = false
 let supabaseDisabledLogged = false
 
 export function isSupabaseWritesEnabled(): boolean {
   return supabaseWritesEnabled
+}
+
+export function enableSupabaseWrites(): void {
+  supabaseWritesEnabled = true
 }
 
 export function disableSupabaseWrites(): void {
@@ -38,4 +42,8 @@ export function createClient() {
 
 export function isSupabaseConfigured(): boolean {
   return getSupabaseConfig().configured
+}
+
+if (typeof window !== "undefined" && isSupabaseConfigured()) {
+  enableSupabaseWrites()
 }

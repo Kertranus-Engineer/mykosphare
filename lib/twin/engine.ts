@@ -1,4 +1,4 @@
-import type { ChamberTwinState, OperationalMode, TwinHealth } from "./types"
+import type { ChamberTwinState, OperationalMode, ChamberHealth } from "./types"
 import { MODE_THRESHOLDS } from "./types"
 
 function clamp(v: number, min: number, max: number): number {
@@ -70,7 +70,10 @@ export function evolveTwinState(
   }
 }
 
-export function computeTwinHealth(state: ChamberTwinState, telemetry: { temperature: number; humidity: number; co2: number }): TwinHealth {
+/**
+ * @deprecated Use computeTwinHealthScore from cultivation-profile.ts instead
+ */
+export function computeChamberHealth(state: ChamberTwinState, telemetry: { temperature: number; humidity: number; co2: number }): ChamberHealth {
   const thresholds = MODE_THRESHOLDS[state.mode]
 
   const thermalScore = scoreMetric(telemetry.temperature, thresholds.temperatureMin, thresholds.temperatureMax, thresholds.targetTemperature)

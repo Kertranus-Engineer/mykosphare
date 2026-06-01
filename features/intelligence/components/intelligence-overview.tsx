@@ -166,7 +166,7 @@ export function IntelligenceOverview() {
               <Thermometer className="size-5 text-emerald-500" />
               <div>
                 <span className="text-[10px] text-muted-foreground/50">Temperature</span>
-                <p className="text-sm font-bold tabular-nums text-foreground">{hasData ? `${temp.toFixed(1)}\u00b0C` : "--"}</p>
+                <p className="text-sm font-bold tabular-nums text-foreground">{hasData ? `${temp.toFixed(1)}°C` : "--"}</p>
               </div>
             </div>
             <div className="flex items-center gap-3 rounded-lg bg-muted/30 px-3 py-2.5">
@@ -179,7 +179,7 @@ export function IntelligenceOverview() {
             <div className="flex items-center gap-3 rounded-lg bg-muted/30 px-3 py-2.5">
               <Wind className="size-5 text-muted-foreground" />
               <div>
-                <span className="text-[10px] text-muted-foreground/50">CO\u2082</span>
+                <span className="text-[10px] text-muted-foreground/50">CO₂</span>
                 <p className="text-sm font-bold tabular-nums text-foreground">{hasData ? `${tel.co2.value}` : "--"} <span className="text-[10px] font-normal text-muted-foreground/50">ppm</span></p>
               </div>
             </div>

@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" fill="none">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="50%" r="60%"><stop offset="0%" stop-color="#0f172a"/><stop offset="100%" stop-color="#020617"/></radialGradient>
+    <radialGradient id="substrate" cx="40%" cy="75%" r="30%"><stop offset="0%" stop-color="#1e293b"/><stop offset="100%" stop-color="#0f172a"/></radialGradient>
+    <filter id="glow"><feGaussianBlur stdDeviation="2" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+  </defs>
+  <rect width="800" height="600" fill="url(#bg)"/>
+  <ellipse cx="400" cy="420" rx="300" ry="140" fill="url(#substrate)"/>
+  <circle cx="360" cy="390" r="8" fill="#10b981" opacity="0.4" filter="url(#glow)"/>
+  <circle cx="420" cy="400" r="6" fill="#10b981" opacity="0.3" filter="url(#glow)"/>
+  <circle cx="380" cy="410" r="5" fill="#10b981" opacity="0.25" filter="url(#glow)"/>
+  <text x="400" y="300" text-anchor="middle" fill="#334155" font-family="system-ui,sans-serif" font-size="72" font-weight="700">DAY 01</text>
+  <text x="400" y="340" text-anchor="middle" fill="#1e293b" font-family="system-ui,sans-serif" font-size="16" font-weight="400">Inoculation Phase</text>
+</svg>

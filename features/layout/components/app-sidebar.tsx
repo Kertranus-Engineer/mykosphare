@@ -24,6 +24,7 @@ import {
   Map,
   Layers,
   Microscope,
+  Eye,
 } from "lucide-react"
 import { NavItem } from "./nav-item"
 import { useUptime } from "@/mock/simulator"
@@ -47,6 +48,7 @@ const navGroups: NavGroup[] = [
     label: "OPERATIONS",
     items: [
       { icon: Brain, label: "Intelligence", href: "/dashboard/intelligence" },
+      { icon: Eye, label: "Visual Intelligence", href: "/dashboard/visual-intelligence" },
       { icon: Share2, label: "Topology", href: "/dashboard/topology" },
       { icon: Clock, label: "Timeline", href: "/dashboard/timeline" },
       { icon: Terminal, label: "Command Center", href: "/dashboard/command-center" },

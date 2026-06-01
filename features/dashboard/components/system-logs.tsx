@@ -69,13 +69,13 @@ function generateLogs(
     if (tempDelta > 0) {
       logs.push({
         time: nowTime(),
-        message: `TEMPERATURE RISING: ${tel.temp}\u00b0C`,
+        message: `TEMPERATURE RISING: ${tel.temp}°C`,
         type: tel.temp > 32 ? "critical" : tel.temp > 28 ? "warning" : "info",
       })
     } else {
       logs.push({
         time: nowTime(),
-        message: `TEMPERATURE DROP DETECTED: ${tel.temp}\u00b0C`,
+        message: `TEMPERATURE DROP DETECTED: ${tel.temp}°C`,
         type: "info",
       })
     }

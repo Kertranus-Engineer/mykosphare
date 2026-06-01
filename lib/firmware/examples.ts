@@ -34,7 +34,7 @@ export const ESP32_EVENT_EXAMPLE = `{
   "deploymentId": "MYK-CH-001",
   "currentState": "WARNING",
   "severity": "warning",
-  "description": "CO\u2082 exceeded threshold of 420 ppm"
+  "description": "CO₂ exceeded threshold of 420 ppm"
 }`
 
 export const ESP32_SUCCESS_RESPONSE = `HTTP/1.1 200 OK

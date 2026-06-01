@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/client"
+import { isSupabaseWritesEnabled, disableSupabaseWrites } from "@/lib/supabase/client"
 import { insertLog } from "@/lib/services/logs-service"
 import { RULES, HEARTBEAT_TIMEOUT_SEC, OFFLINE_GRACE_PERIOD_SEC } from "./rules"
 import type { TelemetrySnapshot, SettingsSnapshot, AlertEvent, CooldownState } from "./types"
@@ -86,14 +87,18 @@ async function hasActiveAlert(title: string): Promise<{ id: string; created_at: 
 
 async function insertAlert(event: AlertEvent): Promise<void> {
   try {
+    if (!isSupabaseWritesEnabled()) return
     const supabase = createClient()
-    await supabase.from("alerts").insert({
+    const { error } = await supabase.from("alerts").insert({
       severity: event.severity,
       title: event.title,
       description: event.description,
       resolved: false,
       deployment_id: event.deploymentId,
     })
+    if (error && (error as any)?.status >= 401 && (error as any)?.status <= 403) {
+      disableSupabaseWrites()
+    }
   } catch {
     // silently fail — alert engine should not block ingestion
   }

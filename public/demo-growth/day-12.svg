@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" fill="none">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="50%" r="60%"><stop offset="0%" stop-color="#0f172a"/><stop offset="100%" stop-color="#020617"/></radialGradient>
+    <radialGradient id="fruit" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#22c55e" stop-opacity="0.15"/><stop offset="100%" stop-color="#052e16"/></radialGradient>
+    <filter id="glow"><feGaussianBlur stdDeviation="3" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+    <filter id="glow2"><feGaussianBlur stdDeviation="5" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+  </defs>
+  <rect width="800" height="600" fill="url(#bg)"/>
+  <ellipse cx="400" cy="390" rx="340" ry="160" fill="url(#fruit)"/>
+  <ellipse cx="400" cy="390" rx="350" ry="165" fill="#031a0a" opacity="0.8"/>
+  <circle cx="260" cy="290" r="20" fill="#22c55e" opacity="0.6" filter="url(#glow2)"/>
+  <circle cx="330" cy="260" r="18" fill="#22c55e" opacity="0.55" filter="url(#glow)"/>
+  <circle cx="500" cy="280" r="19" fill="#22c55e" opacity="0.6" filter="url(#glow2)"/>
+  <circle cx="570" cy="330" r="16" fill="#10b981" opacity="0.65" filter="url(#glow)"/>
+  <circle cx="200" cy="360" r="17" fill="#10b981" opacity="0.6" filter="url(#glow)"/>
+  <circle cx="650" cy="380" r="14" fill="#10b981" opacity="0.5" filter="url(#glow)"/>
+  <circle cx="360" cy="400" r="15" fill="#22c55e" opacity="0.55" filter="url(#glow)"/>
+  <circle cx="520" cy="420" r="14" fill="#10b981" opacity="0.55" filter="url(#glow)"/>
+  <circle cx="430" cy="350" r="12" fill="#22c55e" opacity="0.5" filter="url(#glow)"/>
+  <circle cx="280" cy="430" r="11" fill="#10b981" opacity="0.45" filter="url(#glow)"/>
+  <circle cx="600" cy="440" r="10" fill="#10b981" opacity="0.4" filter="url(#glow)"/>
+  <path d="M260 290 Q290 270 330 260 Q400 250 500 280" stroke="#22c55e" stroke-width="2" opacity="0.4" fill="none"/>
+  <path d="M200 360 Q240 400 360 400 Q420 400 430 350" stroke="#22c55e" stroke-width="1.5" opacity="0.3" fill="none"/>
+  <path d="M500 280 Q540 310 570 330 Q600 350 650 380" stroke="#10b981" stroke-width="1.5" opacity="0.3" fill="none"/>
+  <path d="M360 400 Q410 430 520 420" stroke="#10b981" stroke-width="1.2" opacity="0.25" fill="none"/>
+  <path d="M280 430 Q320 460 400 440 Q460 430 600 440" stroke="#10b981" stroke-width="1" opacity="0.2" fill="none"/>
+  <circle cx="400" cy="420" r="4" fill="#4ade80" opacity="0.9" filter="url(#glow2)"/>
+  <circle cx="440" cy="400" r="3" fill="#4ade80" opacity="0.8" filter="url(#glow2)"/>
+  <circle cx="360" cy="405" r="3.5" fill="#4ade80" opacity="0.85" filter="url(#glow2)"/>
+  <text x="400" y="300" text-anchor="middle" fill="#031a0a" font-family="system-ui,sans-serif" font-size="72" font-weight="700">DAY 12</text>
+  <text x="400" y="340" text-anchor="middle" fill="#052e16" font-family="system-ui,sans-serif" font-size="16" font-weight="400">Fruiting — Harvest Window</text>
+</svg>

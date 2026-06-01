@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" fill="none">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="50%" r="60%"><stop offset="0%" stop-color="#0f172a"/><stop offset="100%" stop-color="#020617"/></radialGradient>
+    <radialGradient id="substrate" cx="50%" cy="75%" r="42%"><stop offset="0%" stop-color="#1a351a"/><stop offset="100%" stop-color="#0a120a"/></radialGradient>
+    <filter id="glow"><feGaussianBlur stdDeviation="2.5" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+  </defs>
+  <rect width="800" height="600" fill="url(#bg)"/>
+  <ellipse cx="400" cy="415" rx="310" ry="135" fill="url(#substrate)"/>
+  <circle cx="320" cy="370" r="9" fill="#22c55e" opacity="0.45" filter="url(#glow)"/>
+  <circle cx="380" cy="350" r="8" fill="#22c55e" opacity="0.4" filter="url(#glow)"/>
+  <circle cx="460" cy="365" r="9" fill="#22c55e" opacity="0.45" filter="url(#glow)"/>
+  <circle cx="520" cy="395" r="7" fill="#22c55e" opacity="0.35" filter="url(#glow)"/>
+  <circle cx="290" cy="400" r="6" fill="#22c55e" opacity="0.3" filter="url(#glow)"/>
+  <path d="M320 370 Q350 350 380 350 Q420 350 460 365" stroke="#22c55e" stroke-width="1.2" opacity="0.2" fill="none"/>
+  <path d="M460 365 Q490 380 520 395" stroke="#22c55e" stroke-width="1" opacity="0.15" fill="none"/>
+  <text x="30" y="30" fill="#166534" font-family="monospace" font-size="14">TEST 03 — Day 5</text>
+  <text x="30" y="50" fill="#14532d" font-family="monospace" font-size="11">Consolidation · 24.3°C · 60.4% RH · 412 ppm CO₂</text>
+</svg>

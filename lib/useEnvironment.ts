@@ -319,7 +319,7 @@ function getContextAlerts(
     alerts.push({
       icon: Thermometer,
       label: "High Temperature",
-      description: `${temp}\u00b0C \u2014 exceeds ${TEMP_CRITICAL}\u00b0C critical threshold`,
+      description: `${temp}°C \u2014 exceeds ${TEMP_CRITICAL}°C critical threshold`,
       color: "text-red-500",
       bg: "bg-red-500/10",
       glow: "shadow-[0_0_10px_-2px] shadow-red-500/20",
@@ -328,7 +328,7 @@ function getContextAlerts(
     alerts.push({
       icon: Thermometer,
       label: "High Temperature",
-      description: `${temp}\u00b0C \u2014 above ${TEMP_WARNING}\u00b0C warning threshold`,
+      description: `${temp}°C \u2014 above ${TEMP_WARNING}°C warning threshold`,
       color: "text-amber-500",
       bg: "bg-amber-500/10",
       glow: "shadow-[0_0_10px_-2px] shadow-amber-500/20",

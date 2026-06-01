@@ -28,7 +28,7 @@ export interface TwinThresholds {
   acceptableDrift: number
 }
 
-export interface TwinHealth {
+export interface ChamberHealth {
   overallScore: number
   thermalScore: number
   humidityScore: number

@@ -1,0 +1,37 @@
+[
+  {
+    "id": "real-001",
+    "imageUrl": "/real-captures/cap-01.jpg",
+    "timestamp": "2026-05-27T10:30:00.000Z",
+    "source": "manual",
+    "notes": "First real capture — inoculation confirmed"
+  },
+  {
+    "id": "real-002",
+    "imageUrl": "/real-captures/cap-02.jpg",
+    "timestamp": "2026-05-29T09:00:00.000Z",
+    "source": "manual",
+    "notes": "Colonization visible across substrate"
+  },
+  {
+    "id": "real-003",
+    "imageUrl": "/real-captures/cap-03.jpg",
+    "timestamp": "2026-05-31T08:15:00.000Z",
+    "source": "manual",
+    "notes": "Full colonization — primordia starting"
+  },
+  {
+    "id": "real-004",
+    "imageUrl": "/real-captures/cap-04.jpg",
+    "timestamp": "2026-06-02T11:00:00.000Z",
+    "source": "manual",
+    "notes": "Fruiting bodies developing"
+  },
+  {
+    "id": "real-005",
+    "imageUrl": "/real-captures/cap-05.jpg",
+    "timestamp": "2026-06-04T07:45:00.000Z",
+    "source": "manual",
+    "notes": "Harvest window opening"
+  }
+]

@@ -43,7 +43,7 @@ export const es: LocaleDict = {
   "walkthrough.next": "Siguiente",
   "walkthrough.complete": "Completar",
   "walkthrough.step1.title": "Vista General Unificada",
-  "walkthrough.step1.desc": "Vista centralizada de todas las m\u00e9tricas ambientales, estado de c\u00e1maras y salud del sistema. Monitoree temperatura, humedad, CO\u2082 y energ\u00eda en tiempo real.",
+  "walkthrough.step1.desc": "Vista centralizada de todas las m\u00e9tricas ambientales, estado de c\u00e1maras y salud del sistema. Monitoree temperatura, humedad, CO₂ y energ\u00eda en tiempo real.",
   "walkthrough.step2.title": "Visualizaci\u00f3n de Topolog\u00eda",
   "walkthrough.step2.desc": "Vista basada en grafos de su tejido de sensores e interconexiones de dispositivos. Inspeccione rutas de se\u00f1al, salud de nodos y flujo de datos.",
   "walkthrough.step3.title": "Capa de Inteligencia",

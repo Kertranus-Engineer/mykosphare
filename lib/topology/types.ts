@@ -45,10 +45,22 @@ export interface ZoneLabel {
   height: number
 }
 
+export interface LayerInfo {
+  id: string
+  label: string
+  x: number
+  y: number
+  width: number
+  height: number
+  color: string
+  nodeIds: string[]
+}
+
 export interface TopologyGraph {
   nodes: TopologyNode[]
   links: SignalLink[]
   zones?: ZoneLabel[]
+  layers?: LayerInfo[]
 }
 
 export interface TopologyMetrics {

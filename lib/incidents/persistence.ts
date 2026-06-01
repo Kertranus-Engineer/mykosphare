@@ -1,6 +1,7 @@
 "use client"
 
 import { createClient } from "@/lib/supabase/client"
+import { isSupabaseWritesEnabled, disableSupabaseWrites } from "@/lib/supabase/client"
 import type { Incident, IncidentStatus } from "./types"
 
 const DEPLOYMENT_ID = "MYK-CH-001"
@@ -29,6 +30,7 @@ function safeLocalSet(key: string, value: unknown) {
 
 export async function persistIncident(incident: Incident): Promise<boolean> {
   try {
+    if (!isSupabaseWritesEnabled()) return false
     const supabase = await getClient()
     const { error } = await supabase.from("incidents").insert({
       title: incident.title,
@@ -46,7 +48,7 @@ export async function persistIncident(incident: Incident): Promise<boolean> {
       deployment_id: DEPLOYMENT_ID,
     })
     if (error) {
-      appendLocalIncident(incident)
+      if ((error as any)?.status >= 401 && (error as any)?.status <= 403) { disableSupabaseWrites() }
       return false
     }
     return true

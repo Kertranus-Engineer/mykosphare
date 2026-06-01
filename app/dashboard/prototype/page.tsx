@@ -322,7 +322,7 @@ export default function PrototypePage() {
         <Card className="border-cyan-500/10 shadow-[0_0_12px_-4px] shadow-cyan-500/5">
           <CardContent className="py-3">
             <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-3 lg:grid-cols-5">
-              {["Additional sensors (CO\u2082, light, soil moisture)", "Remote control modules (relays, actuators)", "Camera integration for visual monitoring", "Automated environmental control loops", "Multi-node mesh deployments"].map((item, i) => (
+              {["Additional sensors (CO₂, light, soil moisture)", "Remote control modules (relays, actuators)", "Camera integration for visual monitoring", "Automated environmental control loops", "Multi-node mesh deployments"].map((item, i) => (
                 <div key={item} className="flex items-center gap-1.5 rounded-md border border-cyan-500/10 bg-cyan-500/[0.02] px-2.5 py-1.5" style={{ animationDelay: `${i * 80}ms` }}>
                   <div className="size-1.5 rounded-full bg-cyan-500/60" />
                   <span className="text-[10px] text-foreground/60">{item}</span>

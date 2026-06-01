@@ -3,7 +3,7 @@
 import { cn } from "@/lib/utils"
 import { CARD_HOVER } from "@/lib/styles/tokens"
 import { MODE_COLORS, MODE_BG, MODE_BORDER, MODE_LABELS } from "@/lib/twin/types"
-import type { ChamberTwinState, TwinHealth, OperationalMode } from "@/lib/twin/types"
+import type { ChamberTwinState, ChamberHealth, OperationalMode } from "@/lib/twin/types"
 import type { Command } from "@/lib/commands/types"
 import { COMMAND_STATUS_COLORS, COMMAND_STATUS_BG } from "@/lib/commands/types"
 import { Gauge, Thermometer, Droplets, Wind, Skull, Heart, Zap, Activity } from "lucide-react"
@@ -33,7 +33,7 @@ function ScoreBar({ label, score, icon }: { label: string; score: number; icon: 
 
 export function ChamberTwinCard({ state, health, onSwitchMode }: {
   state: ChamberTwinState
-  health: TwinHealth
+  health: ChamberHealth
   onSwitchMode: (mode: OperationalMode) => void
 }) {
   const modes: OperationalMode[] = ["incubation", "fruiting", "sterilization", "maintenance", "emergency"]

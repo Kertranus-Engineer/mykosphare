@@ -202,7 +202,7 @@ export default function SettingsPage() {
               label="Temperature Range"
               storageKey="threshold_temp"
               defaultVal={24.5}
-              unit="\u00b0C"
+              unit="°C"
               min={20}
               max={28}
               settings={settings}
@@ -219,7 +219,7 @@ export default function SettingsPage() {
               onChange={updateSetting}
             />
             <SliderControl
-              label="CO\u2082 Limit"
+              label="CO₂ Limit"
               storageKey="threshold_co2"
               defaultVal={420}
               unit="ppm"
@@ -257,8 +257,8 @@ export default function SettingsPage() {
               onToggle={updateSetting}
             />
             <Toggle
-              label="CO\u2082 Alerts"
-              description="Notify on elevated CO\u2082 levels"
+              label="CO₂ Alerts"
+              description="Notify on elevated CO₂ levels"
               storageKey="toggle_co2_alerts"
               settings={settings}
               onToggle={updateSetting}

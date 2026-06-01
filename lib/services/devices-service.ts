@@ -1,6 +1,6 @@
 "use client"
 
-import { createClient } from "@/lib/supabase/client"
+import { createClient, isSupabaseWritesEnabled, disableSupabaseWrites } from "@/lib/supabase/client"
 
 const DEPLOYMENT_ID = "MYK-CH-001"
 const LOCAL_KEY = "mykosphare_service_devices"
@@ -29,6 +29,7 @@ export async function upsertDevice(
   uptime: number | null
 ): Promise<boolean> {
   try {
+    if (!isSupabaseWritesEnabled()) return false
     const supabase = await getClient()
     const { error } = await supabase.from("devices").upsert(
       {
@@ -42,6 +43,7 @@ export async function upsertDevice(
       },
       { onConflict: "device_id" }
     )
+    if (error && (error as any)?.status >= 401 && (error as any)?.status <= 403) { disableSupabaseWrites() }
     return !error
   } catch {
     return false
@@ -51,10 +53,12 @@ export async function upsertDevice(
 export async function upsertDeviceBatch(devices: ServiceDevice[]): Promise<boolean> {
   if (devices.length === 0) return true
   try {
+    if (!isSupabaseWritesEnabled()) return false
     const supabase = await getClient()
     const { error } = await supabase
       .from("devices")
       .upsert(devices, { onConflict: "device_id" })
+    if (error && (error as any)?.status >= 401 && (error as any)?.status <= 403) { disableSupabaseWrites() }
     return !error
   } catch {
     return false

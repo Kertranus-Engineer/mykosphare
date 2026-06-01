@@ -236,7 +236,7 @@ export function ChamberPanel() {
           <div className="absolute bottom-0 inset-x-0 z-10 h-7 bg-gradient-to-t from-background/70 to-transparent" />
           <div className="absolute bottom-1 inset-x-0 z-10 flex items-center justify-center gap-3">
             <span className="text-[9px] tabular-nums text-muted-foreground/50">
-              {tel.temperature.value > 0 ? `${tel.temperature.value}\u00b0C` : "-- \u00b0C"}
+              {tel.temperature.value > 0 ? `${tel.temperature.value}°C` : "-- °C"}
             </span>
             <span className="text-[9px] text-muted-foreground/20">|</span>
             <span className="text-[9px] tabular-nums text-muted-foreground/50">

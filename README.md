@@ -1,33 +1,47 @@
 # MYKOSPHARE
 
-**Environmental Intelligence Platform** — autonomous environmental monitoring, AI-driven stabilization, and intelligent telemetry infrastructure for controlled environment agriculture and industrial biotech.
+**Environmental Intelligence Platform**
+
+Real-time environmental monitoring powered by low-cost IoT hardware, cloud analytics and intelligent telemetry infrastructure.
+
+---
 
 ## Live Demo
 
 https://mykosphare.vercel.app/dashboard
 
-## Video Demonstration
+---
 
-https://drive.google.com/file/d/1ik3pvLC7IU_zRo4khg5gL7J5ncwQe9Aj/view
+## Overview
+
+MYKOSPHARE is an environmental intelligence platform that collects, analyzes and visualizes environmental conditions through affordable ESP32-based hardware and modern web technologies.
+
+The platform focuses on operational awareness — helping users understand the state of an environment as a connected system — rather than displaying isolated sensor values.
 
 ---
 
-## Project Overview
+## Features
 
-MYKOSPHARE is an environmental intelligence platform designed to collect, analyze and visualize environmental conditions through affordable hardware and modern web technologies.
-
-The project combines ESP32-based sensor nodes, telemetry processing, operational visualization and environmental monitoring into a single platform. Rather than displaying isolated sensor values, MYKOSPHARE focuses on operational awareness — helping users understand the state of an environment as a connected system.
+- **Real-Time Telemetry** — Live temperature, humidity, CO₂ and energy monitoring with animated KPI cards
+- **ESP32 Integration** — Physical hardware interface for environmental data acquisition via WiFi
+- **Environmental Intelligence** — AI-driven analysis, confidence scoring and predictive warnings
+- **Operational Topology** — Network visualization showing data flow from sensors through gateways to analytics
+- **Simulation Engine** — Automatic fallback when hardware is unavailable, keeping the dashboard fully operational
+- **Multi-Page Dashboard** — Overview, Analytics, Intelligence, Timeline, Topology, Architecture and more
+- **Prototype Documentation** — Hardware gallery, cost breakdown and deployment concepts
 
 ---
 
-## Project Highlights
+## Technology Stack
 
-- **Low-cost ESP32 architecture** — Affordable hardware that reduces deployment costs by over 90%
-- **Real-time environmental telemetry** — Live temperature, humidity and CO₂ monitoring with cloud ingestion
-- **Cloud-based monitoring dashboard** — Professional operational interface accessible from any browser
-- **Simulation mode for demonstrations** — Platform remains fully operational even without physical hardware
-- **Expandable sensor ecosystem** — Support for additional sensors and remote monitoring modules
-- **Educational and industrial applications** — Suitable for classrooms, laboratories, greenhouses and industrial facilities
+| Layer | Technology |
+|-------|-----------|
+| **Frontend** | Next.js 16, React 19, TypeScript, TailwindCSS v4, shadcn/ui |
+| **Charts** | Recharts |
+| **Icons** | Lucide React |
+| **Backend** | Next.js API Routes, Supabase (optional) |
+| **Hardware** | ESP32, DHT22, LCD I2C, Arduino Framework |
+| **Cloud** | Vercel |
 
 ---
 
@@ -38,9 +52,7 @@ Environmental Sensors (DHT22)
         ↓
 ESP32 Controller (WiFi)
         ↓
-Wireless Communication (HTTP)
-        ↓
-MYKOSPHARE Cloud / Ingestion Layer
+Cloud Ingestion / Telemetry Processing
         ↓
 Analytics Engine (AI Analysis)
         ↓
@@ -49,81 +61,54 @@ Alert System (Threshold Monitoring)
 Operator Dashboard (Next.js)
 ```
 
-Complete environmental monitoring pipeline from data acquisition to decision making.
-
-The system supports both real telemetry and simulation mode, allowing the platform to remain operational even when physical hardware is unavailable.
+The platform supports both live telemetry and simulation mode, remaining fully operational even without physical hardware.
 
 ---
 
-## Applications
+## Simulation Engine
 
-MYKOSPHARE adapts to diverse environments and industries:
+When no ESP32 device is connected, the platform automatically switches to simulated telemetry:
 
-| Sector | Use Case |
-|--------|----------|
-| **Smart Classrooms** | Educational environments where students learn IoT, telemetry, environmental monitoring and data analytics using real operational hardware |
-| **Education** | Learn sensor integration, IoT networking and environmental analysis |
-| **Environmental Monitoring** | Track temperature, humidity and air quality |
-| **Agriculture** | Precision monitoring of growing conditions |
-| **Research Laboratories** | Maintain precise environmental conditions |
-| **Industrial Facilities** | Monitor production environments and compliance |
-| **Smart Greenhouses** | Automated climate control with remote access |
-| **Mushroom Cultivation** | Specialized monitoring for growing chambers |
+- Realistic temperature (22–27°C) and humidity (55–65%) generation
+- Server-side simulation with daily sinusoidal variation
+- Source transitions emit operational events
+- Real telemetry always overrides simulated data
 
 ---
 
-## Technology Stack
+## Prototype Hardware
 
-| Layer | Technology |
-|-------|-----------|
-| **Frontend** | Next.js 16, React 19, TypeScript, Tailwind CSS v4, shadcn/ui, Recharts, Framer Motion |
-| **Backend** | Node.js, Next.js API Routes, Supabase (optional), In-Memory Telemetry Pipeline |
-| **Hardware** | ESP32, DHT22, LCD I2C, Arduino Framework |
-| **Cloud** | Vercel |
+- ESP32-WROOM-32 development board
+- DHT22 temperature and humidity sensor
+- 16×2 I2C LCD status display
+- Industrial power supply with voltage regulation
+- 3D-printed protective enclosure
 
----
-
-## Cost Advantage
-
-Traditional environmental monitoring solutions often require expensive proprietary hardware and complex infrastructure.
-
-MYKOSPHARE uses affordable ESP32 hardware and open technologies, reducing deployment costs dramatically.
-
-**Prototype Cost Breakdown:**
-
-| Component | Estimated Cost |
-|-----------|---------------|
-| ESP32 Controller | ~$4 |
-| Temperature/Humidity Sensor | ~$3 |
-| Power Supply | ~$2 |
-| Enclosure | ~$5 |
-| Cloud Hosting | Free |
-| Dashboard Platform | Free |
-| **Total** | **~$89 USD** |
+**Estimated Prototype Cost:** ~$89 USD
 
 ---
 
-## Roadmap
+## Screenshots
 
-| Phase | Status |
-|-------|--------|
-| Phase 1 — Prototype Development | Completed |
-| Phase 2 — Environmental Monitoring | Completed |
-| Phase 3 — Multi-node Network | In Progress |
-| Phase 4 — Cloud Integration | Planned |
-| Phase 5 — AI Assisted Analytics | Planned |
-| Phase 6 — Educational Deployment | Planned |
-| Phase 7 — Commercial Deployment | Planned |
+Screenshots can be placed in `docs/screenshots/`:
+
+- `overview.png` — Operational dashboard
+- `timeline.png` — Temporal intelligence view
+- `prototype.png` — Hardware prototype gallery
+- `architecture.png` — System architecture flow
 
 ---
 
-## Quick Start
+## Local Development
 
 ```bash
 # Install dependencies
 npm install
 
-# Start dev server
+# Copy environment variables
+cp .env.example .env.local
+
+# Start development server
 npm run dev
 
 # Open dashboard
@@ -132,17 +117,10 @@ open http://localhost:3000
 
 ### ESP32 Setup
 
-1. Open `ESP32_NETWORK_TEST.ino`
-2. Set `WIFI_SSID`, `WIFI_PASS`, and `SERVER_HOST`
-3. Upload to ESP32
-4. Open Serial Monitor (115200 baud)
-5. Verify `[HTTP] code=200`
-
-### Telemetry Modes
-
-**Live Device** — When ESP32 is connected: real sensor values, live environmental data.
-
-**Simulation Mode** — When hardware is unavailable: automatic environmental simulation, dynamic dashboard values, operational continuity. The platform always feels operational.
+1. Flash the ESP32 with the firmware from `docs/firmware/`
+2. Configure WiFi credentials in the firmware
+3. Set `SERVER_HOST` to your machine's LAN IP
+4. The dashboard will automatically detect telemetry
 
 ---
 
@@ -150,33 +128,40 @@ open http://localhost:3000
 
 | Route | Description |
 |-------|-------------|
-| `/dashboard` | Operational Overview — real-time environmental intelligence dashboard |
-| `/dashboard/architecture` | System Architecture — data pipeline and end-to-end flow |
-| `/dashboard/applications` | Applications — use cases across education, agriculture, research |
-| `/dashboard/prototype` | Prototype — hardware implementation and cost breakdown |
-| `/dashboard/cost-advantage` | Cost Advantage — comparison vs traditional solutions |
-| `/dashboard/roadmap` | Roadmap — development timeline and future milestones |
-| `/dashboard/technology-stack` | Technology Stack — technologies across the full stack |
-| `/dashboard/environment` | Environment — chamber visualization and zone monitoring |
-| `/dashboard/analytics` | Analytics — charts, metrics, and environmental history |
-| `/dashboard/topology` | Topology — live network graph with packet flow |
-| `/dashboard/intelligence` | Intelligence — AI operational intelligence and health scoring |
-| `/dashboard/timeline` | Timeline — temporal patterns, forecasting, drift analysis |
-| `/dashboard/command-center` | Command Center — operational terminal and command interface |
-| `/dashboard/about` | About — project information and attribution |
+| `/dashboard` | Operational Overview — live KPIs, chamber, AI analysis |
+| `/dashboard/analytics` | Environmental trends with 6-hour forecast |
+| `/dashboard/intelligence` | AI decision recommendations and risk assessment |
+| `/dashboard/timeline` | Temporal analysis and system events |
+| `/dashboard/topology` | Network visualization and data flow |
+| `/dashboard/architecture` | System architecture and end-to-end flow |
+| `/dashboard/prototype` | Hardware documentation and gallery |
+| `/dashboard/applications` | Use cases across industries |
+| `/dashboard/cost-advantage` | Cost comparison vs traditional solutions |
+| `/dashboard/roadmap` | Development timeline and milestones |
+| `/dashboard/technology-stack` | Technologies used across the stack |
 
 ---
 
-## Screenshots
+## Deployment
 
-| Page | Preview |
-|------|---------|
-| **Overview** | Operational dashboard with live KPI cards, chamber visualization, environmental metrics and AI analysis |
-| **Architecture** | End-to-end telemetry pipeline showing data flow from sensors to dashboard |
-| **Applications** | 8 supported use cases across education, research, agriculture and industry |
-| **Prototype** | Hardware components, cost breakdown, gallery and deployment concepts |
+The platform is deployed on Vercel:
 
-*Screenshots can be added to `/public/screenshots/` directory.*
+```bash
+npm run build
+npx vercel --prod
+```
+
+No Supabase configuration is required — the platform runs in simulation mode by default.
+
+---
+
+## Future Roadmap
+
+- Multi-node sensor mesh deployment
+- Predictive analytics enhancements
+- Mobile applications
+- Additional sensor support (CO₂, light, soil moisture)
+- Automated environmental control loops
 
 ---
 

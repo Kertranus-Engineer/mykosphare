@@ -143,7 +143,7 @@ export default function EnvironmentPage() {
                 <div className="flex flex-col gap-1 rounded-lg bg-muted/30 p-2.5">
                   <Thermometer className="size-3.5 text-muted-foreground/60" />
                   <span className="text-lg font-semibold tabular-nums tracking-tight text-foreground">
-                    {mounted ? `${zone.temp.toFixed(1)}\u00b0` : "—\u00b0"}
+                    {mounted ? `${zone.temp.toFixed(1)}°` : "—°"}
                   </span>
                   <span className="text-[10px] text-muted-foreground/60">Temp</span>
                 </div>
@@ -159,7 +159,7 @@ export default function EnvironmentPage() {
                   <span className="text-lg font-semibold tabular-nums tracking-tight text-foreground">
                     {mounted ? zone.co2 : "—"}
                   </span>
-                  <span className="text-[10px] text-muted-foreground/60">CO\u2082 ppm</span>
+                  <span className="text-[10px] text-muted-foreground/60">CO₂ ppm</span>
                 </div>
               </div>
             </CardContent>

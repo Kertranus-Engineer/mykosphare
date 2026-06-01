@@ -43,7 +43,7 @@ export const en: LocaleDict = {
   "walkthrough.next": "Next",
   "walkthrough.complete": "Complete",
   "walkthrough.step1.title": "Unified Overview",
-  "walkthrough.step1.desc": "Centralized view of all environmental metrics, chamber status, and system health. Monitor temperature, humidity, CO\u2082, and energy in real time.",
+  "walkthrough.step1.desc": "Centralized view of all environmental metrics, chamber status, and system health. Monitor temperature, humidity, CO₂, and energy in real time.",
   "walkthrough.step2.title": "Topology Visualization",
   "walkthrough.step2.desc": "Graph-based view of your sensor fabric and device interconnections. Inspect signal paths, node health, and data flow across the deployment.",
   "walkthrough.step3.title": "Intelligence Layer",

@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" fill="none">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="50%" r="60%"><stop offset="0%" stop-color="#0f172a"/><stop offset="100%" stop-color="#020617"/></radialGradient>
+    <filter id="glow"><feGaussianBlur stdDeviation="2.5" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+  </defs>
+  <rect width="800" height="600" fill="url(#bg)"/>
+  <ellipse cx="400" cy="405" rx="320" ry="150" fill="#0f1c18"/>
+  <circle cx="310" cy="350" r="14" fill="#10b981" opacity="0.55" filter="url(#glow)"/>
+  <circle cx="370" cy="330" r="12" fill="#10b981" opacity="0.5" filter="url(#glow)"/>
+  <circle cx="450" cy="370" r="13" fill="#10b981" opacity="0.45" filter="url(#glow)"/>
+  <circle cx="500" cy="400" r="10" fill="#10b981" opacity="0.35" filter="url(#glow)"/>
+  <circle cx="340" cy="410" r="11" fill="#10b981" opacity="0.4" filter="url(#glow)"/>
+  <circle cx="420" cy="430" r="9" fill="#10b981" opacity="0.35" filter="url(#glow)"/>
+  <path d="M310 350 Q340 330 370 330 Q420 330 450 370 Q480 410 500 400" stroke="#10b981" stroke-width="1.2" opacity="0.25" fill="none"/>
+  <path d="M340 410 Q380 440 420 430" stroke="#10b981" stroke-width="1" opacity="0.15" fill="none"/>
+  <text x="400" y="300" text-anchor="middle" fill="#1e293b" font-family="system-ui,sans-serif" font-size="72" font-weight="700">DAY 05</text>
+  <text x="400" y="340" text-anchor="middle" fill="#0f1c18" font-family="system-ui,sans-serif" font-size="16" font-weight="400">Active Colonization</text>
+</svg>

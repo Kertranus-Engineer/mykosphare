@@ -268,7 +268,7 @@ export function getOperationalMemory() {
     systemAge: `${age}h`,
     incidentCount,
     criticalCount,
-    peakTemp: peakTemp > 0 ? `${peakTemp}\u00b0C` : null,
+    peakTemp: peakTemp > 0 ? `${peakTemp}°C` : null,
     lastIncidentAgo: lastIncidentAgo !== null ? `${lastIncidentAgo}m ago` : null,
     stressIndex: stress,
     stressLevel: stress > 60 ? "elevated" : stress > 30 ? "moderate" : "normal",

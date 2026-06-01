@@ -103,8 +103,8 @@ function TrendChart({ data, predictions, color, gradientId, label, unit, trend }
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="h-36 w-full min-w-0">
-          <ResponsiveContainer width="100%" height="100%">
+        <div style={{ height: "160px", width: "100%" }}>
+          <ResponsiveContainer width="100%" height={160}>
             <LineChart data={combined} margin={{ top: 4, right: 8, bottom: 0, left: -20 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
               <XAxis dataKey="time" tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} axisLine={false} tickLine={false} interval="preserveStartEnd" />
@@ -171,7 +171,7 @@ export default function AnalyticsPage() {
         {[
           { icon: Activity, label: "Avg Temperature", value: `${rollingAverages.temperature}°C`, sub: <span className="inline-flex items-center gap-1">24h rolling <TrendIcon trend={trends.temperature} /></span> },
           { icon: Zap, label: "Avg Humidity", value: `${rollingAverages.humidity}%`, sub: `${variance.humidity > 3 ? "Elevated" : "Nominal"} variance` },
-          { icon: TrendingUp, label: "Avg CO₂", value: `${rollingAverages.co2} ppm`, sub: `CO\u2082 ${trends.co2 === "rising" ? "rising" : trends.co2 === "falling" ? "falling" : "stable"}` },
+          { icon: TrendingUp, label: "Avg CO₂", value: `${rollingAverages.co2} ppm`, sub: `CO₂ ${trends.co2 === "rising" ? "rising" : trends.co2 === "falling" ? "falling" : "stable"}` },
           { icon: Brain, label: "Stability", value: `${stability}%`, sub: `${dataPoints} data points` },
         ].map((kpi) => (
           <Card key={kpi.label} size="sm" className="transition-all duration-200 hover:ring-foreground/20 hover:shadow-[0_0_16px_-6px] hover:shadow-foreground/10">
@@ -204,7 +204,7 @@ export default function AnalyticsPage() {
               { label: "Stability", value: `${stability}%` },
               { label: "Temp Variance", value: `\u00b1${variance.temperature}°C` },
               { label: "Humidity Variance", value: `\u00b1${variance.humidity}%` },
-              { label: "CO\u2082 Variance", value: `\u00b1${variance.co2} ppm` },
+              { label: "CO₂ Variance", value: `\u00b1${variance.co2} ppm` },
               { label: "Avg Energy", value: `${rollingAverages.energy} kWh` },
             ].map((item) => (
               <div key={item.label} className="flex items-center justify-between rounded-lg bg-muted/20 px-3 py-2.5">

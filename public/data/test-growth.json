@@ -1,0 +1,52 @@
+[
+  {
+    "id": "test-01",
+    "imageUrl": "/test-growth/test-01.jpg",
+    "day": 1,
+    "temperature": 24.2,
+    "humidity": 62.0,
+    "co2": 402,
+    "confidence": 88,
+    "source": "manual"
+  },
+  {
+    "id": "test-02",
+    "imageUrl": "/test-growth/test-02.jpg",
+    "day": 3,
+    "temperature": 24.4,
+    "humidity": 61.2,
+    "co2": 406,
+    "confidence": 91,
+    "source": "manual"
+  },
+  {
+    "id": "test-03",
+    "imageUrl": "/test-growth/test-03.jpg",
+    "day": 5,
+    "temperature": 24.3,
+    "humidity": 60.4,
+    "co2": 412,
+    "confidence": 93,
+    "source": "manual"
+  },
+  {
+    "id": "test-04",
+    "imageUrl": "/test-growth/test-04.jpg",
+    "day": 7,
+    "temperature": 24.1,
+    "humidity": 59.2,
+    "co2": 420,
+    "confidence": 92,
+    "source": "manual"
+  },
+  {
+    "id": "test-05",
+    "imageUrl": "/test-growth/test-05.jpg",
+    "day": 9,
+    "temperature": 23.9,
+    "humidity": 58.4,
+    "co2": 428,
+    "confidence": 96,
+    "source": "manual"
+  }
+]
