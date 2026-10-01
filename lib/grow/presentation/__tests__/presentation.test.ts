@@ -39,7 +39,7 @@ function snap(value: EnvironmentalReading | null) {
 describe("status presentation", () => {
   it("healthy → human calm copy", () => {
     const status = presentStatus(snap(reading()), NOW)
-    expect(status).toMatchObject({ title: "Todo bien", body: "Tu cultivo se mantiene estable.", tone: "calm" })
+    expect(status).toMatchObject({ title: "Todo bien", body: "Mi ambiente se mantiene estable.", tone: "calm" })
   })
 
   it("simulated healthy keeps the normal message (provenance is shown elsewhere)", () => {
@@ -48,15 +48,15 @@ describe("status presentation", () => {
   })
 
   it("attention states name the need", () => {
-    expect(presentStatus(snap(reading({ humidity: 50 })), NOW)).toMatchObject({ title: "Necesita humedad", tone: "attention" })
-    expect(presentStatus(snap(reading({ humidity: 82 })), NOW)).toMatchObject({ title: "Necesita ventilación", tone: "attention" })
-    expect(presentStatus(snap(reading({ temperature: 18 })), NOW)).toMatchObject({ title: "Hace frío", tone: "attention" })
-    expect(presentStatus(snap(reading({ temperature: 27 })), NOW)).toMatchObject({ title: "Hace calor", tone: "attention" })
+    expect(presentStatus(snap(reading({ humidity: 50 })), NOW)).toMatchObject({ title: "Necesito humedad", tone: "attention" })
+    expect(presentStatus(snap(reading({ humidity: 82 })), NOW)).toMatchObject({ title: "Necesito ventilación", tone: "attention" })
+    expect(presentStatus(snap(reading({ temperature: 18 })), NOW)).toMatchObject({ title: "Temperatura baja", tone: "attention" })
+    expect(presentStatus(snap(reading({ temperature: 27 })), NOW)).toMatchObject({ title: "Temperatura alta", tone: "attention" })
   })
 
   it("critical names the critical condition", () => {
     const status = presentStatus(snap(reading({ humidity: 40 })), NOW)
-    expect(status).toMatchObject({ title: "Necesita atención ahora", body: GROW_COPY.status.criticalHumidity, tone: "critical" })
+    expect(status).toMatchObject({ title: "Necesito atención ahora", body: GROW_COPY.status.criticalHumidity, tone: "critical" })
   })
 
   it("unknown without readings, and partial data explains itself", () => {
@@ -167,7 +167,7 @@ describe("needs and timeline presentation", () => {
       { id: "b", at: "2026-09-30T11:00:00.000Z", kind: "metric_dropped", metric: "humidity", origin: "real" },
     ])
     expect(items.map((item) => item.id)).toEqual(["b", "a"])
-    expect(items[0]).toMatchObject({ title: "La humedad bajó", simulated: false })
+    expect(items[0]).toMatchObject({ title: "La humedad bajó", simulated: false, icon: "humidity", domain: "water" })
     expect(items[1].simulated).toBe(true)
   })
 })

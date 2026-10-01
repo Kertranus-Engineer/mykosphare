@@ -1,4 +1,4 @@
-import type { GrowSnapshot, MykoViewModel } from "../types"
+import type { GrowSnapshot, MykoForm, MykoViewModel } from "../types"
 import { GROW_COPY } from "./copy.es"
 import { presentMetric, type PresentedMetric } from "./metrics"
 import { cultivationDay, stageLabel } from "./stage"
@@ -12,7 +12,7 @@ export function presentMood(model: MykoViewModel): string {
   return GROW_COPY.myko.moods[model.mood]
 }
 
-/** What MYKO can currently sense: the measured metrics with their semantic condition. */
+/** The two measured metrics with their domain condition (Home / face readouts). */
 export function presentSenses(snapshot: GrowSnapshot): PresentedMetric[] {
   const { conditions, freshness } = snapshot.state
   return [
@@ -21,21 +21,26 @@ export function presentSenses(snapshot: GrowSnapshot): PresentedMetric[] {
   ]
 }
 
-/** Facts MYKO holds about the run, phrased for a person. */
-export function presentKnowledge(snapshot: GrowSnapshot, now: string | Date): string[] {
-  const facts = [GROW_COPY.myko.knowStage(stageLabel(snapshot.state.confirmedStage).toLowerCase())]
-  const day = cultivationDay(snapshot.run.startedAt, now)
-  if (day !== null) facts.push(GROW_COPY.myko.knowDay(day))
-  if (snapshot.profile.kind === "sample") facts.push(GROW_COPY.myko.knowSample)
-  return facts
+export const MYKO_FORM_ORDER: readonly MykoForm[] = ["early", "emerging", "mature", "complete"]
+
+export interface PresentedDevelopment {
+  forms: Array<{ form: MykoForm; name: string; status: "past" | "current" | "future" }>
+  currentFormName: string
+  stage: string
+  day: number | null
 }
 
-/**
- * Product capability manifest v0: things MYKOSPHARE does not observe yet.
- * Presented as honest limits, not as errors or missing values.
- */
-export const UNOBSERVED_CAPABILITIES = [
-  { key: "co2", ...GROW_COPY.capabilities.co2 },
-  { key: "visual", ...GROW_COPY.capabilities.visual },
-  { key: "contamination", ...GROW_COPY.capabilities.contamination },
-] as const
+/** Development follows the CONFIRMED stage only (via MykoViewModel.form). No XP, no levels. */
+export function presentDevelopment(snapshot: GrowSnapshot, now: string | Date): PresentedDevelopment {
+  const currentIndex = MYKO_FORM_ORDER.indexOf(snapshot.myko.form)
+  return {
+    forms: MYKO_FORM_ORDER.map((form, index) => ({
+      form,
+      name: GROW_COPY.myko.formNames[form],
+      status: index < currentIndex ? "past" : index === currentIndex ? "current" : "future",
+    })),
+    currentFormName: GROW_COPY.myko.formNames[snapshot.myko.form],
+    stage: stageLabel(snapshot.state.confirmedStage),
+    day: cultivationDay(snapshot.run.startedAt, now),
+  }
+}

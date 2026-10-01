@@ -1,6 +1,6 @@
 import { buildDemoGrowComposition } from "@/lib/grow/demo/simulation-demo"
 import type { GrowMode } from "@/lib/grow/presentation"
-import type { GrowTimelineEvent } from "@/lib/grow/timeline"
+import { runMilestoneEvents, type GrowTimelineEvent } from "@/lib/grow/timeline"
 import type { GrowSnapshot } from "@/lib/grow/types"
 import type { GrowRequest } from "./grow-request"
 
@@ -100,8 +100,9 @@ export async function fetchRealGrowView(
   if (!isObject(body)) return { status: "unavailable", mode: "real" }
   if (response.ok && body.status === "ready" && isGrowSnapshot(body.snapshot)) {
     const now = options.now?.() ?? new Date()
-    // Real mode has no persisted timeline source yet: show none rather than invent one.
-    return { status: "ready", mode: "real", snapshot: body.snapshot, timeline: [], evaluatedAt: now.toISOString(), notices: [] }
+    // Real mode has no persisted event feed yet: only milestones that are facts of the run record.
+    const timeline = runMilestoneEvents(body.snapshot.run, "real")
+    return { status: "ready", mode: "real", snapshot: body.snapshot, timeline, evaluatedAt: now.toISOString(), notices: [] }
   }
   const mapped = typeof body.status === "string" ? API_STATUS[body.status] : undefined
   return { status: mapped ?? "unavailable", mode: "real" }

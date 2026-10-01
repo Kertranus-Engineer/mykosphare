@@ -76,9 +76,12 @@ describe("real mode never falls back to simulation", () => {
     }
   })
 
-  it("accepts a valid snapshot as real, with no invented timeline", async () => {
+  it("accepts a valid snapshot as real; its timeline holds only run-record milestones", async () => {
     const view = await fetchRealGrowView("abc", { fetchImpl: respond(200, { status: "ready", snapshot: readySnapshot }) })
-    expect(view).toMatchObject({ status: "ready", mode: "real", timeline: [] })
+    expect(view).toMatchObject({ status: "ready", mode: "real" })
+    if (view.status !== "ready") throw new Error("expected ready")
+    expect(view.timeline.map((event) => event.kind)).toEqual(["cultivation_started", "stage_confirmed"])
+    expect(view.timeline.every((event) => event.origin === "real")).toBe(true)
   })
 
   it("the store surfaces a network failure instead of simulated data", async () => {

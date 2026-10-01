@@ -25,7 +25,7 @@ export interface StageStep {
 
 export interface PresentedStageJourney {
   steps: StageStep[]
-  current: { stage: GrowthStage; label: string }
+  current: { stage: GrowthStage; label: string; position: string }
   possibleChange: { stage: GrowthStage; label: string; body: string } | null
 }
 
@@ -40,7 +40,7 @@ export function presentStageJourney(confirmed: GrowthStage, suggested: GrowthSta
   }))
   return {
     steps,
-    current: { stage: confirmed, label: stageLabel(confirmed) },
+    current: { stage: confirmed, label: stageLabel(confirmed), position: GROW_COPY.stage.position(currentIndex + 1, GROW_STAGE_ORDER.length) },
     possibleChange: change
       ? { stage: change, label: stageLabel(change), body: GROW_COPY.stage.possibleChangeBody(stageLabel(change).toLowerCase()) }
       : null,

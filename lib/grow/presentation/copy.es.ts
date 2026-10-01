@@ -1,6 +1,9 @@
 /**
  * Grower Mode copy (Spanish). Single source of user-facing strings so a future
  * i18n layer can swap this object. No thresholds or sensor logic belong here.
+ *
+ * Status headlines use MYKO's first-person voice: fixed deterministic copy that
+ * represents measured state. It is not generated text and implies no AI.
  */
 export const GROW_COPY = {
   brand: "MYKOSPHARE",
@@ -42,20 +45,20 @@ export const GROW_COPY = {
   },
 
   status: {
-    healthy: { title: "Todo bien", body: "Tu cultivo se mantiene estable." },
-    humidityLow: { title: "Necesita humedad", body: "La humedad está por debajo de su rango." },
-    humidityHigh: { title: "Necesita ventilación", body: "La humedad está por encima de su rango." },
-    temperatureLow: { title: "Hace frío", body: "La temperatura está por debajo de su rango." },
-    temperatureHigh: { title: "Hace calor", body: "La temperatura está por encima de su rango." },
-    temperatureOut: { title: "Revisa la temperatura", body: "La temperatura está fuera de su rango." },
-    critical: { title: "Necesita atención ahora", body: "Las condiciones están muy lejos de su rango." },
-    criticalHumidity: "La humedad está muy lejos de su rango.",
-    criticalTemperature: "La temperatura está muy lejos de su rango.",
-    criticalBoth: "La temperatura y la humedad están muy lejos de su rango.",
-    offline: { title: "No puedo sentir la cámara de cultivo", body: "Lo último que sé puede no reflejar el cultivo ahora." },
-    stale: { title: "Mi información está desactualizada", body: "Hace un rato que no recibo lecturas nuevas." },
-    unknown: { title: "Todavía no tengo suficiente información", body: "Aún no recibo lecturas de la cámara." },
-    unknownPartial: "Sólo recibo parte de las lecturas, así que no puedo confirmar el estado.",
+    healthy: { title: "Todo bien", body: "Mi ambiente se mantiene estable." },
+    humidityLow: { title: "Necesito humedad", body: "Mi ambiente está más seco de lo esperado." },
+    humidityHigh: { title: "Necesito ventilación", body: "Hay más humedad de la que necesito." },
+    temperatureLow: { title: "Temperatura baja", body: "Mi ambiente está más frío de lo esperado." },
+    temperatureHigh: { title: "Temperatura alta", body: "Mi ambiente está más cálido de lo esperado." },
+    temperatureOut: { title: "Revisa la temperatura", body: "La temperatura está fuera de mi rango." },
+    critical: { title: "Necesito atención ahora", body: "Las condiciones están muy lejos de mi rango." },
+    criticalHumidity: "La humedad está muy lejos de mi rango.",
+    criticalTemperature: "La temperatura está muy lejos de mi rango.",
+    criticalBoth: "La temperatura y la humedad están muy lejos de mi rango.",
+    offline: { title: "No puedo sentir el ambiente", body: "Lo último que sé puede no reflejar el cultivo ahora." },
+    stale: { title: "Mis lecturas están atrasadas", body: "Hace un rato que no recibo lecturas nuevas." },
+    unknown: { title: "Aún sin datos", body: "Todavía no recibo lecturas del ambiente." },
+    unknownPartial: "Sólo recibo parte de mis lecturas, así que no puedo confirmar cómo estoy.",
     unknownProfile: "Esta etapa no tiene un rango de referencia para comparar.",
   },
 
@@ -71,7 +74,7 @@ export const GROW_COPY = {
       critical: "Muy fuera de rango",
       unknown: "Sin referencia",
     },
-    lastKnown: "Último valor conocido",
+    lastKnown: "Último valor",
     range: (min: string, max: string) => `Rango ${min} – ${max}`,
   },
 
@@ -88,7 +91,8 @@ export const GROW_COPY = {
     day: (n: number) => `Día ${n}`,
     journeyTitle: "Ciclo del cultivo",
     current: "Etapa actual",
-    possibleChange: "Posible cambio de etapa",
+    position: (index: number, total: number) => `Etapa ${index} de ${total}`,
+    possibleChange: "Posible transición detectada",
     possibleChangeBody: (stage: string) =>
       `Por los días transcurridos podría estar entrando en ${stage}. La etapa sólo cambia cuando se confirma observando el cultivo.`,
     done: "Completada",
@@ -106,14 +110,14 @@ export const GROW_COPY = {
   },
 
   needs: {
-    title: "Qué necesita",
+    title: "Necesita",
     none: "Nada por ahora.",
-    unknown: "No puedo saberlo sin lecturas actuales.",
-    humidity: { title: "Humedad", body: "La humedad está por debajo del rango de esta etapa.", hint: "Puedes revisar el agua y el funcionamiento del humidificador." },
-    ventilation: { title: "Ventilación", body: "Hay más humedad o calor de lo esperado para esta etapa.", hint: "Puedes revisar que el aire circule dentro de la cámara." },
-    temperatureLow: { title: "Temperatura", body: "Está por debajo del rango de esta etapa.", hint: "Puedes revisar la temperatura del lugar donde está la cámara." },
-    temperatureHigh: { title: "Temperatura", body: "Está por encima del rango de esta etapa.", hint: "Puedes revisar la temperatura del lugar donde está la cámara." },
-    temperatureOut: { title: "Temperatura", body: "Está fuera del rango de esta etapa.", hint: "Puedes revisar la temperatura del lugar donde está la cámara." },
+    detected: (ago: string) => `Detectado ${ago}`,
+    humidity: { title: "Humedad", body: "Está por debajo del rango esperado.", hint: "Puedes revisar el agua y el funcionamiento del humidificador." },
+    ventilation: { title: "Ventilación", body: "Hay más humedad o calor de lo esperado.", hint: "Puedes revisar que el aire circule dentro de la cámara." },
+    temperatureLow: { title: "Temperatura", body: "Está por debajo del rango esperado.", hint: "Puedes revisar la temperatura del lugar donde está la cámara." },
+    temperatureHigh: { title: "Temperatura", body: "Está por encima del rango esperado.", hint: "Puedes revisar la temperatura del lugar donde está la cámara." },
+    temperatureOut: { title: "Temperatura", body: "Está fuera del rango esperado.", hint: "Puedes revisar la temperatura del lugar donde está la cámara." },
     telemetryStale: { title: "Lecturas", body: "Las lecturas llegan con retraso.", hint: "Puedes revisar la conexión WiFi de la cámara." },
     telemetryOffline: { title: "Conexión", body: "La cámara de cultivo dejó de enviar lecturas.", hint: "Puedes revisar que la cámara tenga energía y WiFi." },
     telemetryUnknown: { title: "Lecturas", body: "Todavía no he recibido lecturas.", hint: "Puedes revisar que la cámara esté encendida y conectada." },
@@ -123,14 +127,19 @@ export const GROW_COPY = {
 
   timeline: {
     title: "Hoy",
-    fullTitle: "Historial",
+    fullTitle: "Historia",
     empty: "Todavía no hay eventos registrados.",
-    simulatedTag: "Simulación",
+    emptyToday: "Hoy no hay eventos registrados todavía.",
+    simulatedTag: "Sim",
+    simulatedLabel: "Evento simulado",
     events: {
-      condition_stable: "Cultivo estable",
+      cultivation_started: "Comenzó el cultivo",
+      stage_confirmed: (stage: string) => `Etapa confirmada: ${stage}`,
+      capture_added: "Nueva observación visual",
+      condition_stable: "Ambiente estable",
       metric_dropped: { temperature: "La temperatura bajó", humidity: "La humedad bajó" },
       metric_rose: { temperature: "La temperatura subió", humidity: "La humedad subió" },
-      metric_recovered: { temperature: "La temperatura volvió a su rango", humidity: "La humedad volvió a su rango" },
+      metric_recovered: { temperature: "Temperatura recuperada", humidity: "Humedad recuperada" },
       metric_missing: { temperature: "Dejé de recibir la temperatura", humidity: "Dejé de recibir la humedad" },
       reading_received: "Última lectura recibida",
       signal_lost: "Perdí la señal de la cámara",
@@ -138,16 +147,10 @@ export const GROW_COPY = {
   },
 
   myko: {
-    senseTitle: "Qué siento",
-    knowTitle: "Qué sé",
-    cannotTitle: "Qué no puedo observar todavía",
-    honesty: "MYKO representa el estado medido por la cámara de cultivo. No es una inteligencia artificial y no interpreta imágenes.",
-    notReceiving: "No estoy recibiendo esta lectura.",
-    knowStage: (stage: string) => `El cultivo está en ${stage} (etapa confirmada).`,
-    knowDay: (day: number) => `Lleva ${day} ${day === 1 ? "día" : "días"} desde que empezó.`,
-    knowSample: "Comparo con un perfil de ejemplo, no validado.",
-    senseLive: "Ahora",
-    senseStale: "Última lectura",
+    name: "MYKO",
+    organismOf: (crop: string) => `Organismo digital de ${crop}`,
+    statusLabel: "Estado",
+    honesty: "MYKO representa lo que miden los sensores de la cámara. No es una inteligencia artificial y todavía no ve el cultivo.",
     moods: {
       content: "tranquilo",
       concerned: "inquieto",
@@ -160,21 +163,73 @@ export const GROW_COPY = {
       mature: "forma madura",
       complete: "forma culminada",
     },
+    formNames: {
+      early: "Espora",
+      emerging: "Brote",
+      mature: "Madurez",
+      complete: "Plenitud",
+    },
     label: (form: string, mood: string) => `MYKO, ${form}, ${mood}`,
-    tapHint: "Toca a MYKO para ver más",
+    tapHint: "Toca a MYKO",
   },
 
-  capabilities: {
-    co2: { title: "CO₂", body: "MYKOSPHARE todavía no tiene un sensor de CO₂ conectado." },
-    visual: { title: "Crecimiento visual", body: "Todavía no analizo imágenes del cultivo." },
-    contamination: { title: "Contaminación", body: "No puedo detectar contaminación; revisa el cultivo a simple vista." },
+  senses: {
+    title: "Mis sentidos",
+    intro: "Cada sensor nuevo en la cámara es un sentido nuevo para MYKO.",
+    feel: "Siento",
+    see: "Veo",
+    status: {
+      connected: "Conectado",
+      noReading: "Sin lectura",
+      noSignal: "Sin señal",
+      waiting: "Esperando lecturas",
+      notInstalled: "Sin sensor",
+      notAvailable: "No disponible",
+    },
+    items: {
+      temperature: { name: "Temperatura", future: "" },
+      humidity: { name: "Humedad", future: "" },
+      co2: { name: "CO₂", future: "Con un sensor de CO₂ podré sentir el aire del cultivo." },
+      vision: { name: "Visión", future: "Con una cámara podré ver cómo crece." },
+      mass: { name: "Masa", future: "Con una celda de carga podré sentir cambios de peso." },
+    },
+  },
+
+  development: {
+    title: "Mi desarrollo",
+    currentForm: "Forma actual",
+    confirmedStage: "Etapa confirmada",
+    day: "Día de cultivo",
+    note: "Mi forma sigue la etapa confirmada del cultivo, no el ambiente.",
+  },
+
+  history: {
+    title: "Mi historia",
+    days: "Días de cultivo",
+    events: "Eventos registrados",
+    captures: "Capturas",
+    simulated: "Incluye eventos simulados",
+  },
+
+  look: {
+    title: "Última mirada",
+    empty: "No hay observaciones visuales todavía.",
+    simulated: "Imagen simulada",
+  },
+
+  moments: {
+    cultivation_started: { title: "Comienza un cultivo", voice: "Comenzamos." },
+    stage_confirmed: { title: "Nueva etapa", voice: "Estoy cambiando." },
+    first_capture: { title: "Primera observación", voice: "Ya puedo ver." },
+    environment_recovered: { title: "Ambiente recuperado", voice: "El ambiente volvió a estabilizarse." },
+    harvest_confirmed: { title: "Cosecha", voice: "Llegamos a cosecha." },
   },
 
   cultivation: {
     title: "Tu cultivo",
-    now: "Cómo está ahora",
+    now: "Ahora",
     see: "Ver cultivo",
-    technical: "Ver datos",
+    technical: "Ver datos técnicos",
     tech: {
       readingAt: "Lectura",
       source: "Fuente",
@@ -250,8 +305,14 @@ export const GROW_COPY = {
   },
 
   face: {
-    back: "Volver",
+    close: "Cerrar",
     fullscreen: "Pantalla completa",
     exitFullscreen: "Salir de pantalla completa",
+  },
+
+  lab: {
+    title: "MYKO · Visual Lab",
+    banner: "VISUAL DEVELOPMENT · VISUAL FIXTURES — no son datos de cultivo ni simulación.",
+    fixture: "Visual fixture",
   },
 } as const

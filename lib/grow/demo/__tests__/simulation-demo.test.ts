@@ -39,7 +39,7 @@ describe("simulation demo composition", () => {
   })
 
   it("timeline fixtures never claim actuator actions", () => {
-    const allowed = new Set(["condition_stable", "metric_dropped", "metric_rose", "metric_recovered", "metric_missing", "reading_received", "signal_lost"])
+    const allowed = new Set(["cultivation_started", "stage_confirmed", "condition_stable", "metric_dropped", "metric_rose", "metric_recovered", "metric_missing", "reading_received", "signal_lost"])
     for (const scenario of GROW_DEMO_SCENARIOS) {
       for (const event of build(scenario).timeline) expect(allowed.has(event.kind)).toBe(true)
     }

@@ -3,27 +3,19 @@
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import type { ReactNode } from "react"
-import { Home, Menu, Sprout } from "lucide-react"
+import { Home, Menu } from "lucide-react"
 import { GROW_DEMO_SCENARIOS } from "@/lib/grow/demo/simulation-demo"
 import { GROW_COPY, presentSource } from "@/lib/grow/presentation"
 import { useGrow } from "../data/grow-provider"
 import { growHref, type GrowRequest } from "../data/grow-request"
+import { GlyphGrowth, GlyphMyko } from "../glyphs/grow-glyphs"
 import { SourceBadge } from "./source-badge"
 
 const NAV = [
   { path: "/grow", label: GROW_COPY.nav.home, icon: Home },
-  { path: "/grow/cultivation", label: GROW_COPY.nav.cultivation, icon: Sprout },
-  { path: "/grow/myko", label: GROW_COPY.nav.myko, icon: MykoGlyph },
+  { path: "/grow/cultivation", label: GROW_COPY.nav.cultivation, icon: GlyphGrowth },
+  { path: "/grow/myko", label: GROW_COPY.nav.myko, icon: GlyphMyko },
 ] as const
-
-function MykoGlyph({ className }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 24 24" width="20" height="20" className={className} fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" aria-hidden="true">
-      <circle cx="12" cy="12" r="4.2" />
-      <path d="M12 7.8V3.5M15.6 9.6l3.3-2.6M16.2 13.6l4.2 1.2M8.4 9.6 5.1 7M7.8 13.6l-4.2 1.2M12 16.2v4.3" />
-    </svg>
-  )
-}
 
 function NavLinks({ request, pathname, className }: { request: GrowRequest; pathname: string; className: string }) {
   return (
@@ -34,8 +26,7 @@ function NavLinks({ request, pathname, className }: { request: GrowRequest; path
           <Link key={path} href={growHref(path, request)} className="g-nav-link" aria-current={active ? "page" : undefined}>
             <Icon className="size-5" aria-hidden="true" />
             <span>{label}</span>
-            <span className="g-nav-dot" aria-hidden="true" />
-          </Link>
+                      </Link>
         )
       })}
     </nav>
@@ -82,7 +73,7 @@ export function GrowShell({ children }: { children: ReactNode }) {
   return (
     <div className="g-shell">
       <header className="g-header">
-        <Link href={growHref("/grow", request)} className="g-wordmark">{GROW_COPY.brand}</Link>
+        <Link href={growHref("/grow", request)} className="g-wordmark"><GlyphMyko size={18} />{GROW_COPY.brand}</Link>
         <NavLinks request={request} pathname={pathname} className="g-top-nav" />
         <div className="g-header-end">
           {source && <SourceBadge source={source} />}

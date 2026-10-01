@@ -7,6 +7,7 @@ import type { MykoViewModel } from "@/lib/grow/types"
 import { SourceBadge } from "../components/source-badge"
 import { buildMykoGeometry } from "../myko/geometry"
 import { MykoRenderer, type MykoRendererProps } from "../myko/myko-renderer"
+import type { MykoVisualTraits } from "../myko/traits"
 
 const model: MykoViewModel = { form: "emerging", mood: "concerned", activity: "idle", attention: "notice", messageKey: "myko.status.humidity_low", origin: "simulated" }
 
@@ -31,7 +32,8 @@ describe("SourceBadge", () => {
 describe("MYKO renderer contract", () => {
   it("receives only the MykoViewModel (no telemetry props)", () => {
     expectTypeOf<MykoRendererProps["model"]>().toEqualTypeOf<MykoViewModel>()
-    expectTypeOf<keyof MykoRendererProps>().toEqualTypeOf<"model" | "decorative" | "className">()
+    // Only presentation inputs besides the view model — no telemetry, no GrowState.
+    expectTypeOf<keyof MykoRendererProps>().toEqualTypeOf<"model" | "traits" | "activity" | "senses" | "decorative" | "className" | "reaction" | "moment" | "still">()
   })
 
   it("renders form and mood as semantics with an accessible label", () => {
@@ -48,16 +50,62 @@ describe("MYKO renderer contract", () => {
     expect(html).not.toContain('role="img"')
   })
 
-  it("grows structurally and deterministically across forms", () => {
+  it("grows structurally (not by scaling) and deterministically across forms", () => {
     const early = buildMykoGeometry("early")
     const emerging = buildMykoGeometry("emerging")
     const mature = buildMykoGeometry("mature")
     const complete = buildMykoGeometry("complete")
-    expect(early.hyphae.length).toBeLessThan(emerging.hyphae.length)
-    expect(emerging.hyphae.length).toBeLessThan(mature.hyphae.length)
-    expect(mature.lamellae.length).toBeGreaterThan(0)
-    expect(complete.open).toBe(true)
-    expect(buildMykoGeometry("mature")).toEqual(mature)
+    // ESPORA → NÚCLEO → ORGANISMO → COLONIA: pod → sprout + pins → hooded → hooded colony.
+    expect(early.bodies).toHaveLength(0)
+    expect(early.caps).toHaveLength(0)
+    expect(emerging.bodies).toHaveLength(1)
+    expect(emerging.pins.length).toBeGreaterThan(0)
+    expect(emerging.caps).toHaveLength(0)
+    expect(mature.caps).toHaveLength(1)
+    expect(mature.caps[0].gills).not.toBe("")
+    expect(mature.satellites).toHaveLength(0)
+    expect(complete.caps).toHaveLength(1)
+    expect(complete.satellites.length).toBeGreaterThan(0)
+    expect(complete.spores.length).toBeGreaterThan(mature.spores.length)
+    expect(complete.nodes.length).toBeGreaterThan(mature.nodes.length)
+    expect(mature.nodes.length).toBeGreaterThan(early.nodes.length)
+    expect(buildMykoGeometry("mature")).toBe(mature)
+  })
+
+  it("the mycelial network is a few shared paths, born from a region (not one point)", () => {
+    const g = buildMykoGeometry("mature")
+    const starts = [...g.hyphae.thick.matchAll(/M(-?[\d.]+) (-?[\d.]+)/g)].map((m) => Number(m[1]))
+    expect(new Set(starts).size).toBeGreaterThan(5)
+    expect(Math.max(...starts) - Math.min(...starts)).toBeGreaterThan(15)
+    expect(g.hyphae.links).not.toBe("")
+    const html = renderToStaticMarkup(<MykoRenderer model={{ ...model, form: "mature" }} />)
+    expect(html.match(/class="myko-h /g)).toHaveLength(4)
+  })
+
+  it("mood is not a geometry input: posture is presentation (CSS) only", () => {
+    expectTypeOf<Parameters<typeof buildMykoGeometry>>().toEqualTypeOf<[form: MykoViewModel["form"], traits?: MykoVisualTraits]>()
+    const content = renderToStaticMarkup(<MykoRenderer model={{ ...model, form: "mature", mood: "content" }} />)
+    const distressed = renderToStaticMarkup(<MykoRenderer model={{ ...model, form: "mature", mood: "distressed" }} />)
+    const paths = (html: string) => [...html.matchAll(/ d="([^"]+)"/g)].map((m) => m[1])
+    expect(paths(distressed)).toEqual(paths(content))
+    expect(distressed).toContain('data-posture="defensive"')
+  })
+
+  it("renders identity layers in every mood and hides spores when distressed or uncertain", () => {
+    for (const mood of ["content", "concerned", "distressed", "uncertain"] as const) {
+      const html = renderToStaticMarkup(<MykoRenderer model={{ ...model, form: "mature", mood }} />)
+      expect(html).toContain("myko-cap")
+      expect(html).toContain("myko-core")
+      expect(html).toContain("myko-h-thick")
+      expect(html.includes("myko-spores")).toBe(mood === "content" || mood === "concerned")
+    }
+  })
+
+  it("the tap reaction and still mode are cosmetic attributes only", () => {
+    const html = renderToStaticMarkup(<MykoRenderer model={model} reaction={2} still />)
+    expect(html).toContain("myko-burst")
+    expect(html).toContain('data-still="true"')
+    expect(html).toContain('data-form="emerging"')
   })
 })
 

@@ -1,6 +1,7 @@
 import type { DeviceFreshness, MetricEvaluation } from "../types"
 import { GROW_COPY } from "./copy.es"
 import { formatHumidity, formatTemperature } from "./format"
+import type { GrowDomain, GrowIconKey } from "./icons"
 import type { GrowTone } from "./status"
 
 export type GrowMetricKind = "temperature" | "humidity"
@@ -8,6 +9,8 @@ export type GrowMetricKind = "temperature" | "humidity"
 export interface PresentedMetric {
   kind: GrowMetricKind
   label: string
+  icon: GrowIconKey
+  domain: GrowDomain
   /** Formatted value, or the missing placeholder. Never an invented number. */
   value: string
   missing: boolean
@@ -21,6 +24,11 @@ export interface PresentedMetric {
 const format = (kind: GrowMetricKind, value: number) =>
   kind === "temperature" ? formatTemperature(value) : formatHumidity(value)
 
+const IDENTITY: Record<GrowMetricKind, { icon: GrowIconKey; domain: GrowDomain }> = {
+  temperature: { icon: "temperature", domain: "heat" },
+  humidity: { icon: "humidity", domain: "water" },
+}
+
 /** Presents an already-evaluated metric. The condition comes from the domain. */
 export function presentMetric(
   kind: GrowMetricKind,
@@ -28,17 +36,18 @@ export function presentMetric(
   freshness: DeviceFreshness,
 ): PresentedMetric {
   const label = GROW_COPY.metrics[kind]
+  const identity = IDENTITY[kind]
   const rangeLabel = evaluation.target
     ? GROW_COPY.metrics.range(format(kind, evaluation.target.min), format(kind, evaluation.target.max))
     : null
 
   if (evaluation.value === null) {
-    return { kind, label, value: GROW_COPY.metrics.missing, missing: true, lastKnown: false, conditionLabel: GROW_COPY.metrics.missingLabel, tone: "unknown", rangeLabel }
+    return { kind, label, ...identity, value: GROW_COPY.metrics.missing, missing: true, lastKnown: false, conditionLabel: GROW_COPY.metrics.missingLabel, tone: "unknown", rangeLabel }
   }
 
   const value = format(kind, evaluation.value)
   if (freshness !== "live") {
-    return { kind, label, value, missing: false, lastKnown: true, conditionLabel: GROW_COPY.metrics.lastKnown, tone: "unknown", rangeLabel }
+    return { kind, label, ...identity, value, missing: false, lastKnown: true, conditionLabel: GROW_COPY.metrics.lastKnown, tone: "unknown", rangeLabel }
   }
 
   const tone: GrowTone =
@@ -47,5 +56,5 @@ export function presentMetric(
         : evaluation.status === "unknown" ? "unknown"
           : "attention"
 
-  return { kind, label, value, missing: false, lastKnown: false, conditionLabel: GROW_COPY.metrics.condition[evaluation.status], tone, rangeLabel }
+  return { kind, label, ...identity, value, missing: false, lastKnown: false, conditionLabel: GROW_COPY.metrics.condition[evaluation.status], tone, rangeLabel }
 }

@@ -13,7 +13,7 @@ import { createSampleOysterRun, SAMPLE_PLEUROTUS_OSTREATUS_PROFILE } from "../fi
 import { DEFAULT_FRESHNESS_POLICY } from "../freshness"
 import { createSampleSimulationReading, type SampleSimulationScenario } from "../simulation"
 import { buildGrowSnapshot } from "../snapshot"
-import type { GrowTimelineEvent } from "../timeline"
+import { runMilestoneEvents, type GrowTimelineEvent } from "../timeline"
 import type { CultivationRun, EnvironmentalReading, GrowSnapshot, GrowthStage } from "../types"
 
 export const GROW_DEMO_SCENARIOS = [
@@ -135,11 +135,15 @@ export function buildDemoGrowComposition(input: {
   stage: GrowthStage | null
   now: Date
 }): DemoGrowComposition {
+  const run = createDemoRun(input.now, input.stage)
   const snapshot = buildGrowSnapshot({
-    run: createDemoRun(input.now, input.stage),
+    run,
     profile: SAMPLE_PLEUROTUS_OSTREATUS_PROFILE,
     reading: demoReading(input.scenario, input.now),
     now: input.now,
   })
-  return { snapshot, timeline: createDemoTimeline(input.scenario, input.now) }
+  return {
+    snapshot,
+    timeline: [...runMilestoneEvents(run, "simulated"), ...createDemoTimeline(input.scenario, input.now)],
+  }
 }
