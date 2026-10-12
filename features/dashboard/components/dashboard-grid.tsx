@@ -88,7 +88,7 @@ export function DashboardGrid() {
   return (
     <div className={`flex flex-col gap-3 p-2 ${initDone ? "dashboard-init" : "dashboard-init-hidden"}`}>
       {/* ── HEADER ────────────── minimal ──────── */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-2 max-md:-order-2">
         <h1 className="text-sm font-semibold tracking-tight text-foreground">Operational Overview</h1>
         <div className="flex items-center gap-2">
           <ModeSelector />
@@ -100,7 +100,7 @@ export function DashboardGrid() {
       </div>
 
       {/* ── Compact Status Bar ─────────────────── */}
-      <div className="flex items-center gap-2 flex-wrap text-[9px] text-muted-foreground/40">
+      <div className="flex items-center gap-2 flex-wrap text-[9px] text-muted-foreground/40 max-md:-order-2">
         <div className={cn("size-1.5 rounded-full animate-pulse", isAutonomous ? "bg-violet-500" : rtTel.source === "live" ? "bg-emerald-500" : "bg-amber-500")} />
         <span className={cn("text-[9px] font-medium", isAutonomous ? "text-violet-500" : rtTel.source === "live" ? "text-emerald-500" : "text-amber-500")}>
           {isAutonomous ? "AUTONOMOUS MODE" : isLive ? "LIVE MONITORING" : "DEMO PLATFORM"}
@@ -161,11 +161,11 @@ export function DashboardGrid() {
           </div>
 
           {/* ═══ ROW 1: TELEMETRY — 40% ─────────────── */}
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-2 gap-3 max-md:-order-1">
         <MetricCard compact icon={Thermometer} label="Temperature" value={tempVal} unit="°C" decimals={1} trend={tel.temperature.trend} delta={tel.temperature.delta} critical={tempCritical} warning={tempWarning} statusLabel={tempVal > 0 && tempVal < 27 ? "Ideal Range" : tempVal > 27 ? "Elevated" : "Nominal"} statusColor={tempVal > 27 ? "text-amber-500" : "text-emerald-500"} />
         <MetricCard compact icon={Droplets} label="Humidity" value={humVal} unit="%" decimals={1} trend={tel.humidity.trend} delta={tel.humidity.delta} critical={humCritical} warning={humWarning} statusLabel={humVal > 0 && humVal >= 55 && humVal <= 75 ? "Within Target Range" : humVal > 75 ? "High" : humVal < 40 ? "Low" : "Monitoring"} statusColor={humVal > 75 || humVal < 40 ? "text-amber-500" : "text-emerald-500"} />
-        <MetricCard compact icon={Wind} label="CO₂" value={co2Val} unit=" ppm" decimals={0} trend={tel.co2.trend} delta={tel.co2.delta} statusLabel={co2Val > 0 && co2Val < 450 ? "Air Quality: Excellent" : co2Val < 600 ? "Air Quality: Good" : "Elevated"} statusColor="text-emerald-500" />
-        <MetricCard compact icon={Zap} label="Energy" value={tel.energyUsage.value} unit=" kWh" decimals={1} trend={tel.energyUsage.trend} delta={tel.energyUsage.delta} statusLabel={tel.energyUsage.value > 0 && tel.energyUsage.value < 1 ? "Low Consumption" : "Efficient Operation"} statusColor="text-emerald-500" />
+        {/* Derived from temp/hum by a formula, not a sensor: hidden on phones */}<div className="hidden md:contents"><MetricCard compact icon={Wind} label="CO₂" value={co2Val} unit=" ppm" decimals={0} trend={tel.co2.trend} delta={tel.co2.delta} statusLabel={co2Val > 0 && co2Val < 450 ? "Air Quality: Excellent" : co2Val < 600 ? "Air Quality: Good" : "Elevated"} statusColor="text-emerald-500" /></div>
+        {/* Derived from temp/hum by a formula, not a sensor: hidden on phones */}<div className="hidden md:contents"><MetricCard compact icon={Zap} label="Energy" value={tel.energyUsage.value} unit=" kWh" decimals={1} trend={tel.energyUsage.trend} delta={tel.energyUsage.delta} statusLabel={tel.energyUsage.value > 0 && tel.energyUsage.value < 1 ? "Low Consumption" : "Efficient Operation"} statusColor="text-emerald-500" /></div>
       </div>
 
       {/* ═══ ROW 2: MISSION STATUS — 25% ────────── */}

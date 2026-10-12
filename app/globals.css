@@ -794,3 +794,18 @@ button, a, [role="button"] {
   0% { transform: translateY(-100%); }
   100% { transform: translateY(240px); }
 }
+
+/* ── Advanced view on phones ─────────────────────────────
+   Below md the dashboard is legible and touch-friendly without touching the
+   components: micro type is raised to readable sizes and buttons get a
+   comfortable hit area. Desktop (>= md) is not affected. */
+@media (max-width: 767px) {
+  .dash-main [class*="text-[8px]"],
+  .dash-main [class*="text-[9px]"],
+  .dash-main [class*="text-[10px]"] { font-size: 0.6875rem; line-height: 1.35; }
+  .dash-main [class*="text-[11px]"] { font-size: 0.75rem; }
+  .dash-main button:not([role="switch"]):not([role="checkbox"]) { min-height: 2.5rem; }
+  .dash-main img,
+  .dash-main svg,
+  .dash-main canvas { max-width: 100%; }
+}

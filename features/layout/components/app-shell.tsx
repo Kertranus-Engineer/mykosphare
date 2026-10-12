@@ -3,6 +3,7 @@
 import { useCallback, useEffect } from "react"
 import { AppHeader } from "./app-header"
 import { AppSidebar } from "./app-sidebar"
+import { MobileHeader } from "./mobile-header"
 import { BootScreen } from "@/features/init/components/boot-screen"
 import { OperationalAmbiance } from "@/features/ambiance/components/operational-ambiance"
 import { DemoMode } from "@/features/demo/components/demo-mode"
@@ -51,8 +52,9 @@ function ShellContent({ children }: { children: React.ReactNode }) {
       <OperationalAmbiance />
       <AppSidebar />
       <div className="flex flex-1 flex-col min-w-0">
+        <MobileHeader />
         <AppHeader />
-        <main className="relative z-10 flex flex-1 flex-col overflow-x-hidden main-vignette">
+        <main className="dash-main relative z-10 flex flex-1 flex-col overflow-x-hidden pb-[env(safe-area-inset-bottom)] main-vignette">
           <div className="system-scanline" />
           <div className="ambient-texture" />
           {children}

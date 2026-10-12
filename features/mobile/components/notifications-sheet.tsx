@@ -24,7 +24,7 @@ export function NotificationsSheet({ open, onOpenChange }: { open: boolean; onOp
             href="/dashboard/alerts"
             className="flex min-h-11 items-center justify-center rounded-xl border border-border bg-muted/40 text-sm font-medium text-cyan-600 dark:text-cyan-400 active:bg-muted"
           >
-            Configuración de alertas (escritorio)
+            Configuración de alertas (vista avanzada)
           </Link>
         </div>
       </SheetContent>

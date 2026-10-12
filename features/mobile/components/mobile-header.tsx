@@ -9,6 +9,7 @@ import { useMobileData } from "../mobile-data-context"
 import { connectionTone } from "../tone"
 import { NotificationsSheet } from "./notifications-sheet"
 import { SettingsSheet } from "./settings-sheet"
+import { ViewSwitchButton } from "./view-switch"
 
 function ConnectionChip() {
   const { tel } = useMobileData()
@@ -44,11 +45,12 @@ export function MobileHeader() {
           <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-emerald-400 to-cyan-500 shadow-[0_0_14px_-2px] shadow-emerald-400/50">
             <Sprout className="size-4 text-background" aria-hidden />
           </span>
-          <span className="truncate text-[13px] font-semibold tracking-[0.16em] text-foreground">MYKOSPHARE</span>
+          <span className="hidden truncate text-[13px] font-semibold tracking-[0.16em] text-foreground min-[360px]:inline">MYKOSPHARE</span>
         </Link>
 
         <div className="ml-auto flex shrink-0 items-center gap-0.5">
           <ConnectionChip />
+          <ViewSwitchButton target="advanced" />
           <button type="button" className={iconButton} onClick={() => setNotifOpen(true)} aria-label={attentionCount > 0 ? `Notificaciones, ${attentionCount} activas` : "Notificaciones"}>
             <Bell className="size-5" aria-hidden />
             {attentionCount > 0 && (

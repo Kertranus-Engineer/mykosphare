@@ -93,14 +93,14 @@ export default function VisualIntelligencePage() {
   return (
     <div className="flex flex-col gap-4 p-6">
       {/* Header */}
-      <div className="flex items-start justify-between gap-4">
+      <div className="flex flex-wrap items-start justify-between gap-3 sm:gap-4">
         <div className="min-w-0">
           <h1 className="text-lg font-semibold tracking-tight text-foreground">Visual Intelligence</h1>
           <p className="text-sm text-muted-foreground/70">
             {isAutonomous ? "Future autonomous visual pipeline" : isLive ? "Live cultivation image monitoring" : "AI-powered visual monitoring and growth analysis"}
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <div className="flex items-center gap-1 rounded-lg bg-muted/30 p-0.5">
             <button type="button" onClick={() => setDataSource("demo")} className={cn("rounded-md px-2.5 py-1.5 text-[10px] font-medium transition-colors", dataSource === "demo" ? "bg-card text-foreground ring-1 ring-foreground/10 shadow-sm" : "text-muted-foreground/60 hover:text-muted-foreground")}>
               Demo

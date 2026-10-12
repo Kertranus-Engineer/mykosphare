@@ -32,10 +32,10 @@ import { DEPLOYMENT_ID, REGION, SOFTWARE_VERSION, OPERATIONAL_SYSTEM } from "@/m
 import type { LucideIcon } from "lucide-react"
 import { cn } from "@/lib/utils"
 
-interface NavItemDef { icon: LucideIcon; label: string; href: string; labelKey?: string }
-interface NavGroup { label: string; items: NavItemDef[] }
+export interface NavItemDef { icon: LucideIcon; label: string; href: string; labelKey?: string }
+export interface NavGroup { label: string; items: NavItemDef[] }
 
-const navGroups: NavGroup[] = [
+export const navGroups: NavGroup[] = [
   {
     label: "CORE",
     items: [
@@ -108,7 +108,7 @@ export function AppSidebar() {
 
   return (
     <aside className={cn(
-      "sticky top-0 h-screen z-30 flex flex-col border-r border-sidebar-border bg-sidebar transition-all duration-220 sidebar-shell shrink-0",
+      "sticky top-0 h-screen z-30 hidden md:flex flex-col border-r border-sidebar-border bg-sidebar transition-all duration-220 sidebar-shell shrink-0",
       mini ? "w-[4.5rem]" : "w-38"
     )}>
       {/* ── Logo ────────────────────────────── */}

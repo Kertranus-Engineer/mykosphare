@@ -61,12 +61,12 @@ export function IntelligenceOverview() {
   return (
     <div className="flex flex-col gap-4 p-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
           <h1 className="text-lg font-semibold tracking-tight text-foreground">Operational Intelligence</h1>
           <p className="text-sm text-muted-foreground/70">Real-time AI assessment and automated decision recommendations</p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <div className="flex items-center gap-1.5 rounded-md border border-border/50 bg-muted/30 px-2.5 py-1">
             <div className={cn("size-1.5 rounded-full transition-all duration-500", rtTel.online || rtTel.source === "simulated" ? "bg-emerald-500 animate-pulse" : "bg-muted-foreground/30")} />
             <Brain className={cn("size-3 transition-all", rtTel.online || rtTel.source === "simulated" ? "text-emerald-500/60" : "text-muted-foreground/30")} />

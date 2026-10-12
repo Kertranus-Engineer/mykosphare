@@ -101,7 +101,7 @@ export function AppHeader() {
   const humColor = rtTel.hum < 40 ? "text-red-500" : rtTel.hum < 50 ? "text-amber-500" : "text-emerald-500/60"
 
   return (
-    <header className="sticky top-0 z-20 flex h-14 items-center justify-between border-b border-border bg-background/80 backdrop-blur-sm px-4">
+    <header className="sticky top-0 z-20 hidden md:flex h-14 items-center justify-between border-b border-border bg-background/80 backdrop-blur-sm px-4">
       <div className="flex items-center gap-4">
         <div className="flex items-center gap-2">
           <Circle className={cn(

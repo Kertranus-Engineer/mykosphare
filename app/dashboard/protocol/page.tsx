@@ -154,7 +154,7 @@ export default function ProtocolPage() {
         </div>
       </div>
 
-      <div className="flex gap-1.5 border-b border-border/40 pb-2">
+      <div className="flex flex-wrap gap-1.5 border-b border-border/40 pb-2">
         {[
           { id: "spec" as const, label: "Specification", icon: Network },
           { id: "validate" as const, label: "Payload Inspector", icon: FlaskConical },

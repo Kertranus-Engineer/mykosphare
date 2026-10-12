@@ -68,7 +68,7 @@ export function SettingsSheet({ open, onOpenChange }: { open: boolean; onOpenCha
             className="flex min-h-12 items-center gap-3 rounded-xl border border-border bg-muted/30 px-3.5 text-sm font-medium text-foreground active:bg-muted/60"
           >
             <Monitor className="size-4 text-cyan-600 dark:text-cyan-400" aria-hidden />
-            Ajustes avanzados (vista de escritorio)
+            Ajustes avanzados (vista avanzada)
           </Link>
         </div>
       </SheetContent>

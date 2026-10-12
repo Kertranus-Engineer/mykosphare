@@ -28,7 +28,7 @@ interface Entry {
   icon: LucideIcon
 }
 
-// Existing desktop routes, reused as-is. They open in the desktop layout.
+// Existing dashboard routes, reused as-is. They open in the advanced view.
 const GROUPS: { title: string; entries: Entry[] }[] = [
   {
     title: "Monitoreo",
@@ -103,10 +103,10 @@ export function MoreScreen() {
         className="flex min-h-12 items-center justify-center gap-2 rounded-xl border border-border bg-card/70 text-sm font-medium text-foreground active:bg-muted/60"
       >
         <Monitor className="size-4 text-cyan-600 dark:text-cyan-400" aria-hidden />
-        Abrir panel de escritorio
+        Abrir vista avanzada
       </Link>
       <p className="px-1 text-center text-xs leading-relaxed text-muted-foreground">
-        Estas secciones usan el diseño de escritorio y se verán mejor en una pantalla grande.
+        Estas secciones se abren en la vista avanzada (dashboard completo).
       </p>
     </div>
   )
