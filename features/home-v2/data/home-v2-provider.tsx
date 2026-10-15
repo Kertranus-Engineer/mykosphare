@@ -1,15 +1,28 @@
 "use client"
 
-import { useSearchParams } from "next/navigation"
+import { usePathname, useRouter, useSearchParams } from "next/navigation"
 import { createContext, useCallback, useContext, useEffect, useMemo, useSyncExternalStore, type ReactNode } from "react"
 
-import { useGrow } from "@/features/grow/data/grow-provider"
+import { useLiveSnapshots } from "@/features/live/live-snapshots"
 import { useMobileData } from "@/features/mobile/mobile-data-context"
-import { useMobileCaptures } from "@/features/mobile/use-captures"
+import type { GrowDemoScenario } from "@/lib/grow/demo/simulation-demo"
 import { toCultivationModel, toDeviceModel, toEnvironmentModel, toHistoryEntries, toPhotosModel } from "./adapters"
 import { buildDemoPhotos } from "./demo-frames"
-import { DEFAULT_LAB_THEME, isLabTheme, LAB_THEME_STORAGE_KEY, type LabRequest } from "./lab-request"
+import {
+  DEFAULT_DEMO_SCENARIO,
+  DEMO_OFF,
+  demoFromUrl,
+  effectiveGrowRequest,
+  getDemoServerSnapshot,
+  getDemoSnapshot,
+  setDemoState,
+  subscribeDemo,
+  type DemoState,
+} from "./demo-mode"
+import { DEFAULT_LAB_THEME, isLabTheme, LAB_THEME_STORAGE_KEY, labHref, parseLabRequest, type LabRequest } from "./lab-request"
 import type { CultivationModel, DeviceModel, EnvironmentModel, HistoryEntryModel, LabThemeId, PhotosModel } from "./model"
+import { assertNoSimulationOutsideDemo, resolveSources, type DataMode, type ResolvedSources } from "./resolve"
+import { useGrowView } from "./use-grow-view"
 
 // ── Theme (lab-only preference; never touches the app-wide theme) ─────────
 
@@ -38,14 +51,21 @@ function subscribeTheme(listener: () => void) {
 // ── Context ───────────────────────────────────────────────
 
 interface HomeV2Value {
+  /** URL-level request (only a real chamber selection travels in links). */
   request: LabRequest
+  /** "demo" only while the user explicitly enabled the demonstration mode. */
+  mode: DataMode
+  demo: DemoState
+  setDemo: (next: { enabled: boolean; scenario?: GrowDemoScenario }) => void
+  /** REAL / SIMULATED / UNAVAILABLE / LOADING / ERROR for each domain. */
+  sources: ResolvedSources
   theme: LabThemeId
   setTheme: (theme: LabThemeId) => void
   environment: EnvironmentModel
   device: DeviceModel
   cultivation: CultivationModel
   photos: PhotosModel
-  /** Session activity + crop logbook, active alerts first. */
+  /** Session alerts and events (alerts first). Not persisted history. */
   history: HistoryEntryModel[]
   retryPhotos: () => void
   retryCultivation: () => void
@@ -58,45 +78,87 @@ const HomeV2Context = createContext<HomeV2Value | null>(null)
 const HOUR_MS = 3_600_000
 
 /**
- * Single composition point for HOME V2. It only adapts what already exists
- * (mobile telemetry, grow domain view, captures hook); it measures nothing and
+ * Single composition point for HOME V2. It resolves every data source ONCE
+ * (see resolve.ts), then adapts what already exists (mobile telemetry, grow
+ * domain view, captures hook) into view models. It measures nothing itself and
  * mounts nothing twice, so tab changes never re-poll or reset session history.
  */
 export function HomeV2Provider({ children }: { children: ReactNode }) {
-  const { tel, activity, attentionCount } = useMobileData()
-  const captures = useMobileCaptures()
-  const { request: grow, view, retry } = useGrow()
+  const { tel, activity } = useMobileData()
+  const captures = useLiveSnapshots()
+  const router = useRouter()
+  const pathname = usePathname()
   const search = useSearchParams()
 
-  const demoPhotos = grow.kind === "simulation" && search.get("photos") === "demo"
-  const request = useMemo<LabRequest>(() => ({ grow, demoPhotos }), [grow, demoPhotos])
+  const request = useMemo<LabRequest>(() => parseLabRequest(new URLSearchParams(search.toString())), [search])
 
-  const environment = useMemo(() => toEnvironmentModel(tel), [tel])
-  const device = useMemo(() => toDeviceModel(tel), [tel])
+  // ── Demonstration mode: explicit opt-in, off by default ──
+  const stored = useSyncExternalStore(subscribeDemo, getDemoSnapshot, getDemoServerSnapshot)
+  const urlDemo = useMemo(() => demoFromUrl(request.grow), [request.grow]) // internal-testing compatibility only
+  const demo: DemoState = urlDemo ?? stored
+  const urlDemoKey = urlDemo ? urlDemo.scenario : null
+
+  useEffect(() => {
+    // Adopt the internal URL switch into the preference, so clean links keep the demo on.
+    if (urlDemoKey !== null) setDemoState({ enabled: true, scenario: urlDemoKey })
+  }, [urlDemoKey])
+
+  const setDemo = useCallback<HomeV2Value["setDemo"]>(
+    (next) => {
+      setDemoState(next.enabled ? { enabled: true, scenario: next.scenario ?? stored.scenario ?? DEFAULT_DEMO_SCENARIO } : DEMO_OFF)
+      // The URL switch would otherwise keep overriding the choice.
+      if (request.grow.kind === "simulation") router.replace(labHref(pathname, { grow: { kind: "unconfigured" } }))
+    },
+    [stored.scenario, request.grow.kind, router, pathname],
+  )
+
+  const mode: DataMode = demo.enabled ? "demo" : "normal"
+  const growRequest = useMemo(() => effectiveGrowRequest(demo, request.grow), [demo, request.grow])
+  const { view, retry } = useGrowView(growRequest)
+
+  // ── Models ──
+  const environment = useMemo(() => toEnvironmentModel(tel, mode), [tel, mode])
+  const device = useMemo(() => toDeviceModel(tel, mode), [tel, mode])
   const cultivation = useMemo(() => toCultivationModel(view), [view])
-  const history = useMemo(() => toHistoryEntries(activity, cultivation), [activity, cultivation])
+  const history = useMemo(() => toHistoryEntries(activity, mode), [activity, mode])
 
   // Demo frames are keyed to the run start and the current hour so they do not
   // regenerate (and flicker) on every 30 s refresh of the grow view.
-  const demoStart = view.status === "ready" ? view.snapshot.run.startedAt : null
-  const demoHour = view.status === "ready" ? Math.floor(new Date(view.evaluatedAt).getTime() / HOUR_MS) : null
+  const demoStart = mode === "demo" && view.status === "ready" ? view.snapshot.run.startedAt : null
+  const demoHour = mode === "demo" && view.status === "ready" ? Math.floor(new Date(view.evaluatedAt).getTime() / HOUR_MS) : null
   const demoItems = useMemo(
-    () => (demoPhotos && demoStart !== null && demoHour !== null ? buildDemoPhotos(demoStart, new Date(demoHour * HOUR_MS)) : null),
-    [demoPhotos, demoStart, demoHour],
+    () => (demoStart !== null && demoHour !== null ? buildDemoPhotos(demoStart, new Date(demoHour * HOUR_MS)) : null),
+    [demoStart, demoHour],
   )
-
   const capturesPhotos = useMemo(
-    () => toPhotosModel({ images: captures.images, loading: captures.loading, error: captures.error, unavailable: captures.unavailable }),
-    [captures.images, captures.loading, captures.error, captures.unavailable],
+    () => toPhotosModel({ images: captures.images, loading: captures.loading, error: captures.error }),
+    [captures.images, captures.loading, captures.error],
   )
-  const photos = useMemo<PhotosModel>(
-    () => (demoItems && demoItems.length > 0 ? { status: "ready", items: demoItems } : capturesPhotos),
-    [demoItems, capturesPhotos],
+  // Demonstration photos and real captures are NEVER shown together.
+  const photos = useMemo<PhotosModel>(() => {
+    if (mode === "demo") {
+      if (demoItems && demoItems.length > 0) return { status: "ready", items: demoItems }
+      return view.status === "loading" ? { status: "loading" } : { status: "empty" }
+    }
+    return capturesPhotos
+  }, [mode, demoItems, view.status, capturesPhotos])
+
+  const sources = useMemo(() => resolveSources({ mode, tel, cultivation, photos }), [mode, tel, cultivation, photos])
+
+  useEffect(() => {
+    if (process.env.NODE_ENV === "production") return
+    const leaks = assertNoSimulationOutsideDemo(sources)
+    if (leaks.length > 0) console.error(`[HOME V2] simulated data outside the demo mode: ${leaks.join(", ")}`)
+  }, [sources])
+
+  const attentionCount = useMemo(
+    () => history.filter((entry) => entry.at === null && (entry.tone === "warn" || entry.tone === "crit")).length,
+    [history],
   )
 
-  // Theme: the lab's own stored preference; nothing stored → default look.
-  const stored = useSyncExternalStore(subscribeTheme, readStoredTheme, () => null)
-  const theme = stored ?? DEFAULT_LAB_THEME
+  // ── Theme ──
+  const storedTheme = useSyncExternalStore(subscribeTheme, readStoredTheme, () => null)
+  const theme = storedTheme ?? DEFAULT_LAB_THEME
 
   const setTheme = useCallback((next: LabThemeId) => {
     try {
@@ -117,6 +179,10 @@ export function HomeV2Provider({ children }: { children: ReactNode }) {
   const value = useMemo<HomeV2Value>(
     () => ({
       request,
+      mode,
+      demo,
+      setDemo,
+      sources,
       theme,
       setTheme,
       environment,
@@ -128,7 +194,7 @@ export function HomeV2Provider({ children }: { children: ReactNode }) {
       retryCultivation: retry,
       attentionCount,
     }),
-    [request, theme, setTheme, environment, device, cultivation, photos, history, captures.refresh, retry, attentionCount],
+    [request, mode, demo, setDemo, sources, theme, setTheme, environment, device, cultivation, photos, history, captures.refresh, retry, attentionCount],
   )
 
   return <HomeV2Context.Provider value={value}>{children}</HomeV2Context.Provider>

@@ -17,6 +17,8 @@ export interface ActivityItem {
   detail?: string
   /** null for "active now" alerts (they describe the current condition). */
   timestamp: number | null
+  /** Derived from simulated telemetry. Optional: HOME (v1) ignores it. */
+  simulated?: boolean
 }
 
 interface StateChange {
@@ -81,6 +83,7 @@ export function useMobileActivity(tel: MobileTelemetry): ActivityItem[] {
         title,
         detail,
         timestamp: null,
+        simulated: tel.source === "simulated",
       })
     }
 
@@ -110,6 +113,7 @@ export function useMobileActivity(tel: MobileTelemetry): ActivityItem[] {
         title: `${STATE_ES[c.from].label} → ${STATE_ES[c.to].label}`,
         detail: c.simulated ? "Cambio de estado (datos simulados)" : "Cambio de estado ambiental",
         timestamp: c.at,
+        simulated: c.simulated,
       })
     }
 
@@ -119,5 +123,5 @@ export function useMobileActivity(tel: MobileTelemetry): ActivityItem[] {
       if (a.timestamp !== null && b.timestamp === null) return 1
       return (b.timestamp ?? 0) - (a.timestamp ?? 0)
     })
-  }, [tel.env.alerts, busEvents, changes, mountedAt])
+  }, [tel.env.alerts, tel.source, busEvents, changes, mountedAt])
 }

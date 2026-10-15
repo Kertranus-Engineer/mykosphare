@@ -6,13 +6,12 @@ import { useMemo, useState } from "react"
 import { cn } from "@/lib/utils"
 import { RelativeTime } from "@/features/mobile/components/primitives"
 import { COPY } from "../../copy"
-import { formatDateTime } from "../../data/format"
 import { useHomeV2 } from "../../data/home-v2-provider"
 import type { HistoryEntryModel, HistoryKind } from "../../data/model"
 import { Card, Chip, EmptyState, ToneDot } from "../ui/surface"
 
 type Filter = "all" | HistoryKind
-const FILTERS: Filter[] = ["all", "alert", "event", "crop"]
+const FILTERS: Filter[] = ["all", "alert", "event"]
 
 function Entry({ entry }: { entry: HistoryEntryModel }) {
   return (
@@ -26,8 +25,6 @@ function Entry({ entry }: { entry: HistoryEntryModel }) {
           <span aria-hidden>·</span>
           {entry.at === null ? (
             <span className="hv2-entry-active">{COPY.historyPage.activeNow}</span>
-          ) : entry.kind === "crop" ? (
-            <time dateTime={new Date(entry.at).toISOString()}>{formatDateTime(new Date(entry.at).toISOString())}</time>
           ) : (
             <RelativeTime at={entry.at} />
           )}

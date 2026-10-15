@@ -53,6 +53,25 @@ export function MetricTile({ metric, dimmed, showSpark = true }: { metric: Metri
   )
 }
 
+/** "Sin dispositivo conectado" / "Conectando…": never a fabricated reading. */
+function WaitingState({ compact }: { compact?: boolean }) {
+  const { environment } = useHomeV2()
+  if (environment.status !== "waiting") return null
+  return (
+    <Card>
+      {environment.reason === "loading" ? (
+        <div className="hv2-waiting" aria-busy="true">
+          <Skeleton className="hv2-waiting-skeleton" />
+          <p className="hv2-caption">{environment.detail}</p>
+        </div>
+      ) : (
+        <EmptyState compact={compact} icon={<WifiOff className="size-5" />} title={environment.title} body={environment.detail} />
+      )}
+    </Card>
+  )
+}
+
+/** Full readings block (Ambiente page): both tiles, overall state and sparklines. */
 export function EnvironmentSection({ title = COPY.home.environmentTitle, showSpark = true }: { title?: string; showSpark?: boolean } = {}) {
   const { environment } = useHomeV2()
   const ready = environment.status === "ready"
@@ -63,18 +82,11 @@ export function EnvironmentSection({ title = COPY.home.environmentTitle, showSpa
       <SectionHeading
         id="hv2-env-h"
         title={title}
-        action={ready ? <ProvenanceBadge provenance={environment.provenance} /> : <ProvenanceBadge provenance="unavailable" />}
+        action={<ProvenanceBadge provenance={ready ? environment.provenance : "unavailable"} />}
       />
 
       {environment.status === "waiting" ? (
-        <Card>
-          <EmptyState
-            compact
-            icon={environment.title === COPY.environment.offlineTitle ? <WifiOff className="size-5" /> : <Leaf className="size-5" />}
-            title={environment.title}
-            body={environment.detail}
-          />
-        </Card>
+        <WaitingState compact />
       ) : (
         <>
           <div className="hv2-metric-grid">

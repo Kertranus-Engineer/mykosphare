@@ -1,42 +1,33 @@
 "use client"
 
-import { NotebookPen, ScrollText } from "lucide-react"
+import { ScrollText } from "lucide-react"
 import { useState } from "react"
 
 import { COPY } from "../../copy"
 import { formatDateTime, isoOrUndefined } from "../../data/format"
 import { useHomeV2 } from "../../data/home-v2-provider"
-import { useFeedback } from "../feedback"
 import { Card, Chip, EmptyState, SectionHeading, ToneDot } from "../ui/surface"
 
 const COLLAPSED = 5
 
-/** Logbook fed only by facts the run record / event sources already provide. */
+/**
+ * Logbook of THIS crop, fed only by facts the run record / event sources
+ * already provide (start, confirmed stage). It exists only while there is a
+ * crop; environment alerts and events live in Historial.
+ */
 export function Logbook() {
   const { cultivation } = useHomeV2()
-  const { notify } = useFeedback()
   const [expanded, setExpanded] = useState(false)
-  const entries = cultivation.status === "ready" ? cultivation.log : []
+  if (cultivation.status !== "ready") return null
+
+  const entries = cultivation.log
   const visible = expanded ? entries : entries.slice(0, COLLAPSED)
   // One note instead of a "Simulado" tag on every row when nothing is real.
   const allSimulated = entries.length > 0 && entries.every((entry) => entry.provenance === "simulated")
 
   return (
     <section aria-labelledby="hv2-log-h" className="hv2-block">
-      <SectionHeading
-        id="hv2-log-h"
-        title={COPY.log.title}
-        action={
-          <button
-            type="button"
-            className="hv2-button hv2-button--ghost hv2-button--small hv2-press"
-            onClick={() => notify({ message: COPY.log.addNoteSoon })}
-          >
-            <NotebookPen aria-hidden className="size-4" />
-            {COPY.log.addNote}
-          </button>
-        }
-      />
+      <SectionHeading id="hv2-log-h" title={COPY.log.title} />
       <Card className="hv2-log-card">
         {entries.length === 0 ? (
           <EmptyState compact icon={<ScrollText className="size-5" />} title={COPY.log.empty} body={COPY.log.emptyBody} />
@@ -64,6 +55,7 @@ export function Logbook() {
             )}
           </>
         )}
+        <p className="hv2-caption hv2-log-foot">{COPY.log.notesSoon}</p>
       </Card>
     </section>
   )

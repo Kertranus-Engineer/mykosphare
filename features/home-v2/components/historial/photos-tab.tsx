@@ -107,6 +107,7 @@ export function PhotosTab() {
               onClick={() => setOpen(index)}
             >
               <Photo photo={photo} className="hv2-thumb-img" />
+              {photo.kind === "demo" && <span className="hv2-thumb-demo" aria-hidden>{COPY.photos.demoBadge}</span>}
               <time className="hv2-thumb-date" dateTime={isoOrUndefined(photo.capturedAt)}>{formatShortDate(photo.capturedAt)}</time>
             </button>
           </li>

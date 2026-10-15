@@ -1,11 +1,11 @@
 import Link from "next/link"
 
 const EXPERIMENTS = [
-  { href: "/design-lab/home-v2", title: "HOME V2 · Inicio", note: "Cultivo protagonista, ambiente, dispositivo y espacio para MYKO Insight." },
-  { href: "/design-lab/home-v2/cultivo", title: "HOME V2 · Cultivo", note: "Fotografías, línea temporal, etapas y bitácora." },
-  { href: "/design-lab/home-v2/ambiente", title: "HOME V2 · Ambiente", note: "Lecturas, tendencia interactiva de la sesión, alertas activas y sensores sin conectar." },
-  { href: "/design-lab/home-v2/historial", title: "HOME V2 · Historial", note: "Actividad, gráficos y fotografías en una sola vista." },
-  { href: "/design-lab/home-v2?mode=simulation&scenario=stable&photos=demo", title: "HOME V2 · Con datos de simulación", note: "Cultivo simulado e ilustraciones de demostración para revisar todos los estados." },
+  { href: "/design-lab/home-v2", title: "HOME V2 · Inicio", note: "Cultivo, resumen del ambiente y estado del dispositivo." },
+  { href: "/design-lab/home-v2/cultivo", title: "HOME V2 · Cultivo", note: "Fotografías, etapas y bitácora de un cultivo." },
+  { href: "/design-lab/home-v2/ambiente", title: "HOME V2 · Ambiente", note: "Lecturas, tendencia de la sesión, actuadores y alertas." },
+  { href: "/design-lab/home-v2/historial", title: "HOME V2 · Historial", note: "Actividad, gráficos y fotografías." },
+  { href: "/design-lab/home-v2/mas", title: "HOME V2 · Más", note: "Tema, modo demostración y otras vistas." },
 ]
 
 export default function DesignLabIndex() {

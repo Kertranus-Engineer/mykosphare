@@ -37,7 +37,7 @@ export interface MetricModel {
 }
 
 export type EnvironmentModel =
-  | { status: "waiting"; title: string; detail: string }
+  | { status: "waiting"; reason: "loading" | "disconnected"; title: string; detail: string }
   | {
       status: "ready"
       provenance: Exclude<Provenance, "unavailable">
@@ -135,7 +135,7 @@ export type PhotosModel =
 
 // ── History ───────────────────────────────────────────────
 
-export type HistoryKind = "alert" | "event" | "crop"
+export type HistoryKind = "alert" | "event"
 
 export interface HistoryEntryModel {
   id: string

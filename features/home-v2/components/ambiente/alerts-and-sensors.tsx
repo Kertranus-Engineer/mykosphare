@@ -9,7 +9,9 @@ import { Card, EmptyState, SectionHeading, ToneDot } from "../ui/surface"
 /** Alerts the shared environment engine reports as active right now. */
 export function AlertsSection() {
   const { history, environment } = useHomeV2()
-  const alerts = history.filter((entry) => entry.kind === "alert" && entry.at === null)
+  // While the first reading is still arriving, engine alerts would only describe "no data yet".
+  const loading = environment.status === "waiting" && environment.reason === "loading"
+  const alerts = loading ? [] : history.filter((entry) => entry.kind === "alert" && entry.at === null)
   const ready = environment.status === "ready"
 
   return (
@@ -59,7 +61,6 @@ export function MissingSensors() {
             </li>
           ))}
         </ul>
-        <p className="hv2-caption">{COPY.environmentPage.controls}</p>
       </Card>
     </section>
   )

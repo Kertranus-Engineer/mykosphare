@@ -15,6 +15,7 @@ import type { GrowTimelineEvent } from "@/lib/grow/timeline"
 import type { GrowSnapshot, GrowthStage, SpeciesProfile } from "@/lib/grow/types"
 import { cultivationDay, GROW_STAGE_ORDER, presentSpecies, stageLabel } from "@/lib/grow/presentation"
 import type { GrowView } from "@/features/grow/data/grow-view"
+import { resolveTelemetry, type DataMode } from "./resolve"
 import { COPY } from "../copy"
 import type {
   ActuatorModel,
@@ -75,12 +76,14 @@ function metric(
   }
 }
 
-export function toEnvironmentModel(tel: MobileTelemetry): EnvironmentModel {
-  if (!tel.hasData || tel.source === "none") {
-    const offline = tel.connection.kind === "offline"
-    return offline
-      ? { status: "waiting", title: COPY.environment.offlineTitle, detail: COPY.environment.offlineDetail }
-      : { status: "waiting", title: COPY.environment.waitingTitle, detail: COPY.environment.waitingDetail }
+export function toEnvironmentModel(tel: MobileTelemetry, mode: DataMode = "normal"): EnvironmentModel {
+  const source = resolveTelemetry(tel, mode)
+  if (source === "LOADING") {
+    return { status: "waiting", reason: "loading", title: COPY.environment.waitingTitle, detail: COPY.environment.waitingDetail }
+  }
+  // No ESP32 reporting. The shared hook's silent simulator does NOT count as data outside the demo mode.
+  if (source === "UNAVAILABLE") {
+    return { status: "waiting", reason: "disconnected", title: COPY.environment.noDeviceTitle, detail: COPY.environment.noDeviceDetail }
   }
 
   const provenance = tel.source === "simulated" ? "simulated" : "real"
@@ -122,7 +125,17 @@ function actuator(id: ActuatorModel["id"], reported: boolean | null, dimmed: boo
   }
 }
 
-export function toDeviceModel(tel: MobileTelemetry): DeviceModel {
+export function toDeviceModel(tel: MobileTelemetry, mode: DataMode = "normal"): DeviceModel {
+  if (resolveTelemetry(tel, mode) === "UNAVAILABLE") {
+    return {
+      kind: "offline",
+      label: COPY.device.disconnected,
+      provenance: "unavailable",
+      tone: "muted",
+      lastSampleAt: null,
+      actuators: [actuator("fan", null, true), actuator("humidifier", null, true)],
+    }
+  }
   const kind: DeviceKind = tel.connection.kind
   return {
     kind,
@@ -253,16 +266,27 @@ export function toCultivationModel(view: GrowView): CultivationModel {
 export interface CaptureSource {
   images: { name: string; url: string; uploadedAt: string }[]
   loading: boolean
-  /** Human-readable error from the existing captures hook, null when fine. */
+  /** Raw error message from the captures hook (null when fine). Classified here, not in the UI. */
   error: string | null
-  /** Storage is simply not configured (not a failure the user can retry). */
-  unavailable: boolean
+}
+
+const STORAGE_NOT_CONFIGURED = "Supabase not configured"
+/** Storage reachable but nothing there yet (e.g. the bucket was never created) is "no photos", not an error. */
+const STORAGE_EMPTY = /bucket.*not.*found|not.*found/i
+
+export function classifyCaptureError(error: string | null): "none" | "unavailable" | "empty" | "error" {
+  if (!error) return "none"
+  if (error === STORAGE_NOT_CONFIGURED) return "unavailable"
+  if (STORAGE_EMPTY.test(error)) return "empty"
+  return "error"
 }
 
 export function toPhotosModel(captures: CaptureSource): PhotosModel {
   if (captures.loading) return { status: "loading" }
-  if (captures.unavailable) return { status: "unavailable" }
-  if (captures.error) return { status: "error" }
+  const problem = classifyCaptureError(captures.error)
+  if (problem === "unavailable") return { status: "unavailable" }
+  if (problem === "empty") return { status: "empty" }
+  if (problem === "error") return { status: "error" }
   const items = captures.images
     .filter((image) => image.url && Number.isFinite(new Date(image.uploadedAt).getTime()))
     .map((image): PhotoModel => ({ id: image.name, url: image.url, capturedAt: image.uploadedAt, kind: "capture" }))
@@ -279,34 +303,26 @@ export function severityToTone(severity: ActivitySeverity): Tone {
 }
 
 /**
- * One chronological feed from the session activity (alerts, bus events, state
- * changes) and, when a crop exists, its logbook. Active alerts come first; the
- * rest is newest first. Session activity is NOT persisted: callers must say so.
+ * Session activity (alerts, bus events, state changes), active alerts first, then
+ * newest first. Anything derived from simulated telemetry is dropped unless the
+ * demo mode is on. Crop events live in Cultivo's logbook, not here. Session
+ * activity is NOT persisted: callers must say so.
  */
-export function toHistoryEntries(activity: readonly ActivityItem[], cultivation: CultivationModel): HistoryEntryModel[] {
-  const fromActivity = activity.map((item): HistoryEntryModel => ({
-    id: item.id,
-    kind: item.kind === "alert" ? "alert" : "event",
-    tone: severityToTone(item.severity),
-    title: item.title,
-    detail: item.detail,
-    at: item.timestamp,
-    simulated: false,
-  }))
-  const fromCrop =
-    cultivation.status === "ready"
-      ? cultivation.log.map((entry): HistoryEntryModel => ({
-          id: `crop-${entry.id}`,
-          kind: "crop",
-          tone: entry.tone,
-          title: entry.title,
-          at: new Date(entry.at).getTime(),
-          simulated: entry.provenance === "simulated",
-        }))
-      : []
-  return [...fromActivity, ...fromCrop].sort((a, b) => {
-    if (a.at === null && b.at !== null) return -1
-    if (a.at !== null && b.at === null) return 1
-    return (b.at ?? 0) - (a.at ?? 0)
-  })
+export function toHistoryEntries(activity: readonly ActivityItem[], mode: DataMode = "normal"): HistoryEntryModel[] {
+  return activity
+    .filter((item) => mode === "demo" || !item.simulated)
+    .map((item): HistoryEntryModel => ({
+      id: item.id,
+      kind: item.kind === "alert" ? "alert" : "event",
+      tone: severityToTone(item.severity),
+      title: item.title,
+      detail: item.detail,
+      at: item.timestamp,
+      simulated: item.simulated === true,
+    }))
+    .sort((a, b) => {
+      if (a.at === null && b.at !== null) return -1
+      if (a.at !== null && b.at === null) return 1
+      return (b.at ?? 0) - (a.at ?? 0)
+    })
 }

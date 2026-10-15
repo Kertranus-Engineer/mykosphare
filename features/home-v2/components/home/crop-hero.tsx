@@ -1,12 +1,12 @@
 "use client"
 
 import Link from "next/link"
-import { ChevronRight, ImageOff, Sprout, TriangleAlert } from "lucide-react"
+import { ChevronRight, FlaskConical, ImageOff, Sprout, TriangleAlert } from "lucide-react"
 import { useState } from "react"
 
 import { COPY } from "../../copy"
 import { useHomeV2 } from "../../data/home-v2-provider"
-import { labHref, LAB_ROUTES, scenarioRequest } from "../../data/lab-request"
+import { labHref, LAB_ROUTES } from "../../data/lab-request"
 import type { PhotoModel } from "../../data/model"
 import { useFeedback } from "../feedback"
 import { MyceliumArt } from "../ui/mycelium-art"
@@ -29,9 +29,47 @@ function HeroMedia({ photo }: { photo: PhotoModel | null }) {
   )
 }
 
+/** First-crop presentation: what the crop view will show, and an honest note that creating crops is not available yet. */
+function EmptyHero() {
+  const { setDemo } = useHomeV2()
+  const { notify } = useFeedback()
+  return (
+    <section className="hv2-hero hv2-hero--state" aria-labelledby="hv2-crop-state">
+      <HeroMedia photo={null} />
+      <div className="hv2-hero-scrim" />
+      <div className="hv2-hero-body">
+        <span className="hv2-hero-state-icon" aria-hidden><Sprout className="size-6" /></span>
+        <h2 id="hv2-crop-state" className="hv2-hero-title hv2-hero-title--state">{COPY.crop.emptyTitle}</h2>
+        <p className="hv2-hero-lead">{COPY.crop.emptyBody}</p>
+        <ol className="hv2-hero-steps">
+          {COPY.crop.steps.map((step, index) => (
+            <li key={step}>
+              <span aria-hidden className="hv2-hero-step-n">{index + 1}</span>
+              {step}
+            </li>
+          ))}
+        </ol>
+        <p className="hv2-hero-note">{COPY.crop.emptyNote}</p>
+        <div className="hv2-hero-actions">
+          <button
+            type="button"
+            className="hv2-button hv2-button--glass hv2-press"
+            onClick={() => {
+              setDemo({ enabled: true })
+              notify({ message: COPY.morePage.enabledToast })
+            }}
+          >
+            <FlaskConical aria-hidden className="size-4" />
+            {COPY.crop.tryDemo}
+          </button>
+        </div>
+      </div>
+    </section>
+  )
+}
+
 export function CropHero() {
   const { cultivation, photos, request, retryCultivation } = useHomeV2()
-  const { notify } = useFeedback()
   const latest = photos.status === "ready" ? photos.items[photos.items.length - 1] : null
 
   if (cultivation.status === "loading") {
@@ -42,31 +80,7 @@ export function CropHero() {
     )
   }
 
-  if (cultivation.status === "empty") {
-    return (
-      <section className="hv2-hero hv2-hero--state" aria-labelledby="hv2-crop-state">
-        <HeroMedia photo={null} />
-        <div className="hv2-hero-scrim" />
-        <div className="hv2-hero-body">
-          <span className="hv2-hero-state-icon" aria-hidden><Sprout className="size-6" /></span>
-          <h2 id="hv2-crop-state" className="hv2-hero-title hv2-hero-title--state">{COPY.crop.emptyTitle}</h2>
-          <p className="hv2-hero-lead">{COPY.crop.emptyBody}</p>
-          <div className="hv2-hero-actions">
-            <button
-              type="button"
-              className="hv2-button hv2-button--primary hv2-press"
-              onClick={() => notify({ title: COPY.capture.unavailableTitle, message: COPY.crop.startUnavailable })}
-            >
-              {COPY.crop.start}
-            </button>
-            <Link href={labHref(LAB_ROUTES.home, scenarioRequest("stable", request))} className="hv2-button hv2-button--ghost hv2-press">
-              {COPY.crop.seeDemo}
-            </Link>
-          </div>
-        </div>
-      </section>
-    )
-  }
+  if (cultivation.status === "empty") return <EmptyHero />
 
   if (cultivation.status === "failed") {
     const retryable = cultivation.reason === "network_error" || cultivation.reason === "unavailable"
@@ -80,7 +94,7 @@ export function CropHero() {
           <p className="hv2-hero-lead">{cultivation.detail}</p>
           {retryable && (
             <div className="hv2-hero-actions">
-              <button type="button" className="hv2-button hv2-button--secondary hv2-press" onClick={retryCultivation}>
+              <button type="button" className="hv2-button hv2-button--glass hv2-press" onClick={retryCultivation}>
                 {COPY.photos.retry}
               </button>
             </div>
@@ -97,7 +111,7 @@ export function CropHero() {
       <div className="hv2-hero-scrim" />
       <div className="hv2-hero-top">
         <ProvenanceBadge provenance={provenance} />
-        {latest?.kind === "demo" && <Chip tone="sim" className="hv2-chip--caps">Demo</Chip>}
+        {latest?.kind === "demo" && <Chip tone="sim" className="hv2-chip--caps">{COPY.photos.demoLabel}</Chip>}
       </div>
       <div className="hv2-hero-body">
         <p className="hv2-kicker">{COPY.crop.kicker}</p>

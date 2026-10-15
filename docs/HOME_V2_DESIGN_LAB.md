@@ -1,90 +1,84 @@
-# HOME V2 · Laboratorio de diseño (Fase 1)
+# HOME V2 · Experiencia unificada
 
-Ruta experimental, aislada de HOME actual y del dashboard avanzado. **Solo lectura**: no controla actuadores, no escribe en Supabase, no llama a servicios externos ni a IA.
+Una sola experiencia móvil (Inicio · Cultivo · Ambiente · Historial · Más) montada en `/design-lab/home-v2`, aislada de HOME actual (`/home`) y del dashboard avanzado. **Solo lectura**: no controla actuadores, no escribe en Supabase, no llama a servicios externos ni a IA.
 
-## Cómo abrirlo
+Capturas de referencia: [`docs/home-v2-screenshots/`](home-v2-screenshots/).
 
-```bash
-npm run dev
-```
+## Rutas
 
-| URL | Qué muestra |
+| Ruta | Contenido |
 | --- | --- |
-| `/design-lab` | Índice del laboratorio |
-| `/design-lab/home-v2` | Inicio V2 (sin parámetros → estado vacío de cultivo) |
-| `/design-lab/home-v2/cultivo` | Cultivo V2 |
-| `/design-lab/home-v2/ambiente` | Ambiente V2 |
-| `/design-lab/home-v2/historial` | Historial V2 (Actividad · Gráficos · Fotos) |
-| `…?mode=simulation&scenario=stable` | Cultivo **simulado** (el demo que ya existía en `lib/grow/demo`) |
-| `…&photos=demo` | Ilustraciones de demostración etiquetadas (solo con simulación) |
-| `…?chamber=<id>` | Cultivo real vía `/api/v2/grow/<id>` (requiere sesión y Supabase) |
+| `/design-lab/home-v2` | Inicio |
+| `/design-lab/home-v2/cultivo` | Cultivo |
+| `/design-lab/home-v2/ambiente` | Ambiente |
+| `/design-lab/home-v2/historial` | Historial (Actividad · Gráficos · Fotos) |
+| `/design-lab/home-v2/mas` | Más: tema, **Modo demostración**, otras vistas |
 
-Escenarios disponibles: `stable, dry, humid, cold, hot, critical, partial, stale, offline, no-data`. También se cambian desde ⚙ Configuración dentro del laboratorio. Móvil: viewport 360–430 px.
+La app funciona **sin parámetros de URL**. Compatibilidad interna: `?chamber=ID` muestra un cultivo real (requiere sesión y `/api/v2/grow`); `?mode=simulation&scenario=x` equivale a encender el modo demostración. Ninguno viaja en la navegación normal.
 
-> En local, el middleware (`proxy.ts`) exige `NEXT_PUBLIC_SUPABASE_URL` y `NEXT_PUBLIC_SUPABASE_ANON_KEY`. Se usó un `.env.local` con valores ficticios (ignorado por git). Con ese Supabase inexistente, las fotos reales muestran el estado de error con "Reintentar".
+## Auditoría inicial (qué existe de verdad)
 
-## Qué reutiliza (no se duplicó lógica)
-
-| Necesidad | Sistema existente |
+| Capacidad | Estado real |
 | --- | --- |
-| Telemetría real / simulada / sin datos, conexión, tendencias de sesión | `features/mobile` (`MobileDataProvider`, `useMobileTelemetry`) |
-| Actividad y alertas | `useMobileActivity` |
-| Fotos reales (solo lectura) | `useMobileCaptures` → bucket `snapshots` |
-| Cultivo, etapas, día, simulación explícita, eventos | `lib/grow` + `features/grow/data` (`GrowProvider`) |
-| Animación | `framer-motion` (ya instalado) con `LazyMotion` + `domAnimation` |
-| Hojas modales | `components/ui/sheet` |
+| Telemetría ESP32 | Real vía `useMobileTelemetry` (`/api/data`). **Cae a un simulador silencioso** cuando no hay dispositivo. |
+| Cultivo real | Solo lectura: `GET /api/v2/grow/[chamberId]` (sesión + cámara). No hay crear/editar ni listar cámaras. |
+| Cultivo simulado | `lib/grow/demo` (`buildDemoGrowComposition`), solo con petición explícita. |
+| Fotografías | Lectura del bucket público `snapshots` (`useLiveSnapshots`); no están vinculadas a un cultivo. `VisualUpload` **no sube nada** (solo memoria). |
+| Bitácora | Solo hitos del registro del cultivo (inicio, etapa confirmada) + eventos simulados. No hay escritura. |
+| Registrar fotografía / crear cultivo / añadir observación | **No existen** (eran avisos en V2 anteriores). |
+| Historial persistente | **No existe**: actividad y gráficas son de la sesión. |
+| Esquema Supabase | Ya tiene `grow_cultivation_runs.name`, `grow_run_events`, `grow_captures`, `grow_stage_events`, `grow_readings`; el código solo lee cámara, corrida, perfil y última lectura. |
+| Duplicados | HOME actual (`features/mobile`) y V2 comparten datos; V2 reutiliza `useMobileData`, `useLiveSnapshots`, `lib/grow`. |
 
-No se reutilizó `VisualUpload`: **no sube nada** (solo guarda en memoria del navegador).
-
-## Arquitectura
+## Arquitectura de datos unificada
 
 ```
-app/design-lab/                      rutas (layout con noindex, template con transición)
-features/home-v2/
-  data/model.ts                      view models (presentación)
-  data/adapters.ts                   funciones puras: sistemas existentes → view models
-  data/lab-request.ts                parseo de URL, escenarios, tema del lab
-  data/home-v2-provider.tsx          composición única (telemetría + cultivo + fotos + tema)
-  data/demo-frames.ts                ilustraciones de demostración (no son fotos)
-  components/{shell,home,cultivo,ambiente,historial,ui,shared}
-  screens/{home,cultivo,environment,history}-screen.tsx
-  styles/home-v2.css                 tokens de 3 temas + componentes + animaciones
-  __tests__/adapters.test.ts         30 tests
+useMobileData (telemetría + actividad)   useLiveSnapshots   useGrowView(request)
+            └──────────────┬───────────────────┴──────────────────┘
+                 HomeV2Provider  ── demo-mode (preferencia) ──┐
+                           │                                  │
+                  resolve.ts  → REAL | SIMULATED | UNAVAILABLE | LOADING | ERROR
+                           │
+                  adapters.ts → view models (EnvironmentModel, DeviceModel, CultivationModel, PhotosModel, HistoryEntryModel)
+                           │
+                  componentes (solo presentan)
 ```
 
-Datos y presentación están separados: los componentes solo reciben view models.
+- `data/resolve.ts`: clasifica cada dominio en uno de cinco estados. Fuera del modo demostración **nunca** resuelve `SIMULATED` (el simulador silencioso de telemetría pasa a `UNAVAILABLE`); el provider lo comprueba en desarrollo (`assertNoSimulationOutsideDemo`).
+- `data/demo-mode.ts`: el modo demostración es una preferencia (`localStorage["mykosphare-demo-mode"]`, **apagada por defecto**). Solo guarda "quiero ver simulación"; no guarda datos de demostración. Con él activo: cultivo simulado, ilustraciones etiquetadas (nunca fotos reales), eventos simulados. Un banner fijo con "Salir" lo recuerda en todas las pantallas.
+- Sin mezclas: en demostración no se muestran capturas reales ni un cultivo real; con telemetría real conectada, las lecturas siguen siendo `REAL`.
+- `features/mobile/use-mobile-activity.ts` recibió un campo opcional `simulated` (HOME actual lo ignora) para filtrar alertas y cambios de estado derivados de simulación.
 
-## Estado de cada parte
+## Qué hace cada pantalla
 
-**Ambiente V2:** lecturas actuales (mismas reglas de procedencia), tendencia interactiva de la sesión (deslizar o flechas del teclado; temperatura/humedad), alertas activas del motor ambiental compartido, dispositivo con actuadores en solo lectura y lista explícita de lo que *no* se mide (CO₂, energía). No hay controles de actuadores ni perfiles: no existen funciones reales que reutilizar.
+- **Inicio:** tarjeta del cultivo (nombre, especie, etapa registrada, día, foto si existe; sin cultivo → presentación del primer cultivo con nota honesta y acceso a la demostración), resumen compacto de ambiente (temperatura, humedad, estado), una línea de dispositivo (conexión, última lectura, detalles), espacio de MYKO Insight (vacío, sin IA) y una nota informativa de fotografías (sin botón engañoso).
+- **Cultivo:** foto principal (swipe, flechas, teclado), línea temporal y galería, distinción explícita **captura real / ilustración demo**, etapas en carrusel con snap, desvanecido solo del lado con más contenido, indicación "Desliza…", selección de etapa y barra compacta por número de etapas (no porcentaje), bitácora del cultivo. Sin cultivo: estado vacío; sin fotos, cargando, error real y almacenamiento no configurado se distinguen.
+- **Ambiente:** lecturas, tendencia interactiva de la sesión (escala mínima conservadora 2 °C / 8 %), **actuadores en solo lectura con protagonismo**, alertas, detalles del dispositivo y lo que no se mide (CO₂, energía).
+- **Historial:** actividad de la sesión (alertas y eventos), gráficos y fotos. El seguimiento de un cultivo vive solo en Cultivo. Advierte que no es persistente.
+- **Más:** tema, Modo demostración (con escenarios), enlaces a HOME actual, vista avanzada y ajustes avanzados.
 
-**Historial V2:** Actividad (alertas activas, eventos y cambios de estado de la sesión + bitácora del cultivo, filtrable), Gráficos (las dos magnitudes) y Fotos (cuadrícula cronológica con visor). La actividad **no se persiste entre sesiones** y se dice en pantalla; no se presenta como un histórico guardado.
+## Migración a `/home` (cuando se autorice)
 
-**Funcional (datos reales cuando existen):** encabezado y estado de conexión, métricas de temperatura/humedad con tendencia y sparkline de la sesión, estado ambiental del motor compartido, estado del dispositivo y actuadores reportados (solo lectura), foto del cultivo y línea temporal con las capturas del bucket, notificaciones, cambio de tema, navegación entre Inicio y Cultivo.
+1. `HOME_V2_BASE` en `features/home-v2/data/lab-request.ts` es el único sitio que conoce el prefijo; cambiarlo a `/home`.
+2. Mover los 7 archivos finos de `app/design-lab/home-v2/` (`layout`, `template`, 5 `page`) a `app/home/` (HOME actual pasa a `/home-v1` o se retira) y conservar el import de `home-v2.css`.
+3. No hay lógica ni componentes que duplicar: todo está en `features/home-v2/`.
 
-**Funcional solo con simulación explícita:** cultivo (nombre/especie/etapa/día/bitácora) vía `?mode=simulation`; todo se etiqueta "Simulado".
+## Preparación para datos reales (sin implementarlos)
 
-**Solo visual (honesto en pantalla):** "Registrar fotografía", "Comenzar un cultivo", "Añadir observación" (muestran un aviso: aún no conectado); MYKO Insight y Análisis visual (estado vacío "Próximamente").
+Contratos ya separados de la presentación (`model.ts`), así que cada fuente futura es un adaptador:
 
-**Depende de datos futuros:** nombre propio del cultivo (hoy se muestra la especie), vincular capturas a un cultivo concreto, eventos reales de bitácora (hoy solo hitos del registro del cultivo), análisis por IA, CO₂/energía (no hay sensor: no se muestran).
+| Futuro | Dónde engancha |
+| --- | --- |
+| Cultivos reales | `GrowRequest` → `toCultivationModel`. Falta endpoint de listado de cámaras y `name` en `CultivationRun`. |
+| Fotos persistentes | Sustituir `toPhotosModel` por lectura de `grow_captures` (ligada a la corrida). |
+| Bitácora persistente | `grow_run_events` → `toLog` ya tiene la forma `LogEntryModel`. |
+| Telemetría histórica | `grow_readings` → `MetricModel.series/times` (hoy solo sesión). |
+| Análisis visual / IA | `PlaceholderCard` ya reserva el espacio; no hay llamadas. |
 
-## Decisiones y límites
+## Limitaciones conocidas
 
-- **Sin porcentajes de progreso.** Se muestra día, etapa registrada y tiempo. La sugerencia por días transcurridos se marca "Estimación" y nunca reemplaza la etapa registrada (y solo se sugiere una etapa posterior).
-- **Etapas adaptables:** salen del perfil de la especie (etapas con objetivos definidos); si el perfil define menos de dos, se usa el ciclo completo. La etapa registrada siempre está incluida. El perfil de muestra define 6 etapas (la imagen de referencia mostraba 4).
-- **Datos simulados nunca parecen sanos-reales:** el estado ambiental simulado usa tono propio (violeta), no verde.
-- **Un valor ausente es `null`**, nunca 0. Los actuadores pasan a "Sin dato" si la lectura no es fresca.
-- **Sin mascota:** el copy de `grow` usa voz en primera persona de MYKO; aquí se escribió copy neutro.
-- **Temas:** Negro, Verde y Blanco con tokens propios (`[data-hv2-theme]`). Blanco está diseñado (papel, sombras, tinta esmeralda), no es una inversión. La preferencia vive en `localStorage["mykosphare-lab-theme"]` (por defecto Negro) y **no cambia el tema global** de la app. Un script inline la aplica antes del primer pintado.
-- **Navegación:** Inicio, Cultivo, Ambiente e Historial viven en el laboratorio. Solo *Más* abre la pantalla actual de `/home/more` (V2 pendiente); se indica en su `aria-label`.
-- **Gráficas honestas:** no se dibuja una tendencia con menos de 3 lecturas, y la escala nunca se acerca más de 2 °C / 8 % para que el ruido del sensor no parezca una oscilación.
-- **Movimiento:** entradas y pulsaciones en CSS (120–300 ms); Motion solo para swipe/transición de fotos, números animados y avisos. `prefers-reduced-motion` desactiva animaciones CSS y `MotionConfig reducedMotion="user"` las de Motion. Únicas animaciones continuas: el skeleton de carga y 3 pulsos del punto "En vivo".
-
-## Pendiente / conocido
-
-- Reduced-motion verificado por revisión de código, no emulando la preferencia del SO.
-- Test visual solo en el navegador integrado (Chromium); no probado en iOS Safari ni dispositivo físico.
-- El indicador de desarrollo de Next ("N") se superpone a la barra inferior solo en `next dev`.
-- Historial y Ambiente solo muestran lo recibido en la sesión actual: aún no hay histórico persistente de telemetría que reutilizar.
-- Un test previo falla en el repo (`features/grow/__tests__/myko-identity.test.tsx`, "infinite animation inside reduced-motion"); falla igual sin estos cambios.
-- ESLint global: 39 errores previos en el repo (sin cambios); los archivos nuevos tienen 0 problemas.
+- Crear cultivos, registrar fotos y escribir observaciones no están disponibles.
+- Actividad y gráficas son de sesión; las fotos no se vinculan a un cultivo concreto.
+- Test previo `features/grow/__tests__/myko-identity.test.tsx` falla en Windows (CRLF vs `"\n}\n"`); pasa con LF (git/Vercel).
+- 39 errores de ESLint anteriores en `lib/` y `features/` ajenos a V2.
+- No probado en dispositivo físico ni iOS; `prefers-reduced-motion` verificado aplicando las reglas del bloque `@media` y por código, no con el ajuste del sistema.

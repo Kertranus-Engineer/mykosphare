@@ -103,6 +103,8 @@ function Stage({
         </m.div>
       </AnimatePresence>
 
+      <p className="hv2-sr-only" aria-live="polite">{`${COPY.photos.mainTitle} ${COPY.photos.counter(index + 1, items.length)}`}</p>
+
       <div className="hv2-viewer-scrim" aria-hidden />
 
       <div className="hv2-viewer-top">
@@ -121,8 +123,11 @@ function Stage({
 
       <div className="hv2-viewer-bottom">
         <div className="hv2-viewer-tags">
-          {photo.kind === "demo" && <Chip tone="sim" className="hv2-chip--caps">{COPY.photos.demoLabel}</Chip>}
-          {isLatest && photo.kind === "capture" && <Chip tone="ok" className="hv2-chip--glass">{COPY.photos.latest}</Chip>}
+          {photo.kind === "demo" ? (
+            <Chip tone="sim" className="hv2-chip--caps hv2-chip--solid">{COPY.photos.demoLabel}</Chip>
+          ) : (
+            <Chip tone="ok" className="hv2-chip--glass">{isLatest ? COPY.photos.latest : COPY.photos.realLabel}</Chip>
+          )}
         </div>
         <button type="button" className="hv2-button hv2-button--glass hv2-press" onClick={onOpenGallery}>
           <Images aria-hidden className="size-4" />
@@ -159,6 +164,7 @@ function Timeline({ items, selectedId, onSelect }: { items: PhotoModel[]; select
               onClick={() => onSelect(photo.id)}
             >
               <Photo photo={photo} className="hv2-thumb-img" />
+              {photo.kind === "demo" && <span className="hv2-thumb-demo" aria-hidden>{COPY.photos.demoBadge}</span>}
               <span className="hv2-thumb-date">{formatShortDate(photo.capturedAt)}</span>
             </button>
           </li>
@@ -200,6 +206,7 @@ function GallerySheet({
                   onClick={() => { onSelect(photo.id); onOpenChange(false) }}
                 >
                   <Photo photo={photo} className="hv2-thumb-img" />
+                  {photo.kind === "demo" && <span className="hv2-thumb-demo" aria-hidden>{COPY.photos.demoBadge}</span>}
                   <span className="hv2-thumb-date">{formatShortDate(photo.capturedAt)}</span>
                 </button>
               </li>

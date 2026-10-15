@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { Bell, Settings } from "lucide-react"
+import { Bell, FlaskConical, Settings } from "lucide-react"
 import { useState } from "react"
 
 import { COPY } from "../../copy"
@@ -10,7 +10,6 @@ import { labHref, LAB_ROUTES } from "../../data/lab-request"
 import { ToneDot } from "../ui/surface"
 import { BrandMark } from "../ui/brand-mark"
 import { NotificationsSheet } from "./notifications-sheet"
-import { SettingsSheet } from "./settings-sheet"
 
 function ConnectionChip() {
   const { device } = useHomeV2()
@@ -22,10 +21,29 @@ function ConnectionChip() {
   )
 }
 
+/** Visible, persistent reminder while simulated data is on. One tap to leave. */
+function DemoBanner() {
+  const { mode, setDemo } = useHomeV2()
+  if (mode !== "demo") return null
+  return (
+    <div className="hv2-demo-banner" role="status">
+      <div className="hv2-demo-banner-inner">
+        <FlaskConical aria-hidden className="size-4" />
+        <p className="hv2-demo-banner-text">
+          <strong>{COPY.demo.banner}</strong>
+          <span> · {COPY.demo.bannerBody}</span>
+        </p>
+        <button type="button" className="hv2-demo-exit hv2-press" onClick={() => setDemo({ enabled: false })}>
+          {COPY.demo.exit}
+        </button>
+      </div>
+    </div>
+  )
+}
+
 export function Header() {
   const { request, attentionCount } = useHomeV2()
   const [notificationsOpen, setNotificationsOpen] = useState(false)
-  const [settingsOpen, setSettingsOpen] = useState(false)
 
   return (
     <header className="hv2-header">
@@ -46,14 +64,14 @@ export function Header() {
             <Bell aria-hidden className="size-5" />
             {attentionCount > 0 && <span className="hv2-badge-count" aria-hidden>{attentionCount}</span>}
           </button>
-          <button type="button" className="hv2-icon-button hv2-press" onClick={() => setSettingsOpen(true)} aria-label={COPY.header.settings}>
+          <Link href={labHref(LAB_ROUTES.more, request)} className="hv2-icon-button hv2-press" aria-label={COPY.header.settings}>
             <Settings aria-hidden className="size-5" />
-          </button>
+          </Link>
         </div>
       </div>
 
+      <DemoBanner />
       <NotificationsSheet open={notificationsOpen} onOpenChange={setNotificationsOpen} />
-      <SettingsSheet open={settingsOpen} onOpenChange={setSettingsOpen} />
     </header>
   )
 }

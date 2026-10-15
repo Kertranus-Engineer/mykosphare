@@ -5,17 +5,19 @@ import { BellOff } from "lucide-react"
 
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet"
 import { RelativeTime } from "@/features/mobile/components/primitives"
-import { useMobileData } from "@/features/mobile/mobile-data-context"
 import { COPY } from "../../copy"
-import { severityToTone } from "../../data/adapters"
+import { useHomeV2 } from "../../data/home-v2-provider"
 import { EmptyState, ToneDot } from "../ui/surface"
 
 const LIMIT = 30
 
-/** Active alerts and session events from the existing activity feed, in HOME V2 styling. */
+/**
+ * Active alerts and session events, already resolved by the provider: anything
+ * derived from simulated telemetry is absent unless the demo mode is on.
+ */
 export function NotificationsSheet({ open, onOpenChange }: { open: boolean; onOpenChange: (open: boolean) => void }) {
-  const { activity } = useMobileData()
-  const items = activity.slice(0, LIMIT)
+  const { history } = useHomeV2()
+  const items = history.slice(0, LIMIT)
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -30,13 +32,13 @@ export function NotificationsSheet({ open, onOpenChange }: { open: boolean; onOp
           ) : (
             <ol className="hv2-notice-list">
               {items.map((item) => (
-                <li key={item.id} className="hv2-notice" data-tone={severityToTone(item.severity)}>
-                  <ToneDot tone={severityToTone(item.severity)} />
+                <li key={item.id} className="hv2-notice" data-tone={item.tone}>
+                  <ToneDot tone={item.tone} />
                   <div className="hv2-notice-text">
                     <p className="hv2-notice-title">{item.title}</p>
                     {item.detail && <p className="hv2-notice-detail">{item.detail}</p>}
                     <p className="hv2-notice-meta">
-                      {item.timestamp === null ? COPY.notifications.active : <RelativeTime at={item.timestamp} />}
+                      {item.at === null ? COPY.notifications.active : <RelativeTime at={item.at} />}
                     </p>
                   </div>
                 </li>

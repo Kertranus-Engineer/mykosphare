@@ -2,61 +2,44 @@ import { GROW_DEMO_SCENARIOS, type GrowDemoScenario } from "@/lib/grow/demo/simu
 import { growQueryString, parseGrowRequest, type GrowRequest, type QueryReader } from "@/features/grow/data/grow-request"
 import type { LabThemeId } from "./model"
 
-export const LAB_BASE = "/design-lab/home-v2"
+/**
+ * The ONLY place that knows where HOME V2 is mounted. When V2 is authorised to
+ * become `/home`, change this constant (and move the thin route files), nothing else.
+ */
+export const HOME_V2_BASE = "/design-lab/home-v2"
 
 export const LAB_ROUTES = {
-  home: LAB_BASE,
-  crop: `${LAB_BASE}/cultivo`,
-  environment: `${LAB_BASE}/ambiente`,
-  history: `${LAB_BASE}/historial`,
+  home: HOME_V2_BASE,
+  crop: `${HOME_V2_BASE}/cultivo`,
+  environment: `${HOME_V2_BASE}/ambiente`,
+  history: `${HOME_V2_BASE}/historial`,
+  more: `${HOME_V2_BASE}/mas`,
 } as const
 
 /**
- * What the lab URL asks for. Everything is read-only: query params only choose
- * which existing view to render (they never write or command anything).
+ * What the URL asks for. Normal navigation carries nothing: the app works with
+ * no parameters. Internal/testing compatibility only:
  *
- *   (none)                       → real mode with no chamber → empty crop state
- *   ?mode=simulation&scenario=x  → explicit simulation (existing grow demo)
- *   ?chamber=ID                  → real crop through the existing /api/v2/grow
- *   &photos=demo                 → labelled demonstration illustrations (simulation only)
+ *   ?chamber=ID                  → show a real crop through /api/v2/grow (needs a session)
+ *   ?mode=simulation&scenario=x  → switches the explicit demo mode ON (internal testing)
+ *
+ * Query params only choose which existing view to render; they never write data.
  */
 export interface LabRequest {
   grow: GrowRequest
-  demoPhotos: boolean
 }
 
 export function parseLabRequest(query: QueryReader): LabRequest {
-  const grow = parseGrowRequest(query)
-  return { grow, demoPhotos: grow.kind === "simulation" && query.get("photos") === "demo" }
+  return { grow: parseGrowRequest(query) }
 }
 
+/** Clean links: only a real chamber selection is carried; the demo lives in its own preference. */
 export function labHref(path: string, request: LabRequest): string {
-  const params = new URLSearchParams(growQueryString(request.grow).replace(/^\?/, ""))
-  if (request.demoPhotos) params.set("photos", "demo")
-  const query = params.toString()
-  return query ? `${path}?${query}` : path
+  if (request.grow.kind !== "real") return path
+  return `${path}${growQueryString(request.grow)}`
 }
 
-export type LabScenario = "none" | GrowDemoScenario
-
-export const LAB_SCENARIOS: readonly LabScenario[] = ["none", ...GROW_DEMO_SCENARIOS]
-
-export function activeScenario(request: LabRequest): LabScenario | null {
-  if (request.grow.kind === "simulation") return request.grow.scenario
-  if (request.grow.kind === "unconfigured") return "none"
-  return null
-}
-
-/** Request for a scenario chip, keeping the photos preference when it still applies. */
-export function scenarioRequest(scenario: LabScenario, current: LabRequest): LabRequest {
-  if (scenario === "none") return { grow: { kind: "unconfigured" }, demoPhotos: false }
-  const stage = current.grow.kind === "simulation" ? current.grow.stage : null
-  return { grow: { kind: "simulation", scenario, stage, notices: [] }, demoPhotos: current.demoPhotos }
-}
-
-export function withDemoPhotos(current: LabRequest, enabled: boolean): LabRequest {
-  return { ...current, demoPhotos: enabled && current.grow.kind === "simulation" }
-}
+export const DEMO_SCENARIOS: readonly GrowDemoScenario[] = GROW_DEMO_SCENARIOS
 
 // ── Theme ─────────────────────────────────────────────────
 // The lab keeps its own preference (it never changes the app-wide theme profile),

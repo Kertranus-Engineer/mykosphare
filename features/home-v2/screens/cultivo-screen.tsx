@@ -10,7 +10,11 @@ import { StageTrack } from "../components/cultivo/stage-track"
 import { PlaceholderCard } from "../components/shared/placeholder-card"
 import { Rise } from "../components/ui/surface"
 
-/** Cultivo V2: identity, photos, stages, logbook, and a placeholder for future visual analysis. */
+/**
+ * Cultivo: follow ONE crop (identity, photos, stages, logbook). Stages and
+ * logbook only exist while there is a crop; photos show whatever the device
+ * captured. Environment history lives in Historial.
+ */
 export function CultivoScreen() {
   return (
     <div className="hv2-stack">

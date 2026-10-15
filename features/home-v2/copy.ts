@@ -6,7 +6,6 @@ import type { CultivationFailure } from "./data/model"
 
 export const COPY = {
   brand: "MYKOSPHARE",
-  lab: "Laboratorio de diseño",
 
   nav: {
     label: "Navegación principal",
@@ -15,7 +14,6 @@ export const COPY = {
     environment: "Ambiente",
     history: "Historial",
     more: "Más",
-    legacyHint: "abre la versión actual",
   },
 
   header: {
@@ -31,19 +29,21 @@ export const COPY = {
   },
 
   home: {
-    greeting: "Resumen de hoy",
     environmentTitle: "Ambiente",
+    viewEnvironment: "Ver ambiente",
     deviceTitle: "Dispositivo",
-    insightTitle: "MYKO Insight",
+    deviceDetails: "Detalles",
+    photoInfoTitle: "Registro de fotografías",
+    photoInfoBody: "Todavía no se pueden registrar fotografías desde la app. Las capturas que sube el dispositivo aparecen en Cultivo e Historial.",
   },
 
   crop: {
     kicker: "Cultivo activo",
     emptyTitle: "Aún no hay un cultivo registrado",
-    emptyBody: "Cuando registres un cultivo, aquí verás su fotografía, su etapa y los días transcurridos.",
-    start: "Comenzar un cultivo",
-    startUnavailable: "Registrar cultivos todavía no está disponible en esta versión.",
-    seeDemo: "Ver con datos de simulación",
+    emptyBody: "Cuando exista un cultivo, aquí verás su fotografía, su etapa y los días transcurridos.",
+    steps: ["Registrar el cultivo", "Conectar el dispositivo", "Seguir su evolución con fotografías"],
+    emptyNote: "El registro de cultivos propios todavía no está disponible en esta versión.",
+    tryDemo: "Explorar con el modo demostración",
     details: "Ver detalles del cultivo",
     day: (n: number) => `Día ${n}`,
     stagePosition: (n: number, total: number) => `Etapa ${n} de ${total}`,
@@ -52,7 +52,6 @@ export const COPY = {
     sampleProfileBody: "Los rangos de este perfil son de ejemplo; no son una guía de cultivo validada.",
     estimate: "Estimación",
     possibleChange: (label: string) => `Por el tiempo transcurrido, podría estar entrando en ${label.toLowerCase()}. Es una estimación: la etapa se confirma manualmente.`,
-    unnamedHint: "El registro del cultivo aún no incluye un nombre propio; se muestra la especie.",
   },
 
   failure: {
@@ -67,8 +66,8 @@ export const COPY = {
   environment: {
     waitingTitle: "Esperando lecturas",
     waitingDetail: "Conectando con el dispositivo…",
-    offlineTitle: "Sin lecturas",
-    offlineDetail: "No hay conexión con el dispositivo, por eso no se muestran valores.",
+    noDeviceTitle: "Sin dispositivo conectado",
+    noDeviceDetail: "No hay un ESP32 enviando datos, por eso no se muestran mediciones.",
     stateLabel: "Estado del ambiente",
     temperature: "Temperatura",
     humidity: "Humedad",
@@ -90,8 +89,18 @@ export const COPY = {
     off: "Apagado",
     unknown: "Sin dato",
     readOnly: "Solo lectura: esta pantalla no controla actuadores.",
-    simulatedNote: "No hay un ESP32 enviando datos: los valores son simulados.",
+    simulatedNote: "Modo demostración: los valores son simulados, no vienen de un dispositivo.",
     offlineNote: "El dispositivo no responde. Los valores se atenúan para no confundirlos con datos actuales.",
+    disconnected: "Desconectado",
+    disconnectedNote: "No hay un ESP32 enviando datos. Conéctalo para ver lecturas reales; mientras tanto no se muestra ninguna medición.",
+    connection: "Conexión",
+    source: "Fuente",
+    lastReading: "Última lectura",
+    sources: { real: "Dispositivo real", simulated: "Simulación (demostración)", unavailable: "Ninguna" },
+    noReading: "Sin lecturas",
+    actuatorsTitle: "Actuadores",
+    actuatorsNote: "Estado que reporta el dispositivo. Esta versión solo lo muestra: no enciende ni apaga nada.",
+    actuatorsUnknown: "Sin dato del dispositivo",
   },
 
   insight: {
@@ -101,16 +110,9 @@ export const COPY = {
     body: "Aquí aparecerán observaciones sobre tu cultivo cuando el análisis inteligente esté disponible. Por ahora no se genera ningún diagnóstico.",
   },
 
-  capture: {
-    action: "Registrar fotografía",
-    unavailableTitle: "Aún no se puede registrar",
-    unavailable: "El registro de fotografías todavía no está conectado. Las capturas del dispositivo se ven en el historial.",
-    hint: "Disponible en una fase futura",
-  },
-
   photos: {
     mainTitle: "Fotografía",
-    latest: "Última imagen disponible",
+    latest: "Última captura real",
     capturedAt: (date: string) => `Capturada ${date}`,
     counter: (n: number, total: number) => `${n} de ${total}`,
     count: (n: number) => (n === 1 ? "1 fotografía" : `${n} fotografías`),
@@ -124,6 +126,8 @@ export const COPY = {
     retry: "Reintentar",
     unlinked: "Capturas del dispositivo. Aún no están vinculadas a un cultivo concreto.",
     demoLabel: "Ilustración demo",
+    realLabel: "Captura real",
+    demoBadge: "DEMO",
     demoNote: "Estas imágenes son ilustraciones de demostración, no fotografías reales.",
     timelineTitle: "Línea temporal",
     previous: "Fotografía anterior",
@@ -139,7 +143,7 @@ export const COPY = {
     trendTitle: "Tendencia de la sesión",
     trendNote: (n: number) => `${n} ${n === 1 ? "lectura recibida" : "lecturas recibidas"} en esta sesión (máx. 30). Al cerrar la app se reinicia; no es un histórico guardado.`,
     trendEmpty: "Recopilando lecturas…",
-    trendEmptyOffline: "Sin lecturas: no hay conexión con el dispositivo.",
+    trendEmptyOffline: "Sin lecturas: no hay un dispositivo conectado.",
     min: "mín",
     max: "máx",
     last: "Última",
@@ -147,14 +151,13 @@ export const COPY = {
     alertsTitle: "Alertas activas",
     noAlerts: "Sin alertas activas",
     noAlertsBody: "El motor ambiental no detecta condiciones fuera de rango en este momento.",
-    alertsUnknown: "No se pueden evaluar alertas sin lecturas.",
+    alertsUnknown: "Sin lecturas no se pueden evaluar alertas.",
     missingTitle: "Sin sensor conectado",
     co2: "CO₂",
     co2Body: "El dispositivo no reporta CO₂, por eso no se muestra ningún valor.",
     energy: "Energía",
     energyBody: "No hay medidor de consumo conectado.",
     unavailable: "No disponible",
-    controls: "Los controles de actuadores no están disponibles en esta versión: solo se muestra el estado reportado.",
   },
 
   historyPage: {
@@ -162,15 +165,15 @@ export const COPY = {
     lead: "Actividad de esta sesión, tendencias y fotografías.",
     tabs: { activity: "Actividad", charts: "Gráficos", photos: "Fotos" },
     tabsLabel: "Secciones del historial",
-    filters: { all: "Todo", alert: "Alertas", event: "Eventos", crop: "Cultivo" },
+    filters: { all: "Todo", alert: "Alertas", event: "Eventos" },
     filtersLabel: "Filtrar actividad",
     active: "Activas ahora",
-    recent: "Esta sesión y cultivo",
-    sessionNote: "Las alertas y eventos se registran mientras la app está abierta y no se guardan entre sesiones. Las entradas de cultivo provienen del registro del cultivo.",
+    recent: "Esta sesión",
+    sessionNote: "Las alertas y eventos se registran mientras la app está abierta y no se guardan entre sesiones. El seguimiento de un cultivo está en la pestaña Cultivo.",
     empty: "Sin actividad reciente",
     emptyFiltered: "Nada en esta categoría",
     emptyBody: "Los eventos aparecerán aquí a medida que ocurran.",
-    kind: { alert: "Alerta", event: "Evento", crop: "Cultivo" },
+    kind: { alert: "Alerta", event: "Evento" },
     activeNow: "Activa ahora",
     chartsNote: "Gráficas con las lecturas recibidas en esta sesión.",
     photosCount: (n: number) => (n === 1 ? "1 captura" : `${n} capturas`),
@@ -184,14 +187,19 @@ export const COPY = {
     current: "Etapa registrada",
     upcoming: "Pendiente",
     planNote: "Las etapas provienen del perfil de la especie y pueden variar entre cultivos.",
+    hint: "Desliza para ver todas las etapas",
+    listLabel: "Etapas del cultivo",
+    doneDetail: "Etapa completada.",
+    upcomingDetail: "Aún no registrada.",
+    currentDetail: (date: string | null) => (date ? `Etapa registrada el ${date}.` : "Etapa registrada."),
+    estimatedDetail: "Estimación por el tiempo transcurrido; todavía no está registrada.",
   },
 
   log: {
     title: "Bitácora",
     empty: "Aún no hay registros",
-    emptyBody: "Observaciones, fotografías, eventos y cambios de etapa se mostrarán aquí.",
-    addNote: "Añadir observación",
-    addNoteSoon: "Escribir observaciones todavía no está disponible.",
+    emptyBody: "Cuando se registren observaciones, fotografías o cambios de etapa, se mostrarán aquí.",
+    notesSoon: "Escribir observaciones propias todavía no está disponible en esta versión.",
     simulated: "Simulado",
     allSimulated: "Registros simulados",
     events: {
@@ -224,20 +232,24 @@ export const COPY = {
     settings: "Configuración de alertas (vista avanzada)",
   },
 
-  settings: {
-    title: "Configuración",
-    description: "Apariencia y laboratorio de esta vista experimental.",
-    theme: "Tema",
+  morePage: {
+    title: "Más",
+    lead: "Apariencia, modo demostración y otras vistas.",
+    themeTitle: "Tema",
     themes: {
       negro: { label: "Negro", hint: "Profundo, para ambientes oscuros" },
       verde: { label: "Verde", hint: "Bosque nocturno" },
       blanco: { label: "Blanco", hint: "Claro, para exteriores" },
     },
-    scenario: "Escenario del laboratorio",
-    scenarioHint: "Cambia los datos del cultivo para revisar cada estado. No modifica nada real.",
+    demoTitle: "Modo demostración",
+    demoLead: "Muestra un cultivo, mediciones y fotografías simuladas para explorar la app sin dispositivo. Nada se guarda y todo queda marcado como demostración.",
+    demoSwitch: "Activar modo demostración",
+    demoOn: "Activado",
+    demoOff: "Desactivado",
+    scenarioTitle: "Escenario",
+    scenarioHint: "Cambia el estado simulado para revisar cada situación.",
     scenarios: {
-      none: "Sin cultivo",
-      stable: "Simulación estable",
+      stable: "Estable",
       dry: "Humedad baja",
       humid: "Humedad alta",
       cold: "Temperatura baja",
@@ -248,14 +260,21 @@ export const COPY = {
       offline: "Sin conexión",
       "no-data": "Sin datos",
     } as Record<string, string>,
-    demoPhotos: "Ilustraciones de demostración",
-    demoPhotosHint: "Muestra fotografías de ejemplo (solo en simulación).",
-    current: "Abrir HOME actual",
+    viewsTitle: "Otras vistas",
+    current: "HOME actual",
     advanced: "Vista avanzada",
+    advancedSettings: "Ajustes avanzados",
+    aboutTitle: "Sobre los datos",
+    aboutBody: "Las mediciones vienen del dispositivo conectado. Sin ESP32 no se muestra ninguna lectura. La actividad y las gráficas corresponden a esta sesión y no se guardan.",
+    enabledToast: "Modo demostración activado",
+    disabledToast: "Modo demostración desactivado",
   },
 
-  notices: {
-    simulationBanner: "Cultivo de simulación. Nada de esto proviene de un cultivo real.",
+  demo: {
+    banner: "Modo demostración",
+    bannerBody: "Datos simulados, no son mediciones reales",
+    exit: "Salir",
+    badge: "Demostración",
   },
 
   feedback: {

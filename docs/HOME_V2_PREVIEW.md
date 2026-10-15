@@ -13,7 +13,7 @@ npx next start -H 0.0.0.0 -p 3000
 
 1. En la PC: `ipconfig` → anota la IPv4 (p. ej. `192.168.1.20`). Permite Node en el firewall de Windows (red privada) si lo pide.
 2. En Android (Chrome): `http://192.168.1.20:3000/design-lab/home-v2`
-3. Para ver todos los estados con datos simulados: `…/design-lab/home-v2?mode=simulation&scenario=stable&photos=demo`
+3. Para ver todos los estados con datos simulados: pestaña **Más → Modo demostración** (apagado por defecto; muestra un banner mientras esté activo).
 
 Alternativa por USB (sin Wi-Fi): activa depuración USB, abre `chrome://inspect` en la PC, y ejecuta `adb reverse tcp:3000 tcp:3000`; en el teléfono abre `http://localhost:3000/design-lab/home-v2`.
 
@@ -47,7 +47,6 @@ Cuando termine el build (Vercel → Deployments → la rama), abre:
 
 ```
 https://<url-del-preview>/design-lab/home-v2
-https://<url-del-preview>/design-lab/home-v2?mode=simulation&scenario=stable&photos=demo
 ```
 
 Qué esperar en la preview: el ESP32 envía a la URL que tenga configurada; si apunta a producción, la preview no recibirá sus datos y mostrará **"Simulación"** de forma explícita (no se pudo verificar a qué URL apunta el firmware). Para validar telemetría real habría que apuntar un dispositivo a la preview, y eso queda fuera de esta fase.
@@ -62,8 +61,8 @@ Borrar la rama remota o la preview no afecta a producción: `git push origin --d
 
 ## Checklist en el teléfono
 
-- [ ] Los tres temas (⚙ Configuración → Tema) y el modo oscuro del sistema.
+- [ ] Los tres temas (Más → Tema).
 - [ ] Giro a horizontal y teclado/gestos de la barra inferior (área segura inferior).
 - [ ] Swipe en la foto de Cultivo, arrastre sobre la gráfica de Ambiente.
 - [ ] Ajustes de Android → Accesibilidad → *Quitar animaciones* y comprobar que casi nada se mueve.
-- [ ] Ninguna pantalla debe decir "Datos reales" mientras el encabezado diga "Simulación".
+- [ ] Sin modo demostración y sin ESP32 el encabezado dice "Desconectado" y no hay mediciones.
