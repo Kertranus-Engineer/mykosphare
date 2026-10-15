@@ -29,7 +29,7 @@ export function ChartsTab() {
     <div className="hv2-stack hv2-stack--tight">
       {plotted.map((metric) => (
         <Card key={metric.id} className="hv2-trend-card" data-metric={metric.id}>
-          <h3 className="hv2-eyebrow">{metric.label}</h3>
+          <h2 className="hv2-eyebrow">{metric.label}</h2>
           <TrendChart metric={metric} />
         </Card>
       ))}

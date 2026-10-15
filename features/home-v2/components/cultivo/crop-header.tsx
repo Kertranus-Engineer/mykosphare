@@ -9,7 +9,14 @@ import { Chip, ProvenanceBadge } from "../ui/surface"
 /** Crop identity for the Cultivo screen. Non-ready states reuse the shared hero states. */
 export function CropHeader() {
   const { cultivation } = useHomeV2()
-  if (cultivation.status !== "ready") return <CropHero />
+  if (cultivation.status !== "ready") {
+    return (
+      <>
+        <h1 className="hv2-sr-only">{COPY.nav.crop}</h1>
+        <CropHero />
+      </>
+    )
+  }
 
   const { name, scientificName, provenance, stage, day, startedAt, sampleProfile } = cultivation
   return (

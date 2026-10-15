@@ -16,7 +16,7 @@ function Lightbox({ items, index, onIndex, onClose }: { items: PhotoModel[]; ind
   const photo = index === null ? null : items[index]
   return (
     <Sheet open={photo !== null} onOpenChange={(open) => !open && onClose()}>
-      <SheetContent side="bottom" className="hv2-sheet max-h-[92dvh] gap-0 rounded-t-3xl pb-[env(safe-area-inset-bottom)]">
+      <SheetContent side="bottom" lang="es" className="hv2-sheet max-h-[92dvh] gap-0 rounded-t-3xl pb-[env(safe-area-inset-bottom)]">
         <SheetHeader className="pr-14">
           <SheetTitle className="hv2-sheet-title">{COPY.historyPage.viewerTitle}</SheetTitle>
           <SheetDescription className="hv2-sheet-desc">{photo ? formatDateTime(photo.capturedAt) : ""}</SheetDescription>

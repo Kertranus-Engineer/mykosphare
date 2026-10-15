@@ -198,7 +198,7 @@ html:not([data-hv2-theme]) .hv2-root {
   top: 8px;
   left: 8px;
   z-index: 100;
-  padding: 10px 14px;
+  padding: 12px 14px;
   border-radius: 12px;
   background: var(--hv2-accent);
   color: var(--hv2-accent-ink);
@@ -259,7 +259,7 @@ html:not([data-hv2-theme]) .hv2-root {
 }
 
 .hv2-caption {
-  font-size: 12.5px;
+  font-size: 13px;
   line-height: 1.45;
   color: var(--hv2-text-3);
 }
@@ -407,7 +407,7 @@ html:not([data-hv2-theme]) .hv2-root {
   border: 1px solid color-mix(in oklab, var(--tone) 30%, transparent);
   background: color-mix(in oklab, var(--tone) 13%, transparent);
   color: var(--tone);
-  font-size: 12.5px;
+  font-size: 13px;
   font-weight: 600;
   line-height: 1;
   white-space: nowrap;
@@ -596,7 +596,7 @@ html:not([data-hv2-theme]) .hv2-root {
   .hv2-conn-label { display: inline; }
 }
 @media (max-width: 389px) {
-  .hv2-wordmark { letter-spacing: 0.12em; font-size: 12.5px; }
+  .hv2-wordmark { letter-spacing: 0.12em; font-size: 13px; }
 }
 
 .hv2-nav {
@@ -687,9 +687,10 @@ html:not([data-hv2-theme]) .hv2-root {
   color: var(--hv2-on-photo);
 }
 .hv2-hero--state { min-height: 340px; }
-/* The hero is always dark (photo / art), so it always uses the bright tone set,
-   whatever the page theme is. */
-.hv2-hero {
+/* The hero and the photo viewer are always dark (photo / art), so they always use
+   the bright tone set, whatever the page theme is. */
+.hv2-hero,
+.hv2-viewer {
   --hv2-ok: oklch(0.83 0.17 158);
   --hv2-info: oklch(0.82 0.11 205);
   --hv2-warn: oklch(0.8 0.15 62);
@@ -807,7 +808,7 @@ html:not([data-hv2-theme]) .hv2-root {
 }
 .hv2-hero-lead {
   max-width: 34ch;
-  font-size: 14.5px;
+  font-size: 15px;
   color: var(--hv2-on-photo-2);
 }
 .hv2-hero-meta {
@@ -822,7 +823,7 @@ html:not([data-hv2-theme]) .hv2-root {
   color: var(--hv2-on-photo-2);
 }
 .hv2-hero-note {
-  font-size: 12.5px;
+  font-size: 13px;
   color: var(--hv2-on-photo-2);
   opacity: 0.9;
 }
@@ -887,7 +888,7 @@ html:not([data-hv2-theme]) .hv2-root {
   align-items: center;
   gap: 8px;
   color: var(--hv2-text-2);
-  font-size: 13.5px;
+  font-size: 14px;
   font-weight: 600;
 }
 .hv2-metric-icon {
@@ -936,7 +937,7 @@ html:not([data-hv2-theme]) .hv2-root {
   display: inline-flex;
   align-items: center;
   gap: 3px;
-  font-size: 12.5px;
+  font-size: 13px;
   font-weight: 600;
   color: var(--hv2-text-2);
   font-variant-numeric: tabular-nums;
@@ -981,7 +982,7 @@ html:not([data-hv2-theme]) .hv2-root {
   color: var(--hv2-text);
 }
 .hv2-state-detail {
-  font-size: 13.5px;
+  font-size: 14px;
   color: var(--hv2-text-2);
 }
 .hv2-state-skeleton { height: 78px; border-radius: 24px; }
@@ -1037,7 +1038,7 @@ html:not([data-hv2-theme]) .hv2-root {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-size: 13.5px;
+  font-size: 14px;
   font-weight: 650;
   color: var(--hv2-text);
 }
@@ -1077,7 +1078,7 @@ html:not([data-hv2-theme]) .hv2-root {
   color: var(--hv2-accent);
 }
 .hv2-placeholder-title { flex: 1; font-size: 17px; font-weight: 700; letter-spacing: -0.01em; }
-.hv2-placeholder-empty { font-size: 14.5px; font-weight: 650; color: var(--hv2-text); }
+.hv2-placeholder-empty { font-size: 15px; font-weight: 650; color: var(--hv2-text); }
 .hv2-placeholder-body { font-size: 14px; color: var(--hv2-text-2); }
 
 .hv2-capture { display: flex; flex-direction: column; gap: 8px; align-items: stretch; }
@@ -1088,7 +1089,7 @@ html:not([data-hv2-theme]) .hv2-root {
 .hv2-crop-head { display: flex; flex-direction: column; gap: 6px; }
 .hv2-crop-head-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .hv2-crop-title {
-  font-size: 36px;
+  font-size: 34px;
   font-weight: 700;
   line-height: 1.04;
   letter-spacing: -0.025em;
@@ -1341,7 +1342,7 @@ html:not([data-hv2-theme]) .hv2-root {
   box-shadow: 0 0 0 5px var(--hv2-accent-soft);
 }
 .hv2-step-label {
-  font-size: 13.5px;
+  font-size: 14px;
   font-weight: 650;
   line-height: 1.2;
   color: var(--hv2-text);
@@ -1371,7 +1372,7 @@ html:not([data-hv2-theme]) .hv2-root {
   border-radius: 16px;
   background: color-mix(in oklab, var(--tone, var(--hv2-muted)) 11%, transparent);
   border: 1px solid color-mix(in oklab, var(--tone, var(--hv2-muted)) 28%, transparent);
-  font-size: 13.5px;
+  font-size: 14px;
   color: var(--hv2-text-2);
 }
 
@@ -1396,7 +1397,7 @@ html:not([data-hv2-theme]) .hv2-root {
   align-items: center;
   gap: 8px;
   margin-top: 3px;
-  font-size: 12.5px;
+  font-size: 13px;
   color: var(--hv2-text-3);
   font-variant-numeric: tabular-nums;
 }
@@ -1475,8 +1476,8 @@ html:not([data-hv2-theme]) .hv2-root {
 .hv2-notice .hv2-dot { margin-top: 7px; }
 .hv2-notice-text { min-width: 0; }
 .hv2-notice-title { font-size: 15px; font-weight: 650; color: var(--hv2-text); }
-.hv2-notice-detail { margin-top: 2px; font-size: 13.5px; color: var(--hv2-text-2); }
-.hv2-notice-meta { margin-top: 3px; font-size: 12.5px; color: var(--hv2-text-3); }
+.hv2-notice-detail { margin-top: 2px; font-size: 14px; color: var(--hv2-text-2); }
+.hv2-notice-meta { margin-top: 3px; font-size: 13px; color: var(--hv2-text-3); }
 
 .hv2-theme-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
 .hv2-theme-option {
@@ -1502,7 +1503,7 @@ html:not([data-hv2-theme]) .hv2-root {
 .hv2-swatch--negro { background: radial-gradient(circle at 30% 30%, oklch(0.3 0.04 165), oklch(0.1 0.008 170)); }
 .hv2-swatch--verde { background: radial-gradient(circle at 30% 30%, oklch(0.5 0.12 160), oklch(0.2 0.045 165)); }
 .hv2-swatch--blanco { background: radial-gradient(circle at 30% 30%, #fff, oklch(0.92 0.02 150)); }
-.hv2-theme-label { font-size: 14.5px; font-weight: 650; }
+.hv2-theme-label { font-size: 15px; font-weight: 650; }
 .hv2-theme-hint { font-size: 12px; line-height: 1.3; color: var(--hv2-text-3); }
 .hv2-theme-check { position: absolute; top: 10px; right: 10px; color: var(--hv2-accent); }
 
@@ -1536,8 +1537,8 @@ html:not([data-hv2-theme]) .hv2-root {
   border: 1px solid var(--hv2-line-2);
   background: var(--hv2-surface-2);
 }
-.hv2-toggle-title { display: block; font-size: 14.5px; font-weight: 650; color: var(--hv2-text); }
-.hv2-toggle-hint { display: block; font-size: 12.5px; color: var(--hv2-text-3); }
+.hv2-toggle-title { display: block; font-size: 15px; font-weight: 650; color: var(--hv2-text); }
+.hv2-toggle-hint { display: block; font-size: 13px; color: var(--hv2-text-3); }
 .hv2-toggle-row[data-disabled] { opacity: 0.5; pointer-events: none; }
 .hv2-switch {
   position: relative;
@@ -1573,7 +1574,7 @@ html:not([data-hv2-theme]) .hv2-root {
   border: 1px solid var(--hv2-line);
   background: var(--hv2-surface-2);
   color: var(--hv2-text);
-  font-size: 14.5px;
+  font-size: 15px;
   font-weight: 600;
 }
 
@@ -1703,7 +1704,7 @@ html:not([data-hv2-theme]) .hv2-root {
 .hv2-trend-axis, .hv2-trend-range {
   display: flex;
   justify-content: space-between;
-  font-size: 12.5px;
+  font-size: 13px;
   color: var(--hv2-text-3);
   font-variant-numeric: tabular-nums;
 }
@@ -1758,6 +1759,8 @@ html:not([data-hv2-theme]) .hv2-root {
   .hv2-segmented-thumb,
   .hv2-switch-knob { transition: none; }
   .hv2-trend-surface, .hv2-tab-panel { animation: none; }
+  /* Shared Sheet slides in with tw-animate; shorten it inside the lab. */
+  .hv2-sheet { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
 }
 
 /* ═════ 15. WIDER SCREENS ═══════════════════════════════════════════════ */

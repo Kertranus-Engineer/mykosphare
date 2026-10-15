@@ -36,7 +36,7 @@ export function HomeV2Shell({ children }: { children: ReactNode }) {
           <LazyMotion features={domAnimation} strict>
             <MotionConfig reducedMotion="user">
               <FeedbackProvider>
-                <div className="hv2-root">
+                <div className="hv2-root" lang="es">
                   <a href="#contenido" className="hv2-skip">Saltar al contenido</a>
                   <div aria-hidden className="hv2-ambient" />
                   <Header />
@@ -57,7 +57,7 @@ export function HomeV2Shell({ children }: { children: ReactNode }) {
 /** Static first paint while the query-driven providers resolve. */
 export function HomeV2Fallback() {
   return (
-    <div className="hv2-root" aria-busy="true">
+    <div className="hv2-root" lang="es" aria-busy="true">
       <div aria-hidden className="hv2-ambient" />
       <header className="hv2-header"><div className="hv2-header-inner" /></header>
       <main className="hv2-main"><div className="hv2-skeleton" style={{ height: 300, borderRadius: 28 }} /></main>

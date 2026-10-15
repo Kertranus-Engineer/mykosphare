@@ -42,7 +42,7 @@ function Group({ title, entries }: { title: string; entries: HistoryEntryModel[]
   if (entries.length === 0) return null
   return (
     <Card className="hv2-history-group">
-      <h3 className="hv2-eyebrow hv2-group-title">{title}</h3>
+      <h2 className="hv2-eyebrow hv2-group-title">{title}</h2>
       <ol className="hv2-notice-list">
         {entries.map((entry) => (
           <Entry key={entry.id} entry={entry} />

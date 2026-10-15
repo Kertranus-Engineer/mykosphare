@@ -20,7 +20,7 @@ export function SettingsSheet({ open, onOpenChange }: { open: boolean; onOpenCha
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="bottom" className="hv2-sheet max-h-[88dvh] gap-0 rounded-t-3xl pb-[env(safe-area-inset-bottom)]">
+      <SheetContent side="bottom" lang="es" className="hv2-sheet max-h-[88dvh] gap-0 rounded-t-3xl pb-[env(safe-area-inset-bottom)]">
         <SheetHeader className="pr-14">
           <SheetTitle className="hv2-sheet-title">{COPY.settings.title}</SheetTitle>
           <SheetDescription className="hv2-sheet-desc">{COPY.settings.description}</SheetDescription>
