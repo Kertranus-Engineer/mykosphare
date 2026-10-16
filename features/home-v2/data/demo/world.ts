@@ -282,7 +282,7 @@ function deviceOf(scenario: GrowDemoScenario, state: SensorState): DeviceModel {
   }
   if (state.stale) return { kind: "stale", label: "Sin señal reciente", provenance: "simulated", tone: "warn", lastSampleAt, actuators: actuatorsOf(state) }
   if (state.offline) return { kind: "offline", label: "Sin conexión", provenance: "simulated", tone: "crit", lastSampleAt, actuators: actuatorsOf(state) }
-  return { kind: "simulated", label: "Simulación", provenance: "simulated", tone: "sim", lastSampleAt, actuators: actuatorsOf(state) }
+  return { kind: "simulated", label: "Ejemplo", provenance: "simulated", tone: "sim", lastSampleAt, actuators: actuatorsOf(state) }
 }
 
 // ── Events derived from the curves ────────────────────────

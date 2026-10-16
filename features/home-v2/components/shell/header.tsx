@@ -21,9 +21,13 @@ function ConnectionChip() {
   )
 }
 
-/** Visible, persistent reminder while simulated data is on. One tap to leave. */
+/**
+ * Persistent, honest label while example data is shown, doubling as the way to real data:
+ * it says it is an example and points to connecting the device. Leaving the example view
+ * lives in Más.
+ */
 function DemoBanner() {
-  const { mode, setDemo } = useHomeV2()
+  const { mode } = useHomeV2()
   if (mode !== "demo") return null
   return (
     <div className="hv2-demo-banner" role="status" aria-label={COPY.demo.bannerLabel}>
@@ -31,11 +35,12 @@ function DemoBanner() {
         <FlaskConical aria-hidden className="size-3.5" />
         <p className="hv2-demo-banner-text">
           <strong>{COPY.demo.banner}</strong>
-          <span>· {COPY.demo.bannerBody}</span>
+          <span className="hv2-demo-banner-long">· {COPY.demo.bannerBody}</span>
+          <span className="hv2-demo-banner-short">· {COPY.demo.bannerBodyShort}</span>
         </p>
-        <button type="button" className="hv2-demo-exit hv2-press" onClick={() => setDemo({ enabled: false })}>
-          {COPY.demo.exit}
-        </button>
+        <Link href={COPY.demo.connectHref} className="hv2-demo-exit hv2-press">
+          {COPY.demo.connect}
+        </Link>
       </div>
     </div>
   )

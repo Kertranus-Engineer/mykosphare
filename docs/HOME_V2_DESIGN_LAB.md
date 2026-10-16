@@ -20,7 +20,7 @@ La app funciona **sin parámetros de URL**. Compatibilidad interna: `?chamber=ID
 
 - **Sin preferencia guardada** HOME V2 abre en modo demostración (`features/home-v2/config.ts`).
 - **Se guarda la elección** (`localStorage["mykosphare-demo-mode"]`): si la persona lo apaga en Más, esa decisión se respeta en visitas futuras; si lo enciende, también. Solo se guarda "quiero ver simulación" y el escenario; nunca datos simulados.
-- **Indicador:** una línea fija bajo el encabezado ("DEMOSTRACIÓN · datos simulados", con "Salir") en todas las pantallas, además del chip "Simulación" del encabezado.
+- **Indicador:** una línea fija bajo el encabezado ("VISTA DE EJEMPLO · conecta tu dispositivo") con el botón **Conectar** (lleva a `/dashboard/esp32`), más el chip "Ejemplo" del encabezado. Sigue siendo explícito que los datos no son reales. Se sale de la vista de ejemplo en Más. En Inicio, una tarjeta "Pasa del ejemplo a tus datos" explica cómo conectar el ESP32. Las insignias "Ejemplo" no se repiten en cada sección (las cubre la línea fija).
 - **Apagar el inicio automático antes de lanzar** (cualquiera de las dos):
   - variable de entorno `NEXT_PUBLIC_HOME_V2_DEMO_DEFAULT=off` (sin tocar código; en Vercel, Settings → Environment Variables), o
   - `DEMO_ON_BY_DEFAULT = false` en `features/home-v2/config.ts`.

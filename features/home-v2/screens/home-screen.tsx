@@ -2,6 +2,7 @@
 
 import { COPY } from "../copy"
 import { CaptureCard } from "../components/home/capture-card"
+import { ConnectCard } from "../components/home/connect-card"
 import { CropHero } from "../components/home/crop-hero"
 import { EnvironmentSummary } from "../components/home/environment-summary"
 import { InsightCard } from "../components/home/insight-card"
@@ -21,6 +22,7 @@ export function HomeScreen() {
       <Rise i={2}><StatusCard /></Rise>
       <Rise i={3}><InsightCard /></Rise>
       <Rise i={4}><CaptureCard /></Rise>
+      <Rise i={5}><ConnectCard /></Rise>
     </div>
   )
 }

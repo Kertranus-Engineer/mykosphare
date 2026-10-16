@@ -59,7 +59,7 @@ export function DeviceDetails() {
 
   return (
     <section id="dispositivo" aria-labelledby="hv2-device-h" className="hv2-block hv2-anchor">
-      <SectionHeading id="hv2-device-h" title={COPY.home.deviceTitle} action={<ProvenanceBadge provenance={device.provenance} />} />
+      <SectionHeading id="hv2-device-h" title={COPY.home.deviceTitle} action={<ProvenanceBadge provenance={device.provenance} quietSimulated />} />
       <Card className="hv2-device" tone={device.tone}>
         <div className="hv2-device-head">
           <span className="hv2-device-icon" aria-hidden><Cpu className="size-5" /></span>

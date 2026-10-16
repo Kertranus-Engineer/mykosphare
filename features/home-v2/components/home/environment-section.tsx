@@ -84,7 +84,7 @@ export function EnvironmentSection({ title = COPY.home.environmentTitle, showSpa
       <SectionHeading
         id="hv2-env-h"
         title={title}
-        action={<ProvenanceBadge provenance={ready ? environment.provenance : "unavailable"} />}
+        action={<ProvenanceBadge provenance={ready ? environment.provenance : "unavailable"} quietSimulated />}
       />
 
       {environment.status === "waiting" ? (

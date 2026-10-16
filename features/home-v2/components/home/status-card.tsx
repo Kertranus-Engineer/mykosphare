@@ -62,7 +62,7 @@ export function StatusCard() {
         <div className="hv2-status-text">
           <p className="hv2-status-label">
             {COPY.home.statusTitle}
-            <ProvenanceBadge provenance={environment.provenance} className="hv2-status-badge" />
+            <ProvenanceBadge provenance={environment.provenance} className="hv2-status-badge" quietSimulated />
           </p>
           {overall ? (
             <>

@@ -87,7 +87,9 @@ const PROVENANCE_TONE: Record<Provenance, Tone> = { real: "ok", simulated: "sim"
 const PROVENANCE_ICON = { real: Radio, simulated: FlaskConical, unavailable: SignalZero } as const
 
 /** Real vs. simulated vs. unavailable. Shown wherever a value or a crop is presented. */
-export function ProvenanceBadge({ provenance, className }: { provenance: Provenance; className?: string }) {
+export function ProvenanceBadge({ provenance, className, quietSimulated = false }: { provenance: Provenance; className?: string; quietSimulated?: boolean }) {
+  // `quietSimulated`: the persistent "vista de ejemplo" banner already says it; don't repeat it on every section.
+  if (quietSimulated && provenance === "simulated") return null
   const Icon = PROVENANCE_ICON[provenance]
   return (
     <Chip tone={PROVENANCE_TONE[provenance]} className={cn("hv2-chip--caps", className)} icon={<Icon aria-hidden className="size-3" />}>

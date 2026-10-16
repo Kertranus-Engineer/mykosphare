@@ -114,8 +114,11 @@ export function CropHero() {
       <div className="hv2-hero-scrim" />
       <div className="hv2-hero-top">
         <div className="hv2-hero-badges">
-          <ProvenanceBadge provenance={provenance} />
-          {latest?.kind === "demo" && <Chip tone="sim" className="hv2-chip--caps">{COPY.photos.illustration}</Chip>}
+          {latest?.kind === "demo" ? (
+            <Chip tone="sim" className="hv2-chip--caps">{COPY.photos.exampleIllustration}</Chip>
+          ) : (
+            <ProvenanceBadge provenance={provenance} />
+          )}
         </div>
         {day !== null && (
           <div className="hv2-hero-day" aria-label={COPY.crop.day(day)}>

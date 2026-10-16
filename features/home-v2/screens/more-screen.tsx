@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { Check, ExternalLink, FlaskConical, LayoutDashboard, SlidersHorizontal } from "lucide-react"
+import { Check, Cpu, ExternalLink, FlaskConical, LayoutDashboard, SlidersHorizontal } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 import { COPY } from "../copy"
@@ -111,6 +111,10 @@ export function MoreScreen() {
         <section aria-labelledby="hv2-views-h" className="hv2-block">
           <SectionHeading id="hv2-views-h" title={COPY.morePage.viewsTitle} />
           <div className="hv2-sheet-links">
+            <Link href={COPY.demo.connectHref} className="hv2-link-row hv2-press">
+              <Cpu aria-hidden className="size-4" />
+              {COPY.connectCard.cta}
+            </Link>
             <Link href="/home-v1" className="hv2-link-row hv2-press">
               <ExternalLink aria-hidden className="size-4" />
               {COPY.morePage.current}

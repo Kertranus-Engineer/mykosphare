@@ -28,7 +28,7 @@ export function TrendSection() {
       <SectionHeading
         id="hv2-trend-h"
         title={environment.status === "ready" && environment.window === "demo" ? COPY.environmentPage.trendTitleDemo : COPY.environmentPage.trendTitle}
-        action={<ProvenanceBadge provenance={environment.status === "ready" ? environment.provenance : "unavailable"} />}
+        action={<ProvenanceBadge provenance={environment.status === "ready" ? environment.provenance : "unavailable"} quietSimulated />}
       />
       <Card className="hv2-trend-card">
         <Segmented options={OPTIONS} value={metricId} onChange={setMetricId} label={COPY.environmentPage.trendTitle} idPrefix="hv2-trend" />
