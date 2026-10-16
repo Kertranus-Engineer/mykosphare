@@ -4,7 +4,6 @@ import { LazyMotion, MotionConfig, domAnimation } from "framer-motion"
 import type { ReactNode } from "react"
 
 import { ErrorBoundary } from "@/components/ui/error-boundary"
-import { MobileDataProvider } from "@/features/mobile/mobile-data-context"
 import { FeedbackProvider } from "../feedback"
 import { HomeV2Provider } from "../../data/home-v2-provider"
 import { BottomNav } from "./bottom-nav"
@@ -23,32 +22,32 @@ function ScreenError() {
 }
 
 /**
- * HOME V2 shell. It composes the EXISTING data providers once (mobile telemetry,
- * captures, grow view) and never duplicates their logic. `LazyMotion` keeps
+ * HOME V2 shell. The provider picks the data source once (the demo engine, or the EXISTING
+ * mobile telemetry / captures / grow view) and never duplicates their logic. `LazyMotion` keeps
  * Motion's footprint to the DOM animation features; `reducedMotion="user"`
  * honours the OS preference.
  */
 export function HomeV2Shell({ children }: { children: ReactNode }) {
+  // Motion and feedback sit ABOVE the data provider: switching the data source (demo on/off)
+  // remounts the screens, and a toast announcing the switch must survive it.
   return (
-    <MobileDataProvider>
-      <HomeV2Provider>
-        <LazyMotion features={domAnimation} strict>
-          <MotionConfig reducedMotion="user">
-            <FeedbackProvider>
-              <div className="hv2-root" lang="es">
-                <a href="#contenido" className="hv2-skip">Saltar al contenido</a>
-                <div aria-hidden className="hv2-ambient" />
-                <Header />
-                <main id="contenido" className="hv2-main">
-                  <ErrorBoundary fallback={<ScreenError />}>{children}</ErrorBoundary>
-                </main>
-                <BottomNav />
-              </div>
-            </FeedbackProvider>
-          </MotionConfig>
-        </LazyMotion>
-      </HomeV2Provider>
-    </MobileDataProvider>
+    <LazyMotion features={domAnimation} strict>
+      <MotionConfig reducedMotion="user">
+        <FeedbackProvider>
+          <HomeV2Provider>
+            <div className="hv2-root" lang="es">
+              <a href="#contenido" className="hv2-skip">Saltar al contenido</a>
+              <div aria-hidden className="hv2-ambient" />
+              <Header />
+              <main id="contenido" className="hv2-main">
+                <ErrorBoundary fallback={<ScreenError />}>{children}</ErrorBoundary>
+              </main>
+              <BottomNav />
+            </div>
+          </HomeV2Provider>
+        </FeedbackProvider>
+      </MotionConfig>
+    </LazyMotion>
   )
 }
 

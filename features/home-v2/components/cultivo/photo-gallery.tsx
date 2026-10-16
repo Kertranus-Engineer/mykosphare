@@ -1,7 +1,7 @@
 "use client"
 
 import { AnimatePresence, m, useReducedMotion, type PanInfo } from "framer-motion"
-import { Camera, ChevronLeft, ChevronRight, ImageOff, Images, TriangleAlert } from "lucide-react"
+import { Camera, ChevronLeft, ChevronRight, FlaskConical, ImageOff, Images, TriangleAlert } from "lucide-react"
 import { useCallback, useEffect, useRef, useState, type KeyboardEvent } from "react"
 
 import { cn } from "@/lib/utils"
@@ -21,7 +21,7 @@ const slide = {
   exit: (dir: number) => ({ opacity: 0, x: dir * -40, scale: 0.985 }),
 }
 
-export function Photo({ photo, className, eager = false }: { photo: PhotoModel; className?: string; eager?: boolean }) {
+export function Photo({ photo, className, eager = false, thumb = false }: { photo: PhotoModel; className?: string; eager?: boolean; thumb?: boolean }) {
   const [failedUrl, setFailedUrl] = useState<string | null>(null)
   if (failedUrl === photo.url) {
     return (
@@ -34,9 +34,10 @@ export function Photo({ photo, className, eager = false }: { photo: PhotoModel; 
   return (
     // eslint-disable-next-line @next/next/no-img-element -- remote Supabase URL / data URI, no image loader configured
     <img
-      src={photo.url}
+      src={thumb ? (photo.thumbUrl ?? photo.url) : photo.url}
       alt=""
       className={className}
+      data-kind={photo.kind}
       loading={eager ? "eager" : "lazy"}
       decoding="async"
       draggable={false}
@@ -122,12 +123,16 @@ function Stage({
       </button>
 
       <div className="hv2-viewer-bottom">
-        <div className="hv2-viewer-tags">
-          {photo.kind === "demo" ? (
-            <Chip tone="sim" className="hv2-chip--caps hv2-chip--solid">{COPY.photos.demoLabel}</Chip>
-          ) : (
-            <Chip tone="ok" className="hv2-chip--glass">{isLatest ? COPY.photos.latest : COPY.photos.realLabel}</Chip>
-          )}
+        <div className="hv2-viewer-caption" key={photo.id}>
+          <div className="hv2-viewer-tags">
+            {photo.kind === "demo" ? (
+              <Chip tone="sim" className="hv2-chip--caps hv2-chip--solid">{COPY.photos.demoLabel}</Chip>
+            ) : (
+              <Chip tone="ok" className="hv2-chip--glass">{isLatest ? COPY.photos.latest : COPY.photos.realLabel}</Chip>
+            )}
+          </div>
+          {photo.day !== undefined && <p className="hv2-viewer-day">{COPY.crop.day(photo.day)}</p>}
+          {photo.caption && <p className="hv2-viewer-text">{photo.caption}</p>}
         </div>
         <button type="button" className="hv2-button hv2-button--glass hv2-press" onClick={onOpenGallery}>
           <Images aria-hidden className="size-4" />
@@ -141,13 +146,16 @@ function Stage({
 function Timeline({ items, selectedId, onSelect }: { items: PhotoModel[]; selectedId: string; onSelect: (id: string) => void }) {
   const listRef = useRef<HTMLUListElement>(null)
   const reduce = useReducedMotion()
+  const settled = useRef(false)
 
   useEffect(() => {
     const list = listRef.current
     const current = list?.querySelector<HTMLElement>('[aria-current="true"]')
     if (!list || !current) return
     const left = current.offsetLeft - (list.clientWidth - current.clientWidth) / 2
-    list.scrollTo({ left, behavior: reduce ? "auto" : "smooth" })
+    // First paint lands on the selection; later changes glide there.
+    list.scrollTo({ left, behavior: reduce || !settled.current ? "auto" : "smooth" })
+    settled.current = true
   }, [selectedId, reduce])
 
   return (
@@ -163,9 +171,14 @@ function Timeline({ items, selectedId, onSelect }: { items: PhotoModel[]; select
               aria-label={COPY.photos.select(formatShortDate(photo.capturedAt))}
               onClick={() => onSelect(photo.id)}
             >
-              <Photo photo={photo} className="hv2-thumb-img" />
-              {photo.kind === "demo" && <span className="hv2-thumb-demo" aria-hidden>{COPY.photos.demoBadge}</span>}
-              <span className="hv2-thumb-date">{formatShortDate(photo.capturedAt)}</span>
+              <span className="hv2-thumb-frame">
+                <Photo photo={photo} className="hv2-thumb-img" thumb />
+                {photo.kind === "demo" && <span className="hv2-thumb-demo hv2-thumb-demo--dot" aria-hidden><FlaskConical className="size-3" /></span>}
+              </span>
+              <span className="hv2-thumb-label">
+                <span className="hv2-thumb-day">{photo.day !== undefined ? COPY.crop.day(photo.day) : formatShortDate(photo.capturedAt)}</span>
+                {photo.day !== undefined && <span className="hv2-thumb-date">{formatShortDate(photo.capturedAt)}</span>}
+              </span>
             </button>
           </li>
         )
@@ -205,9 +218,9 @@ function GallerySheet({
                   aria-label={COPY.photos.select(formatShortDate(photo.capturedAt))}
                   onClick={() => { onSelect(photo.id); onOpenChange(false) }}
                 >
-                  <Photo photo={photo} className="hv2-thumb-img" />
-                  {photo.kind === "demo" && <span className="hv2-thumb-demo" aria-hidden>{COPY.photos.demoBadge}</span>}
-                  <span className="hv2-thumb-date">{formatShortDate(photo.capturedAt)}</span>
+                  <Photo photo={photo} className="hv2-thumb-img" thumb />
+                  {photo.kind === "demo" && <span className="hv2-thumb-demo hv2-thumb-demo--dot" aria-hidden><FlaskConical className="size-3" /></span>}
+                  <span className="hv2-thumb-date">{photo.day !== undefined ? `${COPY.crop.day(photo.day)} · ${formatShortDate(photo.capturedAt)}` : formatShortDate(photo.capturedAt)}</span>
                 </button>
               </li>
             ))}

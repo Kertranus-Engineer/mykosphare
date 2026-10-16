@@ -13,7 +13,7 @@ npx next start -H 0.0.0.0 -p 3000
 
 1. En la PC: `ipconfig` → anota la IPv4 (p. ej. `192.168.1.20`). Permite Node en el firewall de Windows (red privada) si lo pide.
 2. En Android (Chrome): `http://192.168.1.20:3000/design-lab/home-v2`
-3. Para ver todos los estados con datos simulados: pestaña **Más → Modo demostración** (apagado por defecto; muestra un banner mientras esté activo).
+3. HOME V2 abre **ya en modo demostración** (cultivo de ejemplo con fotos, sensores, alertas e historia simulados; una línea fija lo indica). Para cambiar de situación: **Más → Escenario**. Para ver el estado real sin ESP32: **Más → Modo demostración** apagado (tu elección se guarda en ese navegador).
 
 Alternativa por USB (sin Wi-Fi): activa depuración USB, abre `chrome://inspect` en la PC, y ejecuta `adb reverse tcp:3000 tcp:3000`; en el teléfono abre `http://localhost:3000/design-lab/home-v2`.
 
@@ -65,4 +65,9 @@ Borrar la rama remota o la preview no afecta a producción: `git push origin --d
 - [ ] Giro a horizontal y teclado/gestos de la barra inferior (área segura inferior).
 - [ ] Swipe en la foto de Cultivo, arrastre sobre la gráfica de Ambiente.
 - [ ] Ajustes de Android → Accesibilidad → *Quitar animaciones* y comprobar que casi nada se mueve.
-- [ ] Sin modo demostración y sin ESP32 el encabezado dice "Desconectado" y no hay mediciones.
+- [ ] Con la demostración apagada y sin ESP32 el encabezado dice "Desconectado" y no hay mediciones.
+- [ ] Al abrir por primera vez (sin elegir nada) ya aparece el cultivo de ejemplo: Hongo ostra, Colonización, Día 11.
+- [ ] Cada escenario de Más (Humedad baja, Crítico, Sin conexión…) cambia Inicio, Ambiente, alertas e historial a la vez.
+- [ ] Los datos de la demostración nunca aparecen con la demostración apagada.
+
+Para lanzar a usuarios reales sin demostración automática: variable `NEXT_PUBLIC_HOME_V2_DEMO_DEFAULT=off` (ver `docs/HOME_V2_DESIGN_LAB.md`).

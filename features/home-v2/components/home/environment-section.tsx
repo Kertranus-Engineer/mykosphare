@@ -1,5 +1,6 @@
 "use client"
 
+import Link from "next/link"
 import { ArrowDownRight, ArrowUpRight, Droplets, Leaf, Minus, Thermometer, WifiOff } from "lucide-react"
 
 import { cn } from "@/lib/utils"
@@ -19,12 +20,13 @@ function trendText(metric: MetricModel): string | null {
   return metric.delta !== null && Math.abs(metric.delta) >= 0.05 ? `${word} ${metric.delta > 0 ? "+" : ""}${metric.delta.toFixed(1)}` : word
 }
 
-export function MetricTile({ metric, dimmed, showSpark = true }: { metric: MetricModel; dimmed: boolean; showSpark?: boolean }) {
+export function MetricTile({ metric, dimmed, showSpark = true, href }: { metric: MetricModel; dimmed: boolean; showSpark?: boolean; href?: string }) {
   const Icon = ICON[metric.id]
   const trend = trendText(metric)
   const TrendIcon = metric.trend === "up" ? ArrowUpRight : metric.trend === "down" ? ArrowDownRight : Minus
+  const link = href ? ({ as: Link, href } as const) : ({ role: "group" } as const)
   return (
-    <Card className="hv2-metric" role="group" data-metric={metric.id} data-dimmed={dimmed || undefined} aria-label={metric.label}>
+    <Card className={cn("hv2-metric", href && "hv2-press")} {...link} data-metric={metric.id} data-dimmed={dimmed || undefined} aria-label={metric.label}>
       <div className="hv2-metric-head">
         <span className="hv2-metric-icon" aria-hidden><Icon className="size-[18px]" /></span>
         <span className="hv2-metric-label">{metric.label}</span>

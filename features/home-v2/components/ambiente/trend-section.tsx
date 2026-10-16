@@ -27,7 +27,7 @@ export function TrendSection() {
     <section aria-labelledby="hv2-trend-h" className="hv2-block">
       <SectionHeading
         id="hv2-trend-h"
-        title={COPY.environmentPage.trendTitle}
+        title={environment.status === "ready" && environment.window === "demo" ? COPY.environmentPage.trendTitleDemo : COPY.environmentPage.trendTitle}
         action={<ProvenanceBadge provenance={environment.status === "ready" ? environment.provenance : "unavailable"} />}
       />
       <Card className="hv2-trend-card">
@@ -46,7 +46,7 @@ export function TrendSection() {
             />
           )}
         </div>
-        {count >= 3 && <p className="hv2-caption">{COPY.environmentPage.trendNote(count)}</p>}
+        {count >= 3 && <p className="hv2-caption">{environment.status === "ready" && environment.window === "demo" ? COPY.environmentPage.trendNoteDemo(count) : COPY.environmentPage.trendNote(count)}</p>}
       </Card>
     </section>
   )

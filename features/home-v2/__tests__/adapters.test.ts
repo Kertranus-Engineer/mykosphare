@@ -15,14 +15,15 @@ import {
   toDeviceModel,
   severityToTone,
   toEnvironmentModel,
+  toCropHistory,
   toHistoryEntries,
   toLog,
   toPhotosModel,
 } from "../data/adapters"
-import { buildDemoPhotos } from "../data/demo-frames"
 import {
   DEMO_OFF,
   DEMO_STORAGE_KEY,
+  defaultDemoState,
   demoFromUrl,
   effectiveGrowRequest,
   getDemoServerSnapshot,
@@ -98,11 +99,17 @@ describe("environment adapter", () => {
     expect(two.metrics[0].series).toEqual([23, 23.4])
   })
 
-  it("marks simulated data and never gives it a healthy 'ok' tone (demo mode only)", () => {
-    const model = toEnvironmentModel(telemetry({ source: "simulated" }), "demo")
-    if (model.status !== "ready") throw new Error("expected ready")
-    expect(model.provenance).toBe("simulated")
-    expect(model.overall?.tone).toBe("sim")
+  it("gives each engine state a status level and never a calm one when data is not fresh", () => {
+    const level = (state: string, extra: Partial<MobileTelemetry> = {}) => {
+      const model = toEnvironmentModel(telemetry({ env: { state, alerts: [], chamberIndicators: [] } as unknown as MobileTelemetry["env"], ...extra }))
+      if (model.status !== "ready") throw new Error("expected ready")
+      return model.overall?.level
+    }
+    expect(level("STABLE")).toBe("stable")
+    expect(level("OPTIMIZING")).toBe("optimizing")
+    expect(level("PRE_WARNING")).toBe("prealert")
+    expect(level("CRITICAL")).toBe("alert")
+    expect(level("STABLE", { dimmed: true })).toBe("nodata")
   })
 
   it("does not show an overall state before the shared engine catches up", () => {
@@ -112,7 +119,7 @@ describe("environment adapter", () => {
   })
 
   it("never maps critical engine states to a calm tone", () => {
-    const critical = toEnvironmentModel(telemetry({ env: { state: "CRITICAL", alerts: [], chamberIndicators: [] } as unknown as MobileTelemetry["env"], source: "simulated" }), "demo")
+    const critical = toEnvironmentModel(telemetry({ env: { state: "CRITICAL", alerts: [], chamberIndicators: [] } as unknown as MobileTelemetry["env"] }))
     if (critical.status !== "ready") throw new Error("expected ready")
     expect(critical.overall?.tone).toBe("crit")
   })
@@ -121,7 +128,7 @@ describe("environment adapter", () => {
 describe("device adapter", () => {
   it("maps provenance from the telemetry source", () => {
     expect(toDeviceModel(telemetry({ source: "live" })).provenance).toBe("real")
-    expect(toDeviceModel(telemetry({ source: "simulated", connection: { kind: "simulated", label: "Simulación" } }), "demo").provenance).toBe("simulated")
+    expect(toDeviceModel(telemetry({ source: "simulated", connection: { kind: "simulated", label: "Simulación" } })).provenance).toBe("unavailable")
     expect(toDeviceModel(telemetry({ source: "none", connection: { kind: "offline", label: "Sin conexión" } })).provenance).toBe("unavailable")
   })
 
@@ -280,25 +287,6 @@ describe("photos adapter", () => {
   })
 })
 
-describe("demonstration photos", () => {
-  it("are always labelled demo, ordered, and inside the run window", () => {
-    const start = new Date(NOW.getTime() - 10 * 86_400_000).toISOString()
-    const photos = buildDemoPhotos(start, NOW)
-    expect(photos.length).toBeGreaterThanOrEqual(3)
-    expect(photos.every((p) => p.kind === "demo")).toBe(true)
-    const times = photos.map((p) => new Date(p.capturedAt).getTime())
-    expect([...times].sort((a, b) => a - b)).toEqual(times)
-    expect(times[0]).toBeGreaterThanOrEqual(new Date(start).getTime())
-    expect(times[times.length - 1]).toBeLessThanOrEqual(NOW.getTime())
-    expect(photos[0].url.startsWith("data:image/svg+xml")).toBe(true)
-  })
-
-  it("produce nothing for an invalid or future run", () => {
-    expect(buildDemoPhotos("nope", NOW)).toEqual([])
-    expect(buildDemoPhotos(new Date(NOW.getTime() + 1000).toISOString(), NOW)).toEqual([])
-  })
-})
-
 describe("lab request", () => {
   const parse = (q: string) => parseLabRequest(new URLSearchParams(q))
 
@@ -327,20 +315,29 @@ describe("history feed", () => {
     expect(feed[1]).toMatchObject({ kind: "event", tone: "crit" })
   })
 
-  it("drops anything derived from simulated telemetry unless the demo mode is on", () => {
+  it("drops anything derived from simulated telemetry (the demo uses its own engine)", () => {
     const withSim: ActivityItem[] = [
       ...activity,
       { id: "s1", kind: "alert", severity: "info", title: "Simulación activa", timestamp: null, simulated: true },
       { id: "s2", kind: "change", severity: "warning", title: "Estable → Prealerta", timestamp: 9_000, simulated: true },
     ]
     expect(toHistoryEntries(withSim).map((e) => e.id)).toEqual(["a1", "c1", "e1"])
-    const demo = toHistoryEntries(withSim, "demo")
-    expect(demo.map((e) => e.id)).toEqual(["a1", "s1", "s2", "c1", "e1"])
-    expect(demo.filter((e) => e.simulated).map((e) => e.id)).toEqual(["s1", "s2"])
+    expect(toHistoryEntries(withSim).every((e) => !e.simulated)).toBe(true)
   })
 
-  it("does not mix crop logbook entries into the environment history", () => {
-    expect(toHistoryEntries(activity, "demo").some((e) => (e.kind as string) === "crop")).toBe(false)
+  it("gives every entry an icon category", () => {
+    expect(toHistoryEntries(activity).map((e) => e.category)).toEqual(["alert", "session", "session"])
+  })
+
+  it("maps the crop record to timeline entries (milestones, stages and captures are crop; environment is not)", () => {
+    const entries = toCropHistory([
+      { id: "1", at: "2026-10-01T10:00:00.000Z", kind: "milestone", title: "Comenzó", tone: "ok", provenance: "real" },
+      { id: "2", at: "2026-10-02T10:00:00.000Z", kind: "environment", title: "Humedad bajó", tone: "watch", provenance: "real", day: 2 },
+    ])
+    expect(entries.map((e) => [e.kind, e.category, e.simulated, e.day])).toEqual([
+      ["crop", "milestone", false, undefined],
+      ["event", "environment", false, 2],
+    ])
   })
 
   it("maps every severity to a tone", () => {
@@ -365,27 +362,20 @@ describe("metric sample times", () => {
   })
 })
 
-describe("no simulation outside the explicit demo mode", () => {
+describe("no simulation outside the demonstration mode", () => {
   const sim = telemetry({ source: "simulated", connection: { kind: "simulated", label: "Simulación" } })
 
-  it("shows the shared hook's silent simulator as 'no device' in normal mode", () => {
+  it("shows the shared hook's silent simulator as 'no device', always", () => {
     expect(toEnvironmentModel(sim)).toMatchObject({ status: "waiting", reason: "disconnected" })
     const device = toDeviceModel(sim)
     expect(device).toMatchObject({ kind: "offline", label: "Desconectado", provenance: "unavailable", lastSampleAt: null })
     expect(device.actuators.every((a) => a.state === "unknown")).toBe(true)
-    expect(resolveTelemetry(sim, "normal")).toBe("UNAVAILABLE")
+    expect(resolveTelemetry(sim)).toBe("UNAVAILABLE")
   })
 
-  it("shows the same telemetry as SIMULATED only while the demo mode is on", () => {
-    expect(resolveTelemetry(sim, "demo")).toBe("SIMULATED")
-    expect(toEnvironmentModel(sim, "demo")).toMatchObject({ status: "ready", provenance: "simulated" })
-    expect(toDeviceModel(sim, "demo")).toMatchObject({ kind: "simulated", provenance: "simulated" })
-  })
-
-  it("real device data is REAL in both modes (it is never relabelled)", () => {
-    expect(resolveTelemetry(telemetry(), "normal")).toBe("REAL")
-    expect(resolveTelemetry(telemetry(), "demo")).toBe("REAL")
-    expect(toEnvironmentModel(telemetry(), "normal")).toMatchObject({ status: "ready", provenance: "real" })
+  it("real device data is REAL and keeps its provenance", () => {
+    expect(resolveTelemetry(telemetry())).toBe("REAL")
+    expect(toEnvironmentModel(telemetry())).toMatchObject({ status: "ready", provenance: "real", window: "session" })
   })
 
   it("flags any SIMULATED source in normal mode as a leak", () => {
@@ -396,8 +386,8 @@ describe("no simulation outside the explicit demo mode", () => {
 
 describe("source resolution", () => {
   it("resolves connecting without data to LOADING and no device to UNAVAILABLE", () => {
-    expect(resolveTelemetry(telemetry({ hasData: false, source: "none", connection: { kind: "connecting", label: "Conectando" } }), "normal")).toBe("LOADING")
-    expect(resolveTelemetry(telemetry({ hasData: false, source: "none", connection: { kind: "offline", label: "Sin conexión" } }), "normal")).toBe("UNAVAILABLE")
+    expect(resolveTelemetry(telemetry({ hasData: false, source: "none", connection: { kind: "connecting", label: "Conectando" } }))).toBe("LOADING")
+    expect(resolveTelemetry(telemetry({ hasData: false, source: "none", connection: { kind: "offline", label: "Sin conexión" } }))).toBe("UNAVAILABLE")
   })
 
   it("resolves cultivation and photos to the five kinds", () => {
@@ -417,38 +407,50 @@ describe("source resolution", () => {
 })
 
 describe("demo mode preference", () => {
-  it("is OFF for anything missing, malformed or unexpected", () => {
-    for (const raw of [null, "", "nope", "[]", "null", '{"enabled":"yes"}', '{"enabled":false}', "123"]) {
-      expect(parseDemoState(raw)).toEqual(DEMO_OFF)
+  it("starts ON for a visitor with no saved choice while the development default is on", () => {
+    expect(defaultDemoState(true)).toEqual({ enabled: true, scenario: "stable" })
+    for (const raw of [null, "", "nope", "[]", "null", '{"enabled":"yes"}', "123"]) {
+      expect(parseDemoState(raw, true)).toEqual({ enabled: true, scenario: "stable" })
     }
   })
 
+  it("can be switched off before launch (default off) and then starts OFF", () => {
+    expect(defaultDemoState(false)).toEqual(DEMO_OFF)
+    for (const raw of [null, "", "nope", "[]", '{"enabled":"yes"}']) {
+      expect(parseDemoState(raw, false)).toEqual(DEMO_OFF)
+    }
+  })
+
+  it("a saved choice always wins over the default, in both directions", () => {
+    expect(parseDemoState('{"enabled":false}', true)).toEqual(DEMO_OFF)
+    expect(parseDemoState('{"enabled":true,"scenario":"dry"}', false)).toEqual({ enabled: true, scenario: "dry" })
+  })
+
   it("round-trips an enabled state and falls back to a valid scenario", () => {
-    expect(parseDemoState(serializeDemoState({ enabled: true, scenario: "hot" }))).toEqual({ enabled: true, scenario: "hot" })
-    expect(parseDemoState('{"enabled":true,"scenario":"bogus"}')).toEqual({ enabled: true, scenario: "stable" })
+    expect(parseDemoState(serializeDemoState({ enabled: true, scenario: "hot" }), false)).toEqual({ enabled: true, scenario: "hot" })
+    expect(parseDemoState('{"enabled":true,"scenario":"bogus"}', false)).toEqual({ enabled: true, scenario: "stable" })
     expect(serializeDemoState(DEMO_OFF)).toBe('{"enabled":false}')
   })
 
-  it("only the internal URL switch can turn it on without the user's preference", () => {
+  it("the internal URL switch turns it on (testing only)", () => {
     expect(demoFromUrl({ kind: "unconfigured" })).toBeNull()
     expect(demoFromUrl({ kind: "real", chamberId: "abc" })).toBeNull()
     expect(demoFromUrl({ kind: "simulation", scenario: "dry", stage: null, notices: [] })).toEqual({ enabled: true, scenario: "dry" })
   })
 
-  it("serves a simulated grow request ONLY while the demo is on; a URL switch cannot revive it once off", () => {
+  it("never asks the grow store for simulation: the demo crop comes from the demo engine, and a real chamber is never mixed in", () => {
     const urlSim: GrowRequest = { kind: "simulation", scenario: "dry", stage: null, notices: [] }
     expect(effectiveGrowRequest(DEMO_OFF, urlSim)).toEqual({ kind: "unconfigured" })
     expect(effectiveGrowRequest(DEMO_OFF, { kind: "real", chamberId: "abc" })).toEqual({ kind: "real", chamberId: "abc" })
-    expect(effectiveGrowRequest({ enabled: true, scenario: "hot" }, { kind: "unconfigured" })).toMatchObject({ kind: "simulation", scenario: "hot" })
-    // demo never mixes with a real chamber selection
-    expect(effectiveGrowRequest({ enabled: true, scenario: "stable" }, { kind: "real", chamberId: "abc" }).kind).toBe("simulation")
+    expect(effectiveGrowRequest({ enabled: true, scenario: "hot" }, urlSim)).toEqual({ kind: "unconfigured" })
+    expect(effectiveGrowRequest({ enabled: true, scenario: "stable" }, { kind: "real", chamberId: "abc" })).toEqual({ kind: "unconfigured" })
   })
 
-  it("persists through the store and stays off by default (server snapshot is always off)", () => {
+  it("persists the user's choice through the store; the server snapshot is the default", () => {
     resetDemoStoreForTests()
     localStorage.removeItem(DEMO_STORAGE_KEY)
-    expect(getDemoServerSnapshot()).toEqual(DEMO_OFF)
-    expect(getDemoSnapshot()).toEqual(DEMO_OFF)
+    expect(getDemoServerSnapshot()).toBe(defaultDemoState())
+    expect(getDemoSnapshot()).toEqual(defaultDemoState())
     let notified = 0
     const stop = subscribeDemo(() => { notified += 1 })
     setDemoState({ enabled: true, scenario: "dry" })

@@ -15,7 +15,7 @@ import type { GrowTimelineEvent } from "@/lib/grow/timeline"
 import type { GrowSnapshot, GrowthStage, SpeciesProfile } from "@/lib/grow/types"
 import { cultivationDay, GROW_STAGE_ORDER, presentSpecies, stageLabel } from "@/lib/grow/presentation"
 import type { GrowView } from "@/features/grow/data/grow-view"
-import { resolveTelemetry, type DataMode } from "./resolve"
+import { resolveTelemetry } from "./resolve"
 import { COPY } from "../copy"
 import type {
   ActuatorModel,
@@ -26,10 +26,12 @@ import type {
   EnvironmentModel,
   HistoryEntryModel,
   LogEntryModel,
+  LogKind,
   MetricModel,
   PhotoModel,
   PhotosModel,
   StageStepModel,
+  StatusLevel,
   Tone,
 } from "./model"
 
@@ -43,6 +45,16 @@ const STATE_TONE: Record<EnvState, Tone> = {
   WARNING: "warn",
   ESCALATION: "warn",
   CRITICAL: "crit",
+}
+
+const STATE_LEVEL: Record<EnvState, StatusLevel> = {
+  STABLE: "stable",
+  OPTIMIZING: "optimizing",
+  RECOVERY: "optimizing",
+  PRE_WARNING: "prealert",
+  WARNING: "alert",
+  ESCALATION: "alert",
+  CRITICAL: "alert",
 }
 
 const INDICATOR_TONE: Record<string, Tone> = {
@@ -76,8 +88,12 @@ function metric(
   }
 }
 
-export function toEnvironmentModel(tel: MobileTelemetry, mode: DataMode = "normal"): EnvironmentModel {
-  const source = resolveTelemetry(tel, mode)
+/**
+ * Real telemetry only. The silent simulator inside the shared hook is NOT data here (it resolves
+ * to UNAVAILABLE); demonstration values come from the demo engine (data/demo), never from this hook.
+ */
+export function toEnvironmentModel(tel: MobileTelemetry): EnvironmentModel {
+  const source = resolveTelemetry(tel)
   if (source === "LOADING") {
     return { status: "waiting", reason: "loading", title: COPY.environment.waitingTitle, detail: COPY.environment.waitingDetail }
   }
@@ -86,21 +102,18 @@ export function toEnvironmentModel(tel: MobileTelemetry, mode: DataMode = "norma
     return { status: "waiting", reason: "disconnected", title: COPY.environment.noDeviceTitle, detail: COPY.environment.noDeviceDetail }
   }
 
-  const provenance = tel.source === "simulated" ? "simulated" : "real"
-  let overall: { label: string; detail: string; tone: Tone } | null = null
+  let overall: { label: string; detail: string; tone: Tone; level: StatusLevel } | null = null
   if (tel.envReady) {
     const copy = STATE_ES[tel.env.state]
-    const base = STATE_TONE[tel.env.state]
-    // Simulated data must never look like a healthy real reading.
-    const tone: Tone = provenance === "simulated" && (base === "ok" || base === "info") ? "sim" : base
-    overall = { label: copy.label, detail: copy.title, tone }
+    overall = { label: copy.label, detail: copy.title, tone: STATE_TONE[tel.env.state], level: tel.dimmed ? "nodata" : STATE_LEVEL[tel.env.state] }
   }
 
   return {
     status: "ready",
-    provenance,
+    provenance: "real",
     dimmed: tel.dimmed,
     metrics: [metric(tel, "temperature"), metric(tel, "humidity")],
+    window: "session",
     overall,
   }
 }
@@ -125,8 +138,8 @@ function actuator(id: ActuatorModel["id"], reported: boolean | null, dimmed: boo
   }
 }
 
-export function toDeviceModel(tel: MobileTelemetry, mode: DataMode = "normal"): DeviceModel {
-  if (resolveTelemetry(tel, mode) === "UNAVAILABLE") {
+export function toDeviceModel(tel: MobileTelemetry): DeviceModel {
+  if (resolveTelemetry(tel) === "UNAVAILABLE") {
     return {
       kind: "offline",
       label: COPY.device.disconnected,
@@ -140,7 +153,7 @@ export function toDeviceModel(tel: MobileTelemetry, mode: DataMode = "normal"): 
   return {
     kind,
     label: tel.connection.label,
-    provenance: tel.source === "live" ? "real" : tel.source === "simulated" ? "simulated" : "unavailable",
+    provenance: tel.source === "live" ? "real" : "unavailable",
     tone: DEVICE_TONE[kind],
     lastSampleAt: tel.lastDeviceSampleAt,
     actuators: [actuator("fan", tel.fan, tel.dimmed), actuator("humidifier", tel.humidifier, tel.dimmed)],
@@ -184,27 +197,28 @@ function logEntry(event: GrowTimelineEvent): LogEntryModel {
   const events = COPY.log.events
   const metricKey = event.metric ?? "humidity"
   const base = { id: event.id, at: event.at, provenance: event.origin === "simulated" ? ("simulated" as const) : ("real" as const) }
+  const entry = (kind: LogKind, title: string, tone: Tone): LogEntryModel => ({ ...base, kind, title, tone })
   switch (event.kind) {
     case "cultivation_started":
-      return { ...base, title: events.cultivation_started, tone: "ok" }
+      return entry("milestone", events.cultivation_started, "ok")
     case "stage_confirmed":
-      return { ...base, title: events.stage_confirmed(event.stage ? stageLabel(event.stage) : "—"), tone: "info" }
+      return entry("stage", events.stage_confirmed(event.stage ? stageLabel(event.stage) : "—"), "info")
     case "capture_added":
-      return { ...base, title: events.capture_added, tone: "info" }
+      return entry("photo", events.capture_added, "info")
     case "condition_stable":
-      return { ...base, title: events.condition_stable, tone: "ok" }
+      return entry("environment", events.condition_stable, "ok")
     case "metric_dropped":
-      return { ...base, title: events.metric_dropped[metricKey], tone: "watch" }
+      return entry("environment", events.metric_dropped[metricKey], "watch")
     case "metric_rose":
-      return { ...base, title: events.metric_rose[metricKey], tone: "watch" }
+      return entry("environment", events.metric_rose[metricKey], "watch")
     case "metric_recovered":
-      return { ...base, title: events.metric_recovered[metricKey], tone: "ok" }
+      return entry("environment", events.metric_recovered[metricKey], "ok")
     case "metric_missing":
-      return { ...base, title: events.metric_missing[metricKey], tone: "muted" }
+      return entry("device", events.metric_missing[metricKey], "muted")
     case "reading_received":
-      return { ...base, title: events.reading_received, tone: "muted" }
+      return entry("device", events.reading_received, "muted")
     case "signal_lost":
-      return { ...base, title: events.signal_lost, tone: "muted" }
+      return entry("device", events.signal_lost, "muted")
   }
 }
 
@@ -302,27 +316,45 @@ export function severityToTone(severity: ActivitySeverity): Tone {
   return SEVERITY_TONE[severity]
 }
 
+/** Active alerts first, then newest first. */
+export function byRecency(a: HistoryEntryModel, b: HistoryEntryModel): number {
+  if (a.at === null && b.at !== null) return -1
+  if (a.at !== null && b.at === null) return 1
+  return (b.at ?? 0) - (a.at ?? 0)
+}
+
 /**
- * Session activity (alerts, bus events, state changes), active alerts first, then
- * newest first. Anything derived from simulated telemetry is dropped unless the
- * demo mode is on. Crop events live in Cultivo's logbook, not here. Session
- * activity is NOT persisted: callers must say so.
+ * Real session activity (alerts, bus events, state changes). Anything derived from simulated
+ * telemetry is dropped: the demonstration mode never goes through here (its history comes from
+ * the demo engine). Session activity is NOT persisted: callers must say so.
  */
-export function toHistoryEntries(activity: readonly ActivityItem[], mode: DataMode = "normal"): HistoryEntryModel[] {
+export function toHistoryEntries(activity: readonly ActivityItem[]): HistoryEntryModel[] {
   return activity
-    .filter((item) => mode === "demo" || !item.simulated)
+    .filter((item) => !item.simulated)
     .map((item): HistoryEntryModel => ({
       id: item.id,
       kind: item.kind === "alert" ? "alert" : "event",
+      category: item.kind === "alert" ? "alert" : "session",
       tone: severityToTone(item.severity),
       title: item.title,
       detail: item.detail,
       at: item.timestamp,
-      simulated: item.simulated === true,
+      simulated: false,
     }))
-    .sort((a, b) => {
-      if (a.at === null && b.at !== null) return -1
-      if (a.at !== null && b.at === null) return 1
-      return (b.at ?? 0) - (a.at ?? 0)
-    })
+    .sort(byRecency)
+}
+
+/** The crop's own record (run milestones, confirmed stages, captures) as timeline entries. */
+export function toCropHistory(log: readonly LogEntryModel[]): HistoryEntryModel[] {
+  return log.map((entry): HistoryEntryModel => ({
+    id: entry.id,
+    kind: entry.kind === "environment" || entry.kind === "device" ? "event" : "crop",
+    category: entry.kind,
+    tone: entry.tone,
+    title: entry.title,
+    detail: entry.detail,
+    at: new Date(entry.at).getTime(),
+    simulated: entry.provenance === "simulated",
+    day: entry.day,
+  }))
 }

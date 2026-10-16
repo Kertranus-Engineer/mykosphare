@@ -26,12 +26,12 @@ function DemoBanner() {
   const { mode, setDemo } = useHomeV2()
   if (mode !== "demo") return null
   return (
-    <div className="hv2-demo-banner" role="status">
+    <div className="hv2-demo-banner" role="status" aria-label={COPY.demo.bannerLabel}>
       <div className="hv2-demo-banner-inner">
-        <FlaskConical aria-hidden className="size-4" />
+        <FlaskConical aria-hidden className="size-3.5" />
         <p className="hv2-demo-banner-text">
           <strong>{COPY.demo.banner}</strong>
-          <span> · {COPY.demo.bannerBody}</span>
+          <span>· {COPY.demo.bannerBody}</span>
         </p>
         <button type="button" className="hv2-demo-exit hv2-press" onClick={() => setDemo({ enabled: false })}>
           {COPY.demo.exit}

@@ -2,12 +2,12 @@
 
 import { COPY } from "../copy"
 import { AlertsSection, MissingSensors } from "../components/ambiente/alerts-and-sensors"
-import { ActuatorsSection, DeviceDetails } from "../components/ambiente/device-sections"
+import { DeviceDetails } from "../components/ambiente/device-sections"
 import { TrendSection } from "../components/ambiente/trend-section"
 import { EnvironmentSection } from "../components/home/environment-section"
 import { Rise } from "../components/ui/surface"
 
-/** Ambiente: readings, session trend, reported actuators, active alerts, device details and what is not measured. */
+/** Ambiente: readings, trend, active alerts, the ESP32 (sensors and actuators) and what is not measured. */
 export function EnvironmentScreen() {
   return (
     <div className="hv2-stack">
@@ -19,10 +19,9 @@ export function EnvironmentScreen() {
       </Rise>
       <Rise i={1}><EnvironmentSection title={COPY.environmentPage.readings} showSpark={false} /></Rise>
       <Rise i={2}><TrendSection /></Rise>
-      <Rise i={3}><ActuatorsSection /></Rise>
-      <Rise i={4}><AlertsSection /></Rise>
-      <Rise i={5}><DeviceDetails /></Rise>
-      <Rise i={6}><MissingSensors /></Rise>
+      <Rise i={3}><AlertsSection /></Rise>
+      <Rise i={4}><DeviceDetails /></Rise>
+      <Rise i={5}><MissingSensors /></Rise>
     </div>
   )
 }

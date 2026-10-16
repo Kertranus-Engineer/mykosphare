@@ -27,13 +27,21 @@ export function TrendChart({ metric }: { metric: MetricModel }) {
 
   const min = Math.min(...series)
   const max = Math.max(...series)
-  // Never zoom tighter than minSpan: a 0.4 °C wobble must not look like a swing.
-  const span = Math.max(max - min, metric.minSpan)
-  const lo = (min + max) / 2 - span / 2
+  const target = metric.target
+  // With a target range the chart frames it (a 0.4 °C wobble inside 20–24 °C reads as calm). Without one,
+  // never zoom tighter than minSpan: a small wobble must not look like a swing.
+  const domainLo = target ? Math.min(min, target.min) : min
+  const domainHi = target ? Math.max(max, target.max) : max
+  const pad = target ? (domainHi - domainLo) * 0.08 : 0
+  const span = Math.max(domainHi - domainLo + pad * 2, metric.minSpan)
+  const lo = (domainLo + domainHi) / 2 - span / 2
   const x = (i: number) => (i / (count - 1)) * W
   const y = (v: number) => H - PAD - ((v - lo) / span) * (H - PAD * 2)
   const line = series.map((v, i) => `${i === 0 ? "M" : "L"}${x(i).toFixed(2)} ${y(v).toFixed(2)}`).join(" ")
   const area = `${line} L${W} ${H} L0 ${H} Z`
+
+  const bandTop = target ? y(target.max) : 0
+  const bandBottom = target ? y(target.min) : 0
 
   const index = scrub === null ? count - 1 : Math.min(count - 1, Math.max(0, scrub))
   const value = series[index]
@@ -91,17 +99,35 @@ export function TrendChart({ metric }: { metric: MetricModel }) {
           {[0.25, 0.5, 0.75].map((f) => (
             <line key={f} x1="0" x2={W} y1={H * f} y2={H * f} className="hv2-trend-grid" vectorEffect="non-scaling-stroke" />
           ))}
+          {target && <rect x="0" y={bandTop} width={W} height={Math.max(0, bandBottom - bandTop)} className="hv2-trend-band" />}
           <path d={area} fill={`url(#${gradientId})`} />
           <path d={line} fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round" vectorEffect="non-scaling-stroke" />
         </svg>
+        {target && (
+          <>
+            <span aria-hidden className="hv2-trend-edge" style={{ top: `${(bandTop / H) * 100}%` }}>{fixed(target.max)}</span>
+            <span aria-hidden className="hv2-trend-edge" style={{ top: `${(bandBottom / H) * 100}%` }}>{fixed(target.min)}</span>
+          </>
+        )}
         <span aria-hidden className="hv2-trend-guide" data-active={scrub !== null || undefined} style={{ left: `${(index / (count - 1)) * 100}%` }} />
         <span aria-hidden className="hv2-trend-marker" style={{ left: `${(index / (count - 1)) * 100}%`, top: `${(y(value) / H) * 100}%` }} />
+        {scrub !== null && (
+          <span aria-hidden className="hv2-trend-tip" style={{ left: `${Math.min(86, Math.max(14, (index / (count - 1)) * 100))}%`, top: `${Math.max(2, (y(value) / H) * 100 - 26)}%` }}>
+            {fixed(value)} {metric.unit}
+          </span>
+        )}
       </div>
 
       <div className="hv2-trend-axis" aria-hidden>
         <span>{times[0]}</span>
         <span>{times[count - 1]}</span>
       </div>
+      {target && (
+        <p className="hv2-trend-legend" aria-hidden>
+          <span className="hv2-trend-legend-band" />
+          {COPY.environmentPage.targetRange(fixed(target.min), fixed(target.max), metric.unit)}
+        </p>
+      )}
       <p className="hv2-trend-range">
         <span>{COPY.environmentPage.min} {fixed(min)} {metric.unit}</span>
         <span>{COPY.environmentPage.max} {fixed(max)} {metric.unit}</span>

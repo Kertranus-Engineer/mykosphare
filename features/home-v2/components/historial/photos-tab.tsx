@@ -1,7 +1,7 @@
 "use client"
 
 import { AnimatePresence, m } from "framer-motion"
-import { Camera, ChevronLeft, ChevronRight, ImageOff, TriangleAlert } from "lucide-react"
+import { Camera, ChevronLeft, ChevronRight, Columns2, FlaskConical, ImageOff, TriangleAlert } from "lucide-react"
 import { useState } from "react"
 
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet"
@@ -94,25 +94,64 @@ export function PhotosTab() {
 
   const { items } = photos
   const newestFirst = items.map((photo, index) => ({ photo, index })).reverse()
+  const [latest, ...older] = newestFirst
+  const label = (photo: PhotoModel) => (photo.day !== undefined ? COPY.crop.day(photo.day) : formatShortDate(photo.capturedAt))
   return (
     <div className="hv2-stack hv2-stack--tight">
       <p className="hv2-caption hv2-photos-count">{COPY.historyPage.photosCount(items.length)}</p>
-      <ul className="hv2-gallery-grid">
-        {newestFirst.map(({ photo, index }) => (
-          <li key={photo.id}>
-            <button
-              type="button"
-              className="hv2-thumb hv2-thumb--grid hv2-press"
-              aria-label={COPY.historyPage.open(formatShortDate(photo.capturedAt))}
-              onClick={() => setOpen(index)}
-            >
-              <Photo photo={photo} className="hv2-thumb-img" />
-              {photo.kind === "demo" && <span className="hv2-thumb-demo" aria-hidden>{COPY.photos.demoBadge}</span>}
-              <time className="hv2-thumb-date" dateTime={isoOrUndefined(photo.capturedAt)}>{formatShortDate(photo.capturedAt)}</time>
-            </button>
-          </li>
-        ))}
-      </ul>
+
+      <button
+        type="button"
+        className="hv2-featured hv2-press"
+        aria-label={COPY.historyPage.open(formatShortDate(latest.photo.capturedAt))}
+        onClick={() => setOpen(latest.index)}
+      >
+        <Photo photo={latest.photo} className="hv2-featured-img" eager />
+        <span className="hv2-featured-scrim" aria-hidden />
+        <span className="hv2-featured-text">
+          <span className="hv2-eyebrow">{COPY.historyPage.latestTitle}</span>
+          <span className="hv2-featured-day">{label(latest.photo)}</span>
+          <time className="hv2-featured-date" dateTime={isoOrUndefined(latest.photo.capturedAt)}>{formatDateTime(latest.photo.capturedAt)}</time>
+        </span>
+        {latest.photo.kind === "demo" && <span className="hv2-thumb-demo" aria-hidden>{COPY.photos.demoBadge}</span>}
+      </button>
+
+      {older.length > 0 && (
+        <>
+          <h2 className="hv2-eyebrow hv2-tl-heading">{COPY.historyPage.allTitle}</h2>
+          <ul className="hv2-gallery-grid">
+            {older.map(({ photo, index }) => (
+              <li key={photo.id}>
+                <button
+                  type="button"
+                  className="hv2-thumb hv2-thumb--grid hv2-press"
+                  aria-label={COPY.historyPage.open(formatShortDate(photo.capturedAt))}
+                  onClick={() => setOpen(index)}
+                >
+                  <Photo photo={photo} className="hv2-thumb-img" thumb />
+                  {photo.kind === "demo" && <span className="hv2-thumb-demo hv2-thumb-demo--dot" aria-hidden><FlaskConical className="size-3" /></span>}
+                  <time className="hv2-thumb-date" dateTime={isoOrUndefined(photo.capturedAt)}>{label(photo)}</time>
+                </button>
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
+
+      {/* Structure for comparing two dates later. Nothing is compared today. */}
+      <Card className="hv2-compare" aria-labelledby="hv2-compare-h">
+        <div className="hv2-compare-head">
+          <Columns2 aria-hidden className="size-5" />
+          <h2 id="hv2-compare-h" className="hv2-compare-title">{COPY.historyPage.compareTitle}</h2>
+          <Chip tone="info" className="hv2-chip--caps">{COPY.historyPage.compareBadge}</Chip>
+        </div>
+        <div className="hv2-compare-slots" aria-hidden>
+          <span className="hv2-compare-slot">{COPY.historyPage.compareSlotA}</span>
+          <span className="hv2-compare-slot">{COPY.historyPage.compareSlotB}</span>
+        </div>
+        <p className="hv2-caption">{COPY.historyPage.compareBody}</p>
+      </Card>
+
       <p className="hv2-caption">{items.some((photo) => photo.kind === "demo") ? COPY.photos.demoNote : COPY.photos.unlinked}</p>
       <Lightbox items={items} index={open} onIndex={setOpen} onClose={() => setOpen(null)} />
     </div>

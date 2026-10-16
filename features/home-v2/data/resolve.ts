@@ -12,7 +12,7 @@
  *   ERROR       a real failure we can name (never "there is simply nothing")
  */
 import type { MobileTelemetry } from "@/features/mobile/use-mobile-telemetry"
-import type { CultivationModel, PhotosModel } from "./model"
+import type { CultivationModel, EnvironmentModel, PhotosModel } from "./model"
 
 export type SourceKind = "REAL" | "SIMULATED" | "UNAVAILABLE" | "LOADING" | "ERROR"
 export type DataMode = "normal" | "demo"
@@ -31,11 +31,16 @@ type TelemetryInput = Pick<MobileTelemetry, "source" | "hasData"> & { connection
  * is reporting. Outside the demo mode that fallback is NOT data: it resolves
  * to UNAVAILABLE so nothing simulated is ever shown as a measurement.
  */
-export function resolveTelemetry(tel: TelemetryInput, mode: DataMode): SourceKind {
+export function resolveTelemetry(tel: TelemetryInput): SourceKind {
   if (tel.connection.kind === "connecting" && !tel.hasData) return "LOADING"
   if (tel.source === "live" && tel.hasData) return "REAL"
-  if (tel.source === "simulated" && tel.hasData) return mode === "demo" ? "SIMULATED" : "UNAVAILABLE"
   return "UNAVAILABLE"
+}
+
+/** Demonstration telemetry comes from the demo engine: simulated when it reports, otherwise like a missing device. */
+export function resolveDemoTelemetry(environment: EnvironmentModel): SourceKind {
+  if (environment.status === "ready") return "SIMULATED"
+  return environment.reason === "loading" ? "LOADING" : "UNAVAILABLE"
 }
 
 export function resolveCultivation(model: CultivationModel): SourceKind {
@@ -62,15 +67,6 @@ export function resolvePhotos(model: PhotosModel): SourceKind {
       return "ERROR"
     case "ready":
       return model.items.every((photo) => photo.kind === "demo") ? "SIMULATED" : "REAL"
-  }
-}
-
-export function resolveSources(input: { mode: DataMode; tel: TelemetryInput; cultivation: CultivationModel; photos: PhotosModel }): ResolvedSources {
-  return {
-    mode: input.mode,
-    telemetry: resolveTelemetry(input.tel, input.mode),
-    cultivation: resolveCultivation(input.cultivation),
-    photos: resolvePhotos(input.photos),
   }
 }
 

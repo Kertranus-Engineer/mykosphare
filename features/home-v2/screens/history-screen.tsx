@@ -4,6 +4,7 @@ import { Activity, Clock, Images } from "lucide-react"
 import { useState } from "react"
 
 import { COPY } from "../copy"
+import { useHomeV2 } from "../data/home-v2-provider"
 import { ActivityTab } from "../components/historial/activity-tab"
 import { ChartsTab } from "../components/historial/charts-tab"
 import { PhotosTab } from "../components/historial/photos-tab"
@@ -21,13 +22,14 @@ const OPTIONS = [
 /** Historial V2: activity feed, session charts and photos. Everything is read-only. */
 export function HistoryScreen() {
   const [tab, setTab] = useState<Tab>("activity")
+  const { mode } = useHomeV2()
 
   return (
     <div className="hv2-stack">
       <Rise i={0}>
         <header className="hv2-page-head">
           <h1 className="hv2-page-title">{COPY.historyPage.title}</h1>
-          <p className="hv2-page-lead">{COPY.historyPage.lead}</p>
+          <p className="hv2-page-lead">{mode === "demo" ? COPY.historyPage.leadDemo : COPY.historyPage.lead}</p>
         </header>
       </Rise>
       <Rise i={1}>

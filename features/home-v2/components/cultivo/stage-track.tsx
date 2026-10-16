@@ -10,6 +10,8 @@ import type { StageStepModel } from "../../data/model"
 import { Card, Chip, SectionHeading } from "../ui/surface"
 
 const STATUS_LABEL = { done: COPY.stages.done, current: COPY.stages.current, upcoming: COPY.stages.upcoming } as const
+/** Short wording under each stage; the full wording stays in the accessible name. */
+const STATUS_SHORT = { done: COPY.stages.done, current: COPY.stages.currentShort, upcoming: COPY.stages.upcoming } as const
 
 /** Which sides of a horizontal scroller still have content, so the edge fades only appear where they are true. */
 function useScrollEdges(ref: React.RefObject<HTMLElement | null>, enabled: boolean) {
@@ -70,7 +72,7 @@ export function StageTrack() {
   }, [currentId, center])
 
   if (cultivation.status !== "ready") return null
-  const { steps, stage, possibleChange } = cultivation
+  const { steps, stage, possibleChange, sampleProfile } = cultivation
   const selected = steps.find((step) => step.id === (picked ?? currentId)) ?? steps[0]
   const overflow = edges.start || edges.end
 
@@ -108,7 +110,7 @@ export function StageTrack() {
                     {step.status === "done" ? <Check className="size-4" strokeWidth={3} /> : index + 1}
                   </span>
                   <span className="hv2-step-label">{step.label}</span>
-                  {step.estimated && <Chip tone="sim" className="hv2-chip--caps">{COPY.crop.estimate}</Chip>}
+                  <span className="hv2-step-status" aria-hidden>{step.estimated ? COPY.crop.estimate : STATUS_SHORT[step.status]}</span>
                 </button>
               </li>
             ))}
@@ -128,7 +130,7 @@ export function StageTrack() {
             {COPY.crop.possibleChange(possibleChange.label)}
           </p>
         )}
-        <p className="hv2-caption">{COPY.stages.planNote}</p>
+        <p className="hv2-caption">{COPY.stages.planNote}{sampleProfile && ` ${COPY.crop.sampleProfileBody}`}</p>
       </Card>
     </section>
   )

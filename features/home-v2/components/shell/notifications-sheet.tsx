@@ -12,19 +12,20 @@ import { EmptyState, ToneDot } from "../ui/surface"
 const LIMIT = 30
 
 /**
- * Active alerts and session events, already resolved by the provider: anything
- * derived from simulated telemetry is absent unless the demo mode is on.
+ * Active alerts and environment events, already resolved by the provider (the crop's own record, such as
+ * photographs and observations, lives in Cultivo and Historial, not here). Demonstration entries come only
+ * from the demo engine and are labelled by the description.
  */
 export function NotificationsSheet({ open, onOpenChange }: { open: boolean; onOpenChange: (open: boolean) => void }) {
-  const { history } = useHomeV2()
-  const items = history.slice(0, LIMIT)
+  const { history, mode } = useHomeV2()
+  const items = history.filter((entry) => entry.kind !== "crop").slice(0, LIMIT)
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent side="bottom" lang="es" className="hv2-sheet max-h-[85dvh] gap-0 rounded-t-3xl pb-[env(safe-area-inset-bottom)]">
         <SheetHeader className="pr-14">
           <SheetTitle className="hv2-sheet-title">{COPY.notifications.title}</SheetTitle>
-          <SheetDescription className="hv2-sheet-desc">{COPY.notifications.description}</SheetDescription>
+          <SheetDescription className="hv2-sheet-desc">{mode === "demo" ? COPY.notifications.descriptionDemo : COPY.notifications.description}</SheetDescription>
         </SheetHeader>
         <div className="hv2-sheet-body">
           {items.length === 0 ? (

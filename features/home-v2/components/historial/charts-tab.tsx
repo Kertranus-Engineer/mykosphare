@@ -9,7 +9,7 @@ import { Card, EmptyState } from "../ui/surface"
 
 /** Both measured quantities, stacked. Same session-only data as Ambiente. */
 export function ChartsTab() {
-  const { environment, device } = useHomeV2()
+  const { environment, device, mode } = useHomeV2()
   const metrics = environment.status === "ready" ? environment.metrics : []
   const plotted = metrics.filter((metric) => metric.series.length >= 3)
 
@@ -33,7 +33,7 @@ export function ChartsTab() {
           <TrendChart metric={metric} />
         </Card>
       ))}
-      <p className="hv2-caption">{COPY.historyPage.chartsNote} {COPY.environmentPage.scrubHint}</p>
+      <p className="hv2-caption">{mode === "demo" ? COPY.historyPage.chartsNoteDemo : COPY.historyPage.chartsNote} {COPY.environmentPage.scrubHint}</p>
     </div>
   )
 }

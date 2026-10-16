@@ -26,7 +26,10 @@ export function CropHeader() {
         <ProvenanceBadge provenance={provenance} />
       </div>
       <h1 id="hv2-crop-title" className="hv2-crop-title">{name}</h1>
-      <p className="hv2-crop-species">{scientificName}</p>
+      <p className="hv2-crop-species">
+        {scientificName}
+        {sampleProfile && <Chip tone="info">{COPY.crop.sampleProfile}</Chip>}
+      </p>
 
       <dl className="hv2-facts">
         <div className="hv2-fact">
@@ -43,12 +46,6 @@ export function CropHeader() {
         </div>
       </dl>
 
-      {sampleProfile && (
-        <p className="hv2-crop-note">
-          <Chip tone="info">{COPY.crop.sampleProfile}</Chip>
-          {COPY.crop.sampleProfileBody}
-        </p>
-      )}
     </header>
   )
 }

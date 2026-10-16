@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { ChevronRight, FlaskConical, ImageOff, Sprout, TriangleAlert } from "lucide-react"
+import { Camera, ChevronRight, FlaskConical, ImageOff, Sprout, TriangleAlert } from "lucide-react"
 import { useState } from "react"
 
 import { COPY } from "../../copy"
@@ -17,8 +17,10 @@ function HeroMedia({ photo }: { photo: PhotoModel | null }) {
   const [failedUrl, setFailedUrl] = useState<string | null>(null)
   if (photo && failedUrl !== photo.url) {
     return (
-      // eslint-disable-next-line @next/next/no-img-element -- remote Supabase URL / data URI, no image loader configured
-      <img src={photo.url} alt="" className="hv2-hero-img" decoding="async" onError={() => setFailedUrl(photo.url)} />
+      <div className="hv2-hero-media" aria-hidden>
+        {/* eslint-disable-next-line @next/next/no-img-element -- remote Supabase URL / data URI, no image loader configured */}
+        <img src={photo.heroUrl ?? photo.url} alt="" className="hv2-hero-img" data-kind={photo.kind} fetchPriority="high" decoding="async" onError={() => setFailedUrl(photo.url)} />
+      </div>
     )
   }
   return (
@@ -105,13 +107,22 @@ export function CropHero() {
   }
 
   const { name, scientificName, provenance, day, stage, sampleProfile } = cultivation
+  const photoCount = photos.status === "ready" ? photos.items.length : 0
   return (
-    <article className="hv2-hero" aria-labelledby="hv2-crop-name">
+    <article className="hv2-hero hv2-hero--crop" aria-labelledby="hv2-crop-name">
       <HeroMedia photo={latest} />
       <div className="hv2-hero-scrim" />
       <div className="hv2-hero-top">
-        <ProvenanceBadge provenance={provenance} />
-        {latest?.kind === "demo" && <Chip tone="sim" className="hv2-chip--caps">{COPY.photos.demoLabel}</Chip>}
+        <div className="hv2-hero-badges">
+          <ProvenanceBadge provenance={provenance} />
+          {latest?.kind === "demo" && <Chip tone="sim" className="hv2-chip--caps">{COPY.photos.illustration}</Chip>}
+        </div>
+        {day !== null && (
+          <div className="hv2-hero-day" aria-label={COPY.crop.day(day)}>
+            <span className="hv2-hero-day-label" aria-hidden>Día</span>
+            <span className="hv2-hero-day-number" aria-hidden>{day}</span>
+          </div>
+        )}
       </div>
       <div className="hv2-hero-body">
         <p className="hv2-kicker">{COPY.crop.kicker}</p>
@@ -123,8 +134,13 @@ export function CropHero() {
         <p className="hv2-hero-species">{scientificName}</p>
         <div className="hv2-hero-meta">
           <Chip tone="ok">{stage.label}</Chip>
-          {day !== null && <Chip tone="muted">{COPY.crop.day(day)}</Chip>}
           <span className="hv2-hero-pos">{COPY.crop.stagePosition(stage.position, stage.total)}</span>
+          {photoCount > 0 && (
+            <span className="hv2-hero-photos">
+              <Camera aria-hidden className="size-3.5" />
+              {COPY.home.photosCount(photoCount)}
+            </span>
+          )}
         </div>
         {sampleProfile && <p className="hv2-hero-note">{COPY.crop.sampleProfile}</p>}
       </div>

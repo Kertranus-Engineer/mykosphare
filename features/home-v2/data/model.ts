@@ -34,7 +34,12 @@ export interface MetricModel {
   series: number[]
   /** Display time ("HH:MM:SS") of each sample, same order/length as `series`. */
   times: string[]
+  /** Target range of the (sample) species profile. Only the demonstration provides it; never inferred. */
+  target?: { min: number; max: number }
 }
+
+/** General state of the environment, in the five levels the Inicio status card can express. */
+export type StatusLevel = "stable" | "optimizing" | "prealert" | "alert" | "nodata"
 
 export type EnvironmentModel =
   | { status: "waiting"; reason: "loading" | "disconnected"; title: string; detail: string }
@@ -43,8 +48,13 @@ export type EnvironmentModel =
       provenance: Exclude<Provenance, "unavailable">
       dimmed: boolean
       metrics: MetricModel[]
+      /**
+       * What the series in `metrics` is: samples received during this session (real),
+       * or the labelled demonstration series. Charts word their note accordingly.
+       */
+      window: "session" | "demo"
       /** Overall state from the shared environment engine; null until it has caught up. */
-      overall: { label: string; detail: string; tone: Tone } | null
+      overall: { label: string; detail: string; tone: Tone; level: StatusLevel } | null
     }
 
 // ── Device ────────────────────────────────────────────────
@@ -78,13 +88,22 @@ export interface StageStepModel {
   estimated: boolean
 }
 
+export type LogKind = "milestone" | "stage" | "photo" | "observation" | "environment" | "device"
+
 export interface LogEntryModel {
   id: string
   at: string
+  kind: LogKind
   title: string
+  /** Longer description (observations, photo captions). */
+  detail?: string
   tone: Tone
   /** Real fact of the run record vs. simulated fixture. */
   provenance: Exclude<Provenance, "unavailable">
+  /** Photo this entry refers to (demo logbook only). */
+  photoId?: string
+  /** Crop day, when the source states it (the demo story is told by calendar day). Otherwise derived from the start. */
+  day?: number
 }
 
 export type CultivationFailure =
@@ -123,6 +142,14 @@ export interface PhotoModel {
   capturedAt: string
   /** Real files vs. clearly labelled demonstration illustrations. */
   kind: "capture" | "demo"
+  /** Crop day this picture belongs to (demonstration photos only). */
+  day?: number
+  /** Short description of what the picture shows (demonstration photos only). */
+  caption?: string
+  /** Small version for thumbnails (demonstration photos only). */
+  thumbUrl?: string
+  /** Tighter crop of the same picture for the hero (demonstration photos only). */
+  heroUrl?: string
 }
 
 export type PhotosModel =
@@ -135,16 +162,42 @@ export type PhotosModel =
 
 // ── History ───────────────────────────────────────────────
 
-export type HistoryKind = "alert" | "event"
+/** alert: active now · event: environment/device/session · crop: the crop's own record. */
+export type HistoryKind = "alert" | "event" | "crop"
+
+/** Drives the icon of a timeline entry. */
+export type HistoryCategory = LogKind | "alert" | "session"
 
 export interface HistoryEntryModel {
   id: string
   kind: HistoryKind
+  category: HistoryCategory
   tone: Tone
   title: string
   detail?: string
   /** Epoch ms. null = an alert that is active right now (describes the current condition). */
   at: number | null
-  /** Crop log entry produced by simulation. */
+  /** Produced by the demonstration mode. */
   simulated: boolean
+  /** Small picture for photo entries (demonstration only today). */
+  photoUrl?: string
+  /** Crop day of the entry, when the source states it. */
+  day?: number
 }
+
+// ── MYKO Insight ──────────────────────────────────────────
+
+/**
+ * Observations come only from the demonstration engine today. In normal mode
+ * there is no analysis, so the model is `none` and the UI says so.
+ */
+export type InsightModel =
+  | { status: "none" }
+  | {
+      status: "demo"
+      tone: Tone
+      headline: string
+      body: string
+      /** The (simulated) facts the observation is based on. */
+      basis: string[]
+    }

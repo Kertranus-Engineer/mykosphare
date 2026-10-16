@@ -4,10 +4,12 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation"
 import { createContext, useCallback, useContext, useEffect, useMemo, useSyncExternalStore, type ReactNode } from "react"
 
 import { useLiveSnapshots } from "@/features/live/live-snapshots"
-import { useMobileData } from "@/features/mobile/mobile-data-context"
+import { MobileDataProvider, useMobileData } from "@/features/mobile/mobile-data-context"
 import type { GrowDemoScenario } from "@/lib/grow/demo/simulation-demo"
-import { toCultivationModel, toDeviceModel, toEnvironmentModel, toHistoryEntries, toPhotosModel } from "./adapters"
-import { buildDemoPhotos } from "./demo-frames"
+import { COPY } from "../copy"
+import { byRecency, toCropHistory, toCultivationModel, toDeviceModel, toEnvironmentModel, toHistoryEntries, toPhotosModel } from "./adapters"
+import { getDemoClock, getDemoClockServer, subscribeDemoClock } from "./demo/clock"
+import { buildDemoWorld } from "./demo/world"
 import {
   DEFAULT_DEMO_SCENARIO,
   DEMO_OFF,
@@ -20,8 +22,8 @@ import {
   type DemoState,
 } from "./demo-mode"
 import { DEFAULT_LAB_THEME, isLabTheme, LAB_THEME_STORAGE_KEY, labHref, parseLabRequest, type LabRequest } from "./lab-request"
-import type { CultivationModel, DeviceModel, EnvironmentModel, HistoryEntryModel, LabThemeId, PhotosModel } from "./model"
-import { assertNoSimulationOutsideDemo, resolveSources, type DataMode, type ResolvedSources } from "./resolve"
+import type { CultivationModel, DeviceModel, EnvironmentModel, HistoryEntryModel, InsightModel, LabThemeId, PhotosModel } from "./model"
+import { assertNoSimulationOutsideDemo, resolveCultivation, resolveDemoTelemetry, resolvePhotos, resolveTelemetry, type DataMode, type ResolvedSources } from "./resolve"
 import { useGrowView } from "./use-grow-view"
 
 // ── Theme (lab-only preference; never touches the app-wide theme) ─────────
@@ -53,7 +55,7 @@ function subscribeTheme(listener: () => void) {
 interface HomeV2Value {
   /** URL-level request (only a real chamber selection travels in links). */
   request: LabRequest
-  /** "demo" only while the user explicitly enabled the demonstration mode. */
+  /** "demo" only while the demonstration mode is on (see config.ts for the development default). */
   mode: DataMode
   demo: DemoState
   setDemo: (next: { enabled: boolean; scenario?: GrowDemoScenario }) => void
@@ -65,34 +67,60 @@ interface HomeV2Value {
   device: DeviceModel
   cultivation: CultivationModel
   photos: PhotosModel
-  /** Session alerts and events (alerts first). Not persisted history. */
+  /** Alerts (first), then events and the crop record, newest first. Real session activity is not persisted. */
   history: HistoryEntryModel[]
+  /** Example observation (demo only); `none` when no analysis exists. */
+  insight: InsightModel
   retryPhotos: () => void
   retryCultivation: () => void
   /** Active warning/critical alerts for the bell badge. */
   attentionCount: number
 }
 
+type Base = Pick<HomeV2Value, "request" | "mode" | "demo" | "setDemo" | "theme" | "setTheme">
+type Data = Pick<HomeV2Value, "sources" | "environment" | "device" | "cultivation" | "photos" | "history" | "insight" | "retryPhotos" | "retryCultivation">
+
 const HomeV2Context = createContext<HomeV2Value | null>(null)
 
-const HOUR_MS = 3_600_000
+// Shown while the demo clock has not ticked yet (server render and first client paint).
+const LOADING_ENVIRONMENT: EnvironmentModel = {
+  status: "waiting",
+  reason: "loading",
+  title: COPY.environment.waitingTitle,
+  detail: COPY.environment.waitingDetail,
+}
+const LOADING_DEVICE: DeviceModel = {
+  kind: "connecting",
+  label: "Conectando",
+  provenance: "unavailable",
+  tone: "muted",
+  lastSampleAt: null,
+  actuators: [
+    { id: "fan", label: COPY.device.fan, state: "unknown" },
+    { id: "humidifier", label: COPY.device.humidifier, state: "unknown" },
+  ],
+}
+const NO_INSIGHT: InsightModel = { status: "none" }
+const noop = () => {}
 
 /**
- * Single composition point for HOME V2. It resolves every data source ONCE
- * (see resolve.ts), then adapts what already exists (mobile telemetry, grow
- * domain view, captures hook) into view models. It measures nothing itself and
- * mounts nothing twice, so tab changes never re-poll or reset session history.
+ * Single composition point for HOME V2. It first decides WHERE data comes from:
+ *
+ *  - demonstration ON  → the demo engine (one deterministic world). The shared telemetry, activity and
+ *    captures hooks are NOT mounted, so nothing polls the device or the storage while demoing.
+ *  - demonstration OFF → the existing systems (mobile telemetry, grow domain view, captures hook),
+ *    adapted into view models. The silent simulator inside the shared telemetry hook is never data.
+ *
+ * Either way the screens receive the same view models and never know which source produced them.
  */
 export function HomeV2Provider({ children }: { children: ReactNode }) {
-  const { tel, activity } = useMobileData()
-  const captures = useLiveSnapshots()
   const router = useRouter()
   const pathname = usePathname()
   const search = useSearchParams()
 
   const request = useMemo<LabRequest>(() => parseLabRequest(new URLSearchParams(search.toString())), [search])
 
-  // ── Demonstration mode: explicit opt-in, off by default ──
+  // ── Demonstration mode: the visitor's saved choice, or the development default ──
   const stored = useSyncExternalStore(subscribeDemo, getDemoSnapshot, getDemoServerSnapshot)
   const urlDemo = useMemo(() => demoFromUrl(request.grow), [request.grow]) // internal-testing compatibility only
   const demo: DemoState = urlDemo ?? stored
@@ -110,50 +138,6 @@ export function HomeV2Provider({ children }: { children: ReactNode }) {
       if (request.grow.kind === "simulation") router.replace(labHref(pathname, { grow: { kind: "unconfigured" } }))
     },
     [stored.scenario, request.grow.kind, router, pathname],
-  )
-
-  const mode: DataMode = demo.enabled ? "demo" : "normal"
-  const growRequest = useMemo(() => effectiveGrowRequest(demo, request.grow), [demo, request.grow])
-  const { view, retry } = useGrowView(growRequest)
-
-  // ── Models ──
-  const environment = useMemo(() => toEnvironmentModel(tel, mode), [tel, mode])
-  const device = useMemo(() => toDeviceModel(tel, mode), [tel, mode])
-  const cultivation = useMemo(() => toCultivationModel(view), [view])
-  const history = useMemo(() => toHistoryEntries(activity, mode), [activity, mode])
-
-  // Demo frames are keyed to the run start and the current hour so they do not
-  // regenerate (and flicker) on every 30 s refresh of the grow view.
-  const demoStart = mode === "demo" && view.status === "ready" ? view.snapshot.run.startedAt : null
-  const demoHour = mode === "demo" && view.status === "ready" ? Math.floor(new Date(view.evaluatedAt).getTime() / HOUR_MS) : null
-  const demoItems = useMemo(
-    () => (demoStart !== null && demoHour !== null ? buildDemoPhotos(demoStart, new Date(demoHour * HOUR_MS)) : null),
-    [demoStart, demoHour],
-  )
-  const capturesPhotos = useMemo(
-    () => toPhotosModel({ images: captures.images, loading: captures.loading, error: captures.error }),
-    [captures.images, captures.loading, captures.error],
-  )
-  // Demonstration photos and real captures are NEVER shown together.
-  const photos = useMemo<PhotosModel>(() => {
-    if (mode === "demo") {
-      if (demoItems && demoItems.length > 0) return { status: "ready", items: demoItems }
-      return view.status === "loading" ? { status: "loading" } : { status: "empty" }
-    }
-    return capturesPhotos
-  }, [mode, demoItems, view.status, capturesPhotos])
-
-  const sources = useMemo(() => resolveSources({ mode, tel, cultivation, photos }), [mode, tel, cultivation, photos])
-
-  useEffect(() => {
-    if (process.env.NODE_ENV === "production") return
-    const leaks = assertNoSimulationOutsideDemo(sources)
-    if (leaks.length > 0) console.error(`[HOME V2] simulated data outside the demo mode: ${leaks.join(", ")}`)
-  }, [sources])
-
-  const attentionCount = useMemo(
-    () => history.filter((entry) => entry.at === null && (entry.tone === "warn" || entry.tone === "crit")).length,
-    [history],
   )
 
   // ── Theme ──
@@ -176,26 +160,93 @@ export function HomeV2Provider({ children }: { children: ReactNode }) {
     return () => root.removeAttribute("data-hv2-theme")
   }, [theme])
 
-  const value = useMemo<HomeV2Value>(
+  const mode: DataMode = demo.enabled ? "demo" : "normal"
+  const base = useMemo<Base>(() => ({ request, mode, demo, setDemo, theme, setTheme }), [request, mode, demo, setDemo, theme, setTheme])
+
+  return demo.enabled ? (
+    <DemoSource base={base}>{children}</DemoSource>
+  ) : (
+    <MobileDataProvider>
+      <LiveSource base={base}>{children}</LiveSource>
+    </MobileDataProvider>
+  )
+}
+
+/** Demonstration data: pure function of (scenario, minute). Its only timer pauses while the page is hidden. */
+function DemoSource({ base, children }: { base: Base; children: ReactNode }) {
+  const minute = useSyncExternalStore(subscribeDemoClock, getDemoClock, getDemoClockServer)
+  const world = useMemo(() => (minute !== null ? buildDemoWorld(base.demo.scenario, minute) : null), [base.demo.scenario, minute])
+
+  const data = useMemo<Data>(() => {
+    const environment = world?.environment ?? LOADING_ENVIRONMENT
+    const cultivation: CultivationModel = world?.cultivation ?? { status: "loading" }
+    // Demonstration pictures are never shown together with real captures.
+    const photos: PhotosModel = world ? { status: "ready", items: world.photos } : { status: "loading" }
+    return {
+      environment,
+      device: world?.device ?? LOADING_DEVICE,
+      cultivation,
+      photos,
+      history: world?.history ?? [],
+      insight: world?.insight ?? NO_INSIGHT,
+      sources: { mode: "demo", telemetry: resolveDemoTelemetry(environment), cultivation: resolveCultivation(cultivation), photos: resolvePhotos(photos) },
+      retryPhotos: noop,
+      retryCultivation: noop,
+    }
+  }, [world])
+
+  return <Provide base={base} data={data}>{children}</Provide>
+}
+
+/** Real data: the existing hooks, adapted. Demonstration values never reach this branch. */
+function LiveSource({ base, children }: { base: Base; children: ReactNode }) {
+  const { tel, activity } = useMobileData()
+  const captures = useLiveSnapshots()
+  const { view, retry } = useGrowView(effectiveGrowRequest(base.demo, base.request.grow))
+
+  const environment = useMemo(() => toEnvironmentModel(tel), [tel])
+  const device = useMemo(() => toDeviceModel(tel), [tel])
+  const cultivation = useMemo(() => toCultivationModel(view), [view])
+  const photos = useMemo(
+    () => toPhotosModel({ images: captures.images, loading: captures.loading, error: captures.error }),
+    [captures.images, captures.loading, captures.error],
+  )
+  const history = useMemo(() => {
+    const crop = cultivation.status === "ready" ? toCropHistory(cultivation.log) : []
+    return [...toHistoryEntries(activity), ...crop].sort(byRecency)
+  }, [activity, cultivation])
+
+  const data = useMemo<Data>(
     () => ({
-      request,
-      mode,
-      demo,
-      setDemo,
-      sources,
-      theme,
-      setTheme,
       environment,
       device,
       cultivation,
       photos,
       history,
+      insight: NO_INSIGHT,
+      sources: { mode: "normal", telemetry: resolveTelemetry(tel), cultivation: resolveCultivation(cultivation), photos: resolvePhotos(photos) },
       retryPhotos: captures.refresh,
       retryCultivation: retry,
-      attentionCount,
     }),
-    [request, mode, demo, setDemo, sources, theme, setTheme, environment, device, cultivation, photos, history, captures.refresh, retry, attentionCount],
+    [environment, device, cultivation, photos, history, tel, captures.refresh, retry],
   )
+
+  return <Provide base={base} data={data}>{children}</Provide>
+}
+
+function Provide({ base, data, children }: { base: Base; data: Data; children: ReactNode }) {
+  useEffect(() => {
+    if (process.env.NODE_ENV === "production") return
+    const leaks = assertNoSimulationOutsideDemo(data.sources)
+    if (leaks.length > 0) console.error(`[HOME V2] simulated data outside the demo mode: ${leaks.join(", ")}`)
+  }, [data.sources])
+
+  const attentionCount = useMemo(
+    () => data.history.filter((entry) => entry.at === null && (entry.tone === "warn" || entry.tone === "crit")).length,
+    [data.history],
+  )
+
+  const value = useMemo<HomeV2Value>(() => ({ ...base, ...data, attentionCount }), [base, data, attentionCount])
 
   return <HomeV2Context.Provider value={value}>{children}</HomeV2Context.Provider>
 }
