@@ -1,19 +1,22 @@
 "use client"
 
 import { usePathname, useRouter, useSearchParams } from "next/navigation"
-import { createContext, useCallback, useContext, useEffect, useMemo, useSyncExternalStore, type ReactNode } from "react"
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useSyncExternalStore, type ReactNode } from "react"
 
 import { useLiveSnapshots } from "@/features/live/live-snapshots"
 import { MobileDataProvider, useMobileData } from "@/features/mobile/mobile-data-context"
 import type { GrowDemoScenario } from "@/lib/grow/demo/simulation-demo"
 import { COPY } from "../copy"
+import { useFeedback } from "../components/feedback"
 import { byRecency, toCropHistory, toCultivationModel, toDeviceModel, toEnvironmentModel, toHistoryEntries, toPhotosModel } from "./adapters"
 import { getDemoClock, getDemoClockServer, subscribeDemoClock } from "./demo/clock"
 import { buildDemoWorld } from "./demo/world"
+import { getDeviceSeenServerSnapshot, getDeviceSeenSnapshot, subscribeDeviceSeen, useDeviceProbe } from "./device-seen"
 import {
   DEFAULT_DEMO_SCENARIO,
   DEMO_OFF,
   demoFromUrl,
+  effectiveDemo,
   effectiveGrowRequest,
   getDemoServerSnapshot,
   getDemoSnapshot,
@@ -58,6 +61,8 @@ interface HomeV2Value {
   /** "demo" only while the demonstration mode is on (see config.ts for the development default). */
   mode: DataMode
   demo: DemoState
+  /** A real device has reported to this browser: the example view yields to the person's own data. */
+  deviceSeen: boolean
   setDemo: (next: { enabled: boolean; scenario?: GrowDemoScenario }) => void
   /** REAL / SIMULATED / UNAVAILABLE / LOADING / ERROR for each domain. */
   sources: ResolvedSources
@@ -77,7 +82,7 @@ interface HomeV2Value {
   attentionCount: number
 }
 
-type Base = Pick<HomeV2Value, "request" | "mode" | "demo" | "setDemo" | "theme" | "setTheme">
+type Base = Pick<HomeV2Value, "request" | "mode" | "demo" | "deviceSeen" | "setDemo" | "theme" | "setTheme">
 type Data = Pick<HomeV2Value, "sources" | "environment" | "device" | "cultivation" | "photos" | "history" | "insight" | "retryPhotos" | "retryCultivation">
 
 const HomeV2Context = createContext<HomeV2Value | null>(null)
@@ -120,11 +125,23 @@ export function HomeV2Provider({ children }: { children: ReactNode }) {
 
   const request = useMemo<LabRequest>(() => parseLabRequest(new URLSearchParams(search.toString())), [search])
 
-  // ── Demonstration mode: the visitor's saved choice, or the development default ──
+  // ── Demonstration mode: the visitor's saved choice, or the default (on) — until a real device reports ──
   const stored = useSyncExternalStore(subscribeDemo, getDemoSnapshot, getDemoServerSnapshot)
+  const deviceSeen = useSyncExternalStore(subscribeDeviceSeen, getDeviceSeenSnapshot, getDeviceSeenServerSnapshot)
   const urlDemo = useMemo(() => demoFromUrl(request.grow), [request.grow]) // internal-testing compatibility only
-  const demo: DemoState = urlDemo ?? stored
+  const demo: DemoState = useMemo(() => urlDemo ?? effectiveDemo(stored, deviceSeen), [urlDemo, stored, deviceSeen])
   const urlDemoKey = urlDemo ? urlDemo.scenario : null
+
+  // While the example view is automatic, look for the first real device. Seeing one flips every screen
+  // to the person's own data (no reload) and says so once.
+  const following = stored.enabled && !stored.pinned && !urlDemo
+  useDeviceProbe(following && !deviceSeen)
+  const { notify } = useFeedback()
+  const announced = useRef(deviceSeen)
+  useEffect(() => {
+    if (deviceSeen && !announced.current && following) notify({ title: COPY.demo.connectedTitle, message: COPY.demo.connectedBody })
+    announced.current = deviceSeen
+  }, [deviceSeen, following, notify])
 
   useEffect(() => {
     // Adopt the internal URL switch into the preference, so clean links keep the demo on.
@@ -133,11 +150,16 @@ export function HomeV2Provider({ children }: { children: ReactNode }) {
 
   const setDemo = useCallback<HomeV2Value["setDemo"]>(
     (next) => {
-      setDemoState(next.enabled ? { enabled: true, scenario: next.scenario ?? stored.scenario ?? DEFAULT_DEMO_SCENARIO } : DEMO_OFF)
+      // Turning the example view on by hand while a device is connected is deliberate: keep it until switched off.
+      setDemoState(
+        next.enabled
+          ? { enabled: true, scenario: next.scenario ?? stored.scenario ?? DEFAULT_DEMO_SCENARIO, pinned: deviceSeen || stored.pinned === true }
+          : DEMO_OFF,
+      )
       // The URL switch would otherwise keep overriding the choice.
       if (request.grow.kind === "simulation") router.replace(labHref(pathname, { grow: { kind: "unconfigured" } }))
     },
-    [stored.scenario, request.grow.kind, router, pathname],
+    [stored.scenario, stored.pinned, deviceSeen, request.grow.kind, router, pathname],
   )
 
   // ── Theme ──
@@ -161,7 +183,10 @@ export function HomeV2Provider({ children }: { children: ReactNode }) {
   }, [theme])
 
   const mode: DataMode = demo.enabled ? "demo" : "normal"
-  const base = useMemo<Base>(() => ({ request, mode, demo, setDemo, theme, setTheme }), [request, mode, demo, setDemo, theme, setTheme])
+  const base = useMemo<Base>(
+    () => ({ request, mode, demo, deviceSeen, setDemo, theme, setTheme }),
+    [request, mode, demo, deviceSeen, setDemo, theme, setTheme],
+  )
 
   return demo.enabled ? (
     <DemoSource base={base}>{children}</DemoSource>

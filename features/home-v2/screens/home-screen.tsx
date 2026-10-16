@@ -10,19 +10,19 @@ import { StatusCard } from "../components/home/status-card"
 import { Rise } from "../components/ui/surface"
 
 /**
- * Inicio: the crop first (photograph as the protagonist), then the environment, the general
- * state, MYKO Insight and the primary action. Detail lives in Cultivo and Ambiente.
+ * Inicio: the crop first (photograph as the protagonist), then (example view only) what the person's own
+ * data will look like, then the environment, the general state, MYKO Insight and the primary action. Detail lives in Cultivo and Ambiente.
  */
 export function HomeScreen() {
   return (
     <div className="hv2-stack">
       <h1 className="hv2-sr-only">{COPY.nav.home}</h1>
       <Rise i={0}><CropHero /></Rise>
+      <ConnectCard />
       <Rise i={1}><EnvironmentSummary /></Rise>
       <Rise i={2}><StatusCard /></Rise>
       <Rise i={3}><InsightCard /></Rise>
       <Rise i={4}><CaptureCard /></Rise>
-      <Rise i={5}><ConnectCard /></Rise>
     </div>
   )
 }

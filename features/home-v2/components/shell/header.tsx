@@ -7,6 +7,7 @@ import { useState } from "react"
 import { COPY } from "../../copy"
 import { useHomeV2 } from "../../data/home-v2-provider"
 import { labHref, LAB_ROUTES } from "../../data/lab-request"
+import { useFeedback } from "../feedback"
 import { ToneDot } from "../ui/surface"
 import { BrandMark } from "../ui/brand-mark"
 import { NotificationsSheet } from "./notifications-sheet"
@@ -27,20 +28,34 @@ function ConnectionChip() {
  * lives in Más.
  */
 function DemoBanner() {
-  const { mode } = useHomeV2()
+  const { mode, deviceSeen, setDemo } = useHomeV2()
+  const { notify } = useFeedback()
   if (mode !== "demo") return null
   return (
     <div className="hv2-demo-banner" role="status" aria-label={COPY.demo.bannerLabel}>
       <div className="hv2-demo-banner-inner">
-        <FlaskConical aria-hidden className="size-3.5" />
+        <span aria-hidden className="hv2-demo-pulse"><FlaskConical className="size-3.5" /></span>
         <p className="hv2-demo-banner-text">
           <strong>{COPY.demo.banner}</strong>
-          <span className="hv2-demo-banner-long">· {COPY.demo.bannerBody}</span>
-          <span className="hv2-demo-banner-short">· {COPY.demo.bannerBodyShort}</span>
+          <span className="hv2-demo-banner-long">· {deviceSeen ? COPY.demo.pinnedBody : COPY.demo.bannerBody}</span>
+          <span className="hv2-demo-banner-short">· {deviceSeen ? COPY.demo.pinnedBodyShort : COPY.demo.bannerBodyShort}</span>
         </p>
-        <Link href={COPY.demo.connectHref} className="hv2-demo-exit hv2-press">
-          {COPY.demo.connect}
-        </Link>
+        {deviceSeen ? (
+          <button
+            type="button"
+            className="hv2-demo-exit hv2-press"
+            onClick={() => {
+              setDemo({ enabled: false })
+              notify({ message: COPY.demo.seeMineToast })
+            }}
+          >
+            {COPY.demo.seeMine}
+          </button>
+        ) : (
+          <Link href={COPY.demo.connectHref} className="hv2-demo-exit hv2-press">
+            {COPY.demo.connect}
+          </Link>
+        )}
       </div>
     </div>
   )

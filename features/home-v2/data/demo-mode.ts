@@ -3,17 +3,24 @@ import type { GrowRequest } from "@/features/grow/data/grow-request"
 import { HOME_V2_DEMO_DEFAULT_ON } from "../config"
 
 /**
- * Demonstration mode. While HOME V2 is in development it starts ON for visitors
- * who have not chosen (see `config.ts` to turn that off before launch); a saved
- * choice always wins. The only thing stored is that choice: it never writes demo
- * data anywhere, and simulated values are always labelled as such.
+ * Demonstration ("vista de ejemplo") mode. It starts ON for visitors who have not chosen (see
+ * `config.ts` to turn that off before launch) and turns itself off as soon as a real device has
+ * reported (see `device-seen.ts` and `effectiveDemo`). A saved choice always wins. The only thing
+ * stored is that choice: it never writes demo data anywhere, and simulated values are always
+ * labelled as such.
  */
 export interface DemoState {
   enabled: boolean
   scenario: GrowDemoScenario
+  /**
+   * The visitor switched the example view ON by hand while a device was already connected.
+   * Without it, the example view yields to a connected device.
+   */
+  pinned?: boolean
 }
 
-export const DEMO_STORAGE_KEY = "mykosphare-demo-mode"
+/** v2: the example view now follows the device connection, so earlier saved choices are not carried over. */
+export const DEMO_STORAGE_KEY = "mykosphare-demo-mode-v2"
 export const DEMO_OFF: DemoState = Object.freeze({ enabled: false, scenario: "stable" })
 export const DEFAULT_DEMO_SCENARIO: GrowDemoScenario = "stable"
 
@@ -34,8 +41,11 @@ export function parseDemoState(raw: string | null, defaultOn: boolean = HOME_V2_
   try {
     const value: unknown = JSON.parse(raw)
     if (typeof value !== "object" || value === null) return fallback
-    const { enabled, scenario } = value as Record<string, unknown>
-    if (enabled === true) return { enabled: true, scenario: isGrowDemoScenario(scenario) ? scenario : DEFAULT_DEMO_SCENARIO }
+    const { enabled, scenario, pinned } = value as Record<string, unknown>
+    if (enabled === true) {
+      const state: DemoState = { enabled: true, scenario: isGrowDemoScenario(scenario) ? scenario : DEFAULT_DEMO_SCENARIO }
+      return pinned === true ? { ...state, pinned: true } : state
+    }
     if (enabled === false) return DEMO_OFF
     return fallback
   } catch {
@@ -44,7 +54,16 @@ export function parseDemoState(raw: string | null, defaultOn: boolean = HOME_V2_
 }
 
 export function serializeDemoState(state: DemoState): string {
-  return JSON.stringify(state.enabled ? { enabled: true, scenario: state.scenario } : { enabled: false })
+  if (!state.enabled) return JSON.stringify({ enabled: false })
+  return JSON.stringify(state.pinned ? { enabled: true, scenario: state.scenario, pinned: true } : { enabled: true, scenario: state.scenario })
+}
+
+/**
+ * What the screens actually show. The example view yields to a real device: once one has reported,
+ * the visitor sees their own data unless they pinned the example view on purpose.
+ */
+export function effectiveDemo(chosen: DemoState, deviceSeen: boolean): DemoState {
+  return chosen.enabled && deviceSeen && !chosen.pinned ? DEMO_OFF : chosen
 }
 
 /** Internal-testing compatibility: `?mode=simulation&scenario=x` means "demo ON". */
@@ -53,7 +72,7 @@ export function demoFromUrl(request: GrowRequest): DemoState | null {
 }
 
 export function sameDemo(a: DemoState, b: DemoState): boolean {
-  return a.enabled === b.enabled && (!a.enabled || a.scenario === b.scenario)
+  return a.enabled === b.enabled && (!a.enabled || (a.scenario === b.scenario && Boolean(a.pinned) === Boolean(b.pinned)))
 }
 
 /**
@@ -101,7 +120,11 @@ export function getDemoServerSnapshot(): DemoState {
 
 /** Saves the visitor's explicit choice (even when it equals the default, so it survives a change of default). */
 export function setDemoState(next: DemoState): void {
-  const normalized = next.enabled ? { enabled: true as const, scenario: next.scenario } : DEMO_OFF
+  const normalized: DemoState = next.enabled
+    ? next.pinned
+      ? { enabled: true, scenario: next.scenario, pinned: true }
+      : { enabled: true, scenario: next.scenario }
+    : DEMO_OFF
   if (snapshot !== null && sameDemo(snapshot, normalized) && hasStoredChoice()) return
   snapshot = normalized
   try {

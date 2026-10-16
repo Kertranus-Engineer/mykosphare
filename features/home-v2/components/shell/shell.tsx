@@ -5,7 +5,8 @@ import type { ReactNode } from "react"
 
 import { ErrorBoundary } from "@/components/ui/error-boundary"
 import { FeedbackProvider } from "../feedback"
-import { HomeV2Provider } from "../../data/home-v2-provider"
+import { HomeV2Provider, useHomeV2 } from "../../data/home-v2-provider"
+import { GlyphField } from "../ui/glyph-field"
 import { BottomNav } from "./bottom-nav"
 import { Header } from "./header"
 
@@ -19,6 +20,12 @@ function ScreenError() {
       </button>
     </div>
   )
+}
+
+/** Character-art background in the person's theme. */
+function ThemedGlyphField() {
+  const { theme } = useHomeV2()
+  return <GlyphField theme={theme} />
 }
 
 /**
@@ -38,6 +45,7 @@ export function HomeV2Shell({ children }: { children: ReactNode }) {
             <div className="hv2-root" lang="es">
               <a href="#contenido" className="hv2-skip">Saltar al contenido</a>
               <div aria-hidden className="hv2-ambient" />
+              <ThemedGlyphField />
               <Header />
               <main id="contenido" className="hv2-main">
                 <ErrorBoundary fallback={<ScreenError />}>{children}</ErrorBoundary>

@@ -17,13 +17,17 @@ const SWATCH: Record<string, string> = { negro: "hv2-swatch--negro", verde: "hv2
  * The demo mode is a preference only: turning it on never writes anything.
  */
 export function MoreScreen() {
-  const { theme, setTheme, demo, setDemo } = useHomeV2()
+  const { theme, setTheme, demo, deviceSeen, setDemo } = useHomeV2()
   const { notify } = useFeedback()
 
   const toggleDemo = () => {
     setDemo({ enabled: !demo.enabled })
     notify({ message: demo.enabled ? COPY.morePage.disabledToast : COPY.morePage.enabledToast })
   }
+
+  const demoHint = demo.enabled
+    ? demo.pinned ? COPY.morePage.demoOnPinned : COPY.morePage.demoOn
+    : deviceSeen ? COPY.morePage.demoOffConnected : COPY.morePage.demoOff
 
   return (
     <div className="hv2-stack">
@@ -78,7 +82,7 @@ export function MoreScreen() {
                 <FlaskConical aria-hidden className="size-5" />
                 <span>
                   <span className="hv2-toggle-title">{COPY.morePage.demoSwitch}</span>
-                  <span className="hv2-toggle-hint">{demo.enabled ? COPY.morePage.demoOn : COPY.morePage.demoOff}</span>
+                  <span className="hv2-toggle-hint">{demoHint}</span>
                 </span>
               </span>
               <span aria-hidden className="hv2-switch"><span className="hv2-switch-knob" /></span>

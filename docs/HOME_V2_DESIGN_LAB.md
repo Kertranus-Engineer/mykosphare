@@ -19,14 +19,23 @@ La app funciona **sin parámetros de URL**. Compatibilidad interna: `?chamber=ID
 ## Modo demostración (activado por defecto, solo durante el desarrollo)
 
 - **Sin preferencia guardada** HOME V2 abre en modo demostración (`features/home-v2/config.ts`).
-- **Se guarda la elección** (`localStorage["mykosphare-demo-mode"]`): si la persona lo apaga en Más, esa decisión se respeta en visitas futuras; si lo enciende, también. Solo se guarda "quiero ver simulación" y el escenario; nunca datos simulados.
-- **Indicador:** una línea fija bajo el encabezado ("VISTA DE EJEMPLO · conecta tu dispositivo") con el botón **Conectar** (lleva a `/dashboard/esp32`), más el chip "Ejemplo" del encabezado. Sigue siendo explícito que los datos no son reales. Se sale de la vista de ejemplo en Más. En Inicio, una tarjeta "Pasa del ejemplo a tus datos" explica cómo conectar el ESP32. Las insignias "Ejemplo" no se repiten en cada sección (las cubre la línea fija).
+- **Se apaga sola al conectar el dispositivo** (`data/device-seen.ts`): mientras la vista de ejemplo es automática, una consulta ligera a `/api/data` cada 4 s (solo con la pestaña visible) busca la primera lectura real (`source: "live"`, no atrasada, con valores). Al verla, todas las pantallas pasan a los datos reales sin recargar y un aviso lo dice una vez. Se **recuerda** (`localStorage["mykosphare-device-seen"]`): si luego el ESP32 se desconecta, las pantallas reales lo muestran con honestidad ("Desconectado") en vez de volver a números de ejemplo.
+- **Se guarda la elección** (`localStorage["mykosphare-demo-mode-v2"]`; la `v2` descarta elecciones anteriores a este comportamiento): si la persona la apaga en Más, esa decisión se respeta en visitas futuras. Si la enciende **con un dispositivo ya conectado**, queda *fijada* (`pinned`) y no cede ante el dispositivo; el aviso superior ofrece **Ver mis datos**. Solo se guarda "quiero ver ejemplo", el escenario y la fijación; nunca datos simulados.
+- **Indicador que llama la atención:** una línea fija bajo el encabezado con el frasco pulsante y un destello ocasional ("VISTA DE EJEMPLO · así se verá con tu dispositivo") y el botón **Conectar** (lleva a `/dashboard/esp32`), más el chip "Ejemplo" del encabezado. Justo bajo el cultivo, en Inicio, la tarjeta **"Así se verá tu cultivo"** lista lo que sí mostrará con datos propios ("Disponible": temperatura y humedad, ventilador y humidificador, alertas y actividad de la sesión, fotografías que sube el dispositivo; "Próximamente": etapa del cultivo y MYKO Insight), los pasos para conectar, el botón **Conectar mi dispositivo** y una línea "Esperando tu dispositivo…". Las animaciones solo existen con movimiento permitido (`prefers-reduced-motion`). Las insignias "Ejemplo" no se repiten en cada sección (las cubre la línea fija).
 - **Apagar el inicio automático antes de lanzar** (cualquiera de las dos):
   - variable de entorno `NEXT_PUBLIC_HOME_V2_DEMO_DEFAULT=off` (sin tocar código; en Vercel, Settings → Environment Variables), o
   - `DEMO_ON_BY_DEFAULT = false` en `features/home-v2/config.ts`.
   Con el valor por defecto en "off", quien nunca eligió ve el estado real (sin dispositivo: "Desconectado", sin mediciones); quien ya eligió conserva su elección.
 - No afecta a `/home` ni al resto de rutas: la preferencia y el motor viven solo en `features/home-v2`.
-- Encendida la demostración **no se montan** los hooks de telemetría, actividad ni capturas (`/api/data`, Supabase): no hay sondeo ni simulador silencioso. Verificado: 0 peticiones en 6 s de reposo.
+- Encendida la demostración **no se montan** los hooks de telemetría, actividad ni capturas (Supabase): no hay simulador silencioso. Lo único que consulta es la sonda de arriba (`GET /api/data`, ligera, cada 4 s y solo mientras la vista de ejemplo es automática); si queda fijada o apagada, no hay ninguna petición.
+
+## Fondo de caracteres (hongos y plantas)
+
+`components/ui/glyph-field.tsx` + `glyph-engine.ts` + `glyph-specimens.ts`. Un campo de glifos monoespaciados (tenue en todas partes, brillante donde hay un dibujo) al estilo del fondo de Claude, pero con **hongos y plantas de todo tipo y en todas las fases**: esporas, micelio, primordios y cuerpos fructíferos (ostra, champiñón, amanita, colmenilla, rebozuelo, bejín, coral, shiitake, melena de león, coprino), y semilla, raíz, brote, hojas y floración (plántula, helecho, pasto, flor, árbol, suculenta). Cada ejemplar vive un ciclo (55–105 s) desde un punto distinto, así que siempre se ven todas las fases a la vez, y en cada ciclo siguiente muestra otra especie.
+
+- Se dibuja en un lienzo mínimo de una celda por píxel; la cobertura de cada píxel es el brillo de su glifo. ~14 fps, se pausa con la pestaña oculta y queda quieto con `prefers-reduced-motion`. Decorativo: `aria-hidden`, sin eventos de puntero.
+- Sigue el tema (negro / verde / blanco). En pantallas anchas los ejemplares ocupan los lados de la columna de la app; las tarjetas dejan pasar un poco de él (`--hv2-surface-glass`).
+- Determinista: nada usa `Math.random` al dibujar (hay prueba), una forma solo cambia porque crece.
 
 ## Demo Data Engine (`features/home-v2/data/demo/`)
 
@@ -84,7 +93,7 @@ Más → preferencia (config.ts por defecto)           useMobileData · useLiveS
 
 - Imágenes estáticas WebP con miniaturas dedicadas, `loading="lazy"`/`decoding="async"` y `fetchPriority="high"` solo en el hero. No se usa `next/image`: las capturas reales vienen de Supabase (sin loader configurado) y las de demostración ya son archivos pequeños.
 - Una sola suscripción por minuto en la demostración y ninguna en segundo plano; sin timers adicionales ni fugas (el reloj retira el listener de visibilidad al desmontar).
-- Animaciones de una sola vez (entrada, selección de etapa, cambio de foto); pulso del estado solo 2–3 repeticiones; nada se mueve en bucle. `prefers-reduced-motion` desactiva entradas, parallax, pulsos y transiciones (verificado aplicando el bloque `@media` y contando animaciones activas: queda solo el `theme-switch-fade` global de la app).
+- Animaciones de una sola vez (entrada, selección de etapa, cambio de foto); pulso del estado solo 2–3 repeticiones; fuera de eso, solo se mueven en bucle, a propósito, el aviso y la tarjeta de la vista de ejemplo (pulso y destello) y el fondo de caracteres. `prefers-reduced-motion` desactiva entradas, parallax, pulsos y transiciones (verificado aplicando el bloque `@media` y contando animaciones activas: queda solo el `theme-switch-fade` global de la app).
 - Solo se animan `transform` y `opacity`; los números tienen reserva de espacio (sin saltos de layout).
 
 ## Es el HOME oficial
