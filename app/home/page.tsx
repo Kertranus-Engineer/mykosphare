@@ -1,5 +1,9 @@
-import { HomeScreen } from "@/features/mobile/screens/home-screen"
+import type { Metadata } from "next"
 
-export default function HomePage() {
+import { HomeScreen } from "@/features/home-v2/screens/home-screen"
+
+export const metadata: Metadata = { title: "Inicio" }
+
+export default function HomeV2Page() {
   return <HomeScreen />
 }

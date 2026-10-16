@@ -1,6 +1,6 @@
 # HOME V2 · Cómo revisarlo en un teléfono Android
 
-Nada de esto toca producción ni `/home`. El laboratorio vive en `/design-lab/home-v2` y es solo lectura.
+Nada de esto toca producción ni `/home`. El laboratorio vive en `/home` y es solo lectura.
 
 ## Opción A — Sin desplegar (la más rápida)
 
@@ -12,10 +12,10 @@ npx next start -H 0.0.0.0 -p 3000
 ```
 
 1. En la PC: `ipconfig` → anota la IPv4 (p. ej. `192.168.1.20`). Permite Node en el firewall de Windows (red privada) si lo pide.
-2. En Android (Chrome): `http://192.168.1.20:3000/design-lab/home-v2`
+2. En Android (Chrome): `http://192.168.1.20:3000/home`
 3. HOME V2 abre **ya en modo demostración** (cultivo de ejemplo con fotos, sensores, alertas e historia simulados; una línea fija lo indica). Para cambiar de situación: **Más → Escenario**. Para ver el estado real sin ESP32: **Más → Modo demostración** apagado (tu elección se guarda en ese navegador).
 
-Alternativa por USB (sin Wi-Fi): activa depuración USB, abre `chrome://inspect` en la PC, y ejecuta `adb reverse tcp:3000 tcp:3000`; en el teléfono abre `http://localhost:3000/design-lab/home-v2`.
+Alternativa por USB (sin Wi-Fi): activa depuración USB, abre `chrome://inspect` en la PC, y ejecuta `adb reverse tcp:3000 tcp:3000`; en el teléfono abre `http://localhost:3000/home`.
 
 Requisito local: `.env.local` con `NEXT_PUBLIC_SUPABASE_URL` y `NEXT_PUBLIC_SUPABASE_ANON_KEY` (el middleware falla sin ellas). Pueden ser ficticias; entonces las fotos reales mostrarán el estado de error.
 
@@ -46,7 +46,7 @@ El push solo añade los commits propios del laboratorio: la base (`93b69eb`) ya 
 Cuando termine el build (Vercel → Deployments → la rama), abre:
 
 ```
-https://<url-del-preview>/design-lab/home-v2
+https://<url-del-preview>/home
 ```
 
 Qué esperar en la preview: el ESP32 envía a la URL que tenga configurada; si apunta a producción, la preview no recibirá sus datos y mostrará **"Simulación"** de forma explícita (no se pudo verificar a qué URL apunta el firmware). Para validar telemetría real habría que apuntar un dispositivo a la preview, y eso queda fuera de esta fase.

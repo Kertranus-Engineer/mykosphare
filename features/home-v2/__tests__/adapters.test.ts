@@ -292,12 +292,12 @@ describe("lab request", () => {
 
   it("works with no parameters at all", () => {
     expect(parse("").grow).toEqual({ kind: "unconfigured" })
-    expect(labHref("/design-lab/home-v2/cultivo", parse(""))).toBe("/design-lab/home-v2/cultivo")
+    expect(labHref("/home/cultivo", parse(""))).toBe("/home/cultivo")
   })
 
   it("keeps links clean: demo/scenario/photos params never travel; only a real chamber does", () => {
-    expect(labHref("/design-lab/home-v2", parse("mode=simulation&scenario=dry&photos=demo&x=1"))).toBe("/design-lab/home-v2")
-    expect(labHref("/design-lab/home-v2/ambiente", parse("chamber=abc-1&x=1"))).toBe("/design-lab/home-v2/ambiente?chamber=abc-1")
+    expect(labHref("/home", parse("mode=simulation&scenario=dry&photos=demo&x=1"))).toBe("/home")
+    expect(labHref("/home/ambiente", parse("chamber=abc-1&x=1"))).toBe("/home/ambiente?chamber=abc-1")
   })
 })
 

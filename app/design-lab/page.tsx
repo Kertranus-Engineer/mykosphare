@@ -1,11 +1,8 @@
 import Link from "next/link"
 
 const EXPERIMENTS = [
-  { href: "/design-lab/home-v2", title: "HOME V2 · Inicio", note: "Cultivo, resumen del ambiente y estado del dispositivo." },
-  { href: "/design-lab/home-v2/cultivo", title: "HOME V2 · Cultivo", note: "Fotografías, etapas y bitácora de un cultivo." },
-  { href: "/design-lab/home-v2/ambiente", title: "HOME V2 · Ambiente", note: "Lecturas, tendencia de la sesión, actuadores y alertas." },
-  { href: "/design-lab/home-v2/historial", title: "HOME V2 · Historial", note: "Actividad, gráficos y fotografías." },
-  { href: "/design-lab/home-v2/mas", title: "HOME V2 · Más", note: "Tema, modo demostración y otras vistas." },
+  { href: "/home", title: "HOME (oficial)", note: "La experiencia móvil actual: Inicio, Cultivo, Ambiente, Historial y Más." },
+  { href: "/home-v1", title: "HOME anterior", note: "La versión previa, conservada como respaldo." },
 ]
 
 export default function DesignLabIndex() {
@@ -13,7 +10,7 @@ export default function DesignLabIndex() {
     <main style={{ maxWidth: 560, margin: "0 auto", padding: "48px 20px", fontFamily: "var(--font-geist-sans), system-ui, sans-serif" }}>
       <h1 style={{ fontSize: 24, fontWeight: 700, marginBottom: 8 }}>Laboratorio de diseño</h1>
       <p style={{ opacity: 0.7, marginBottom: 24, lineHeight: 1.5 }}>
-        Prototipos aislados de HOME actual y del dashboard avanzado. Solo lectura: no controlan actuadores ni modifican datos.
+        Espacio para prototipos aislados de HOME y del dashboard avanzado. Hoy no hay experimentos abiertos: HOME V2 ya es el HOME oficial.
       </p>
       <ul style={{ display: "grid", gap: 12, listStyle: "none", padding: 0 }}>
         {EXPERIMENTS.map((item) => (

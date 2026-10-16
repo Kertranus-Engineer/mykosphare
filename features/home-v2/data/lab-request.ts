@@ -3,10 +3,10 @@ import { growQueryString, parseGrowRequest, type GrowRequest, type QueryReader }
 import type { LabThemeId } from "./model"
 
 /**
- * The ONLY place that knows where HOME V2 is mounted. When V2 is authorised to
- * become `/home`, change this constant (and move the thin route files), nothing else.
+ * The ONLY place that knows where HOME V2 is mounted. It IS the official `/home` now (the previous
+ * HOME lives on at `/home-v1`); to move it again, change this constant and the thin route files.
  */
-export const HOME_V2_BASE = "/design-lab/home-v2"
+export const HOME_V2_BASE = "/home"
 
 export const LAB_ROUTES = {
   home: HOME_V2_BASE,

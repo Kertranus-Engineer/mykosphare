@@ -85,7 +85,7 @@ export function LatestCaptureCard({ captures }: { captures: MobileCaptures }) {
     <div className="flex flex-col gap-3">
       {body}
       <Link
-        href="/home/history#capturas"
+        href="/home-v1/history#capturas"
         className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-border bg-card/70 px-4 text-sm font-medium text-cyan-600 dark:text-cyan-400 transition-colors active:bg-cyan-500/10"
       >
         <Camera className="size-4" aria-hidden />

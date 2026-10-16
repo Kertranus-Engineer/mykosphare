@@ -41,7 +41,7 @@ export function MobileHeader() {
   return (
     <header className="sticky top-0 z-30 border-b border-border bg-background/85 pt-[env(safe-area-inset-top)] backdrop-blur-xl">
       <div className="mx-auto flex h-14 w-full max-w-3xl items-center gap-2 pl-4 pr-2 sm:px-6">
-        <Link href="/home" className="flex min-h-11 min-w-0 items-center gap-2" aria-label="MYKOSPHARE — Inicio">
+        <Link href="/home-v1" className="flex min-h-11 min-w-0 items-center gap-2" aria-label="MYKOSPHARE — Inicio">
           <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-emerald-400 to-cyan-500 shadow-[0_0_14px_-2px] shadow-emerald-400/50">
             <Sprout className="size-4 text-background" aria-hidden />
           </span>

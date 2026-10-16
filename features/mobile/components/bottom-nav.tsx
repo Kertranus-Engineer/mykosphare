@@ -15,10 +15,10 @@ interface Tab {
 }
 
 const TABS: Tab[] = [
-  { href: "/home", label: "Inicio", icon: House, exact: true },
-  { href: "/home/environment", label: "Ambiente", icon: Leaf },
-  { href: "/home/history", label: "Historial", icon: Clock },
-  { href: "/home/more", label: "Más", icon: Ellipsis },
+  { href: "/home-v1", label: "Inicio", icon: House, exact: true },
+  { href: "/home-v1/environment", label: "Ambiente", icon: Leaf },
+  { href: "/home-v1/history", label: "Historial", icon: Clock },
+  { href: "/home-v1/more", label: "Más", icon: Ellipsis },
 ]
 
 export function BottomNav() {

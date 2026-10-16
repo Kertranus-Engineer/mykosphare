@@ -111,7 +111,7 @@ export function MoreScreen() {
         <section aria-labelledby="hv2-views-h" className="hv2-block">
           <SectionHeading id="hv2-views-h" title={COPY.morePage.viewsTitle} />
           <div className="hv2-sheet-links">
-            <Link href="/home" className="hv2-link-row hv2-press">
+            <Link href="/home-v1" className="hv2-link-row hv2-press">
               <ExternalLink aria-hidden className="size-4" />
               {COPY.morePage.current}
             </Link>

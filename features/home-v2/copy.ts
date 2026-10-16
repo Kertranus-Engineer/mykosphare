@@ -299,7 +299,7 @@ export const COPY = {
       "no-data": "Sin datos",
     } as Record<string, string>,
     viewsTitle: "Otras vistas",
-    current: "HOME actual",
+    current: "HOME anterior",
     advanced: "Vista avanzada",
     advancedSettings: "Ajustes avanzados",
     aboutTitle: "Sobre los datos",

@@ -26,7 +26,7 @@ export function HomeScreen() {
 
       <div className="grid gap-6 md:grid-cols-2 md:items-start">
         <section aria-label="Actividad reciente" className="flex flex-col gap-1">
-          <SectionHeader title="Actividad reciente" href="/home/history#actividad" />
+          <SectionHeader title="Actividad reciente" href="/home-v1/history#actividad" />
           <Panel className="px-4">
             <ActivityList items={activity} limit={4} />
           </Panel>

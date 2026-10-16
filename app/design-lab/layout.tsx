@@ -1,8 +1,6 @@
 import type { Metadata } from "next"
 import type { ReactNode } from "react"
 
-import "@/features/home-v2/styles/home-v2.css"
-
 /** Experimental design lab: isolated from HOME and the advanced dashboard, never indexed. */
 export const metadata: Metadata = {
   title: { default: "Laboratorio de diseño", template: "%s · Laboratorio · MYKOSPHARE" },

@@ -1,6 +1,6 @@
 # HOME V2 · Experiencia premium unificada
 
-Una sola experiencia móvil (Inicio · Cultivo · Ambiente · Historial · Más) montada en `/design-lab/home-v2`, aislada de HOME actual (`/home`) y del dashboard avanzado. **Solo lectura**: no controla actuadores, no escribe en Supabase, no llama a servicios externos ni a IA.
+Una sola experiencia móvil (Inicio · Cultivo · Ambiente · Historial · Más) montada en `/home`, aislada de HOME actual (`/home`) y del dashboard avanzado. **Solo lectura**: no controla actuadores, no escribe en Supabase, no llama a servicios externos ni a IA.
 
 Capturas: [`docs/home-v2-screenshots/`](home-v2-screenshots/) (nuevas) y [`before/`](home-v2-screenshots/before/) (la versión anterior, para comparar).
 
@@ -8,11 +8,11 @@ Capturas: [`docs/home-v2-screenshots/`](home-v2-screenshots/) (nuevas) y [`befor
 
 | Ruta | Contenido |
 | --- | --- |
-| `/design-lab/home-v2` | Inicio |
-| `/design-lab/home-v2/cultivo` | Cultivo |
-| `/design-lab/home-v2/ambiente` | Ambiente |
-| `/design-lab/home-v2/historial` | Historial (Actividad · Gráficos · Fotos) |
-| `/design-lab/home-v2/mas` | Más: tema, **Modo demostración**, otras vistas |
+| `/home` | Inicio |
+| `/home/cultivo` | Cultivo |
+| `/home/ambiente` | Ambiente |
+| `/home/historial` | Historial (Actividad · Gráficos · Fotos) |
+| `/home/mas` | Más: tema, **Modo demostración**, otras vistas |
 
 La app funciona **sin parámetros de URL**. Compatibilidad interna: `?chamber=ID` muestra un cultivo real (requiere sesión, `/api/v2/grow` y el modo demostración apagado); `?mode=simulation&scenario=x` equivale a encender la demostración con ese escenario. Ninguno viaja en la navegación normal.
 
@@ -87,11 +87,13 @@ Más → preferencia (config.ts por defecto)           useMobileData · useLiveS
 - Animaciones de una sola vez (entrada, selección de etapa, cambio de foto); pulso del estado solo 2–3 repeticiones; nada se mueve en bucle. `prefers-reduced-motion` desactiva entradas, parallax, pulsos y transiciones (verificado aplicando el bloque `@media` y contando animaciones activas: queda solo el `theme-switch-fade` global de la app).
 - Solo se animan `transform` y `opacity`; los números tienen reserva de espacio (sin saltos de layout).
 
-## Migración a `/home` (cuando se autorice)
+## Es el HOME oficial
 
-1. `HOME_V2_BASE` en `features/home-v2/data/lab-request.ts` es el único sitio que conoce el prefijo; cambiarlo a `/home`.
-2. Mover los 7 archivos finos de `app/design-lab/home-v2/` (`layout`, `template`, 5 `page`) a `app/home/` (HOME actual pasa a `/home-v1` o se retira) y conservar el import de `home-v2.css`.
-3. Antes del lanzamiento a usuarios reales: `NEXT_PUBLIC_HOME_V2_DEMO_DEFAULT=off`.
+- HOME V2 vive en `/home` (+ `/home/cultivo`, `/ambiente`, `/historial`, `/mas`): `app/home/*` son archivos finos y todo el código está en `features/home-v2/`. `HOME_V2_BASE` (`features/home-v2/data/lab-request.ts`) es el único sitio que conoce el prefijo.
+- El HOME anterior se conserva como respaldo en `/home-v1` (`app/home-v1/*`, sus enlaces internos apuntan a `/home-v1`); Más → "HOME anterior" lleva ahí. Para retirarlo basta borrar `app/home-v1` y `features/mobile/screens`.
+- Los conmutadores del dashboard avanzado ("Vista HOME") ya llevan a `/home`, es decir, a V2. `/` sigue redirigiendo a `/dashboard` (no se tocó).
+- Ya no hereda `noindex` del laboratorio; su CSS (`home-v2.css`) se importa en `app/home/layout.tsx`.
+- Sigue activo el modo demostración por defecto: antes de abrirlo a usuarios reales, `NEXT_PUBLIC_HOME_V2_DEMO_DEFAULT=off`.
 
 ## Preparación para datos reales (sin implementarlos)
 
