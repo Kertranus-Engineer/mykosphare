@@ -7,7 +7,8 @@ const now = new Date("2026-10-27T15:00:00Z")
 const readings: ReadingPoint[] = Array.from({ length: 30 }, (_, i) => ({ observedAt: new Date(now.getTime() - i * 30_000).toISOString(), temperature: 24.6, humidity: 58 }))
 const report = interpretEnvironment({ readings, device: { name: "MYKO-001", enabled: true, lastSeenAt: now.toISOString() }, targets: null, now })
 const context = buildAssistantContext({ report, history: readings, events: [], now, deviceName: "MYKO-001" })
-const ai = { apiKey: "test-key-not-real", model: "claude-haiku-5-5", baseUrl: "https://provider.test" }
+const ai = { provider: "anthropic" as const, apiKey: "test-key-not-real", model: "claude-haiku-5-5", baseUrl: "https://provider.test" }
+const local = { provider: "openai-compatible" as const, apiKey: "", model: "llama3.2", baseUrl: "http://localhost:11434" }
 const modelBody = (payload: unknown) => ({ ok: true, status: 200, json: async () => ({ content: [{ type: "text", text: typeof payload === "string" ? payload : JSON.stringify(payload) }] }) }) as Response
 
 describe("AI configuration", () => {
@@ -16,7 +17,16 @@ describe("AI configuration", () => {
     expect(readAiConfig({ MYKO_AI_API_KEY: "k" })).toBeNull()
     expect(readAiConfig({ MYKO_AI_ENABLED: "1" })).toBeNull()
     expect(readAiConfig({ NEXT_PUBLIC_MYKO_AI_API_KEY: "k", MYKO_AI_ENABLED: "1" })).toBeNull()
-    expect(readAiConfig({ MYKO_AI_ENABLED: "1", MYKO_AI_API_KEY: "k" })).toMatchObject({ model: "claude-haiku-5-5" })
+    expect(readAiConfig({ MYKO_AI_ENABLED: "1", MYKO_AI_API_KEY: "k" })).toBeNull() // a provider must be chosen explicitly
+    expect(readAiConfig({ MYKO_AI_ENABLED: "1", MYKO_AI_PROVIDER: "anthropic", MYKO_AI_API_KEY: "k" })).toMatchObject({ provider: "anthropic", model: "claude-haiku-5-5" })
+  })
+
+  it("supports a free, self-hosted model without any key, but only with an explicit address and model", () => {
+    expect(readAiConfig({ MYKO_AI_ENABLED: "1", MYKO_AI_PROVIDER: "openai-compatible" })).toBeNull()
+    expect(readAiConfig({ MYKO_AI_ENABLED: "1", MYKO_AI_PROVIDER: "openai-compatible", MYKO_AI_BASE_URL: "http://localhost:11434" })).toBeNull()
+    expect(readAiConfig({ MYKO_AI_ENABLED: "1", MYKO_AI_PROVIDER: "openai-compatible", MYKO_AI_BASE_URL: "ftp://x", MYKO_AI_MODEL: "m" })).toBeNull()
+    expect(readAiConfig({ MYKO_AI_ENABLED: "1", MYKO_AI_PROVIDER: "openai-compatible", MYKO_AI_BASE_URL: "http://localhost:11434/", MYKO_AI_MODEL: "llama3.2" })).toEqual(local)
+    expect(readAiConfig({ MYKO_AI_PROVIDER: "openai-compatible", MYKO_AI_BASE_URL: "http://localhost:11434", MYKO_AI_MODEL: "llama3.2" })).toBeNull()
   })
 })
 
@@ -77,6 +87,17 @@ describe("answering policy", () => {
     expect(url).toBe("https://provider.test/v1/messages")
     expect((init.headers as Record<string, string>)["x-api-key"]).toBe(ai.apiKey)
     expect(String(init.body)).not.toContain(ai.apiKey)
+  })
+
+  it("talks to a local OpenAI-compatible server with no key and applies the same filters", async () => {
+    const good = vi.fn(async () => ({ ok: true, status: 200, json: async () => ({ choices: [{ message: { content: JSON.stringify({ answer: "Mido 24,6 °C.", observations: [], hypotheses: [], missing: [] }) } }] }) }) as Response)
+    const reply = await answerMessage({ ai: local, limiter: limiter(), fetchImpl: good as unknown as typeof fetch }, "u1", "cuéntame algo interesante de mi cámara hoy", context)
+    expect(reply).toMatchObject({ aiStatus: "used", answer: { source: "model" } })
+    const [url, init] = good.mock.calls[0] as unknown as [string, RequestInit]
+    expect(url).toBe("http://localhost:11434/v1/chat/completions")
+    expect((init.headers as Record<string, string>).authorization).toBeUndefined()
+    const bad = vi.fn(async () => ({ ok: true, status: 200, json: async () => ({ choices: [{ message: { content: JSON.stringify({ answer: "Ya encendí el ventilador.", observations: [], hypotheses: [], missing: [] }) } }] }) }) as Response)
+    expect((await answerMessage({ ai: local, limiter: limiter(), fetchImpl: bad as unknown as typeof fetch }, "u2", "otro texto sin sentido para las reglas", context)).aiStatus).toBe("rejected")
   })
 
   it("discards a model reply that claims actions and answers with rules instead", async () => {

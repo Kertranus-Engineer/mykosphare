@@ -56,6 +56,15 @@ export interface ProposedIntent {
   unavailableReason: string
 }
 
+/**
+ * Who decides. Three kinds, never mixed:
+ *  - automatic: a verified local controller acts by itself within confirmed limits (none exists yet);
+ *  - suggestion: something a person can do or check; MYKOSPHARE only says it;
+ *  - needs_confirmation: an action on a device that a person must approve first.
+ */
+export type DecisionClass = "automatic" | "suggestion" | "needs_confirmation"
+export interface DecisionInfo { class: DecisionClass; label: string; /** Why it is in this class, in plain words. */ reason: string }
+
 export interface Recommendation {
   id: string
   findingId: string
@@ -69,6 +78,7 @@ export interface Recommendation {
   /** Inert: nothing is executed and the person always decides. */
   proposal?: ProposedIntent
   requiresHuman: true
+  decision: DecisionInfo
 }
 
 export interface PrimaryAction { kind: "configure_cultivation" | "check_device"; label: string; href: string }

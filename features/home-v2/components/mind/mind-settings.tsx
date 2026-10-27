@@ -4,7 +4,7 @@ import Link from "next/link"
 import { BellOff, Check, Cpu, Lock } from "lucide-react"
 
 import { cn } from "@/lib/utils"
-import { AUTONOMY_MODES, agoText, automationEligibility, type AutonomyMode } from "@/lib/grow/intelligence"
+import { ACTUATOR_READINESS, AUTONOMY_MODES, agoText, automationEligibility, type AutonomyMode } from "@/lib/grow/intelligence"
 import { useNow } from "@/features/mobile/use-now"
 import { useHomeV2 } from "../../data/home-v2-provider"
 import { Card, SectionHeading, ToneDot } from "../ui/surface"
@@ -61,6 +61,21 @@ export function ModesCard() {
           <p className="hv2-setup-note-title">Para llegar al modo Automático falta</p>
           <ul>{eligibility.reasons.map(r => <li key={r}>{r}</li>)}</ul>
         </div>
+        <p className="hv2-caption">Acciones automáticas activas: ninguna.</p>
+        <details className="hv2-readiness">
+          <summary>Pruebas antes de activar actuadores · 0 de {ACTUATOR_READINESS.length}</summary>
+          <p className="hv2-caption">Ninguno se enciende hasta que cada punto se pruebe y se registre el resultado medido.</p>
+          {(["electrica", "funcional", "operacion"] as const).map(category => (
+            <div key={category}>
+              <h4 className="hv2-readiness-group">{category === "electrica" ? "Eléctricas" : category === "funcional" ? "Seguridad funcional" : "Operación"}</h4>
+              <ol>
+                {ACTUATOR_READINESS.filter(g => g.category === category).map(g => (
+                  <li key={g.id}><strong>{g.title}.</strong> {g.pass}</li>
+                ))}
+              </ol>
+            </div>
+          ))}
+        </details>
         <p className="hv2-caption">Cuando haya actuadores, el control lo hará un controlador local con límites, tiempos máximos y estado seguro. La conversación con MYKO nunca enciende nada y tú podrás intervenir siempre.</p>
       </Card>
     </section>

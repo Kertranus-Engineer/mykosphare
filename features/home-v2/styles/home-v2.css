@@ -2871,3 +2871,16 @@ html:not([data-hv2-theme]) .hv2-root {
 .hv2-setup-note { padding: 12px 14px; border-radius: 16px; background: var(--hv2-surface-3); }
 .hv2-setup-note-title { margin: 0 0 6px; font-size: 13px; font-weight: 650; }
 .hv2-setup-note ul { margin: 0; padding-left: 18px; font-size: 12.5px; line-height: 1.5; color: var(--hv2-text-3); }
+
+/* ═════ 18. TELEMETRY SUMMARY, DECISIONS AND READINESS ═══════════════════════ */
+
+.hv2-mind-metric-trend { font-size: 11.5px; font-weight: 600; color: var(--tone); font-variant-numeric: tabular-nums; }
+.hv2-tele { display: flex; flex-direction: column; gap: 12px; }
+.hv2-tele-title { margin: 0; font-size: 16px; font-weight: 650; }
+.hv2-tele-list { margin: 0; padding-left: 18px; font-size: 13px; line-height: 1.5; color: var(--hv2-text-2); }
+.hv2-reco-decision { align-self: flex-start; }
+.hv2-readiness { padding: 12px 14px; border-radius: 16px; background: var(--hv2-surface-3); }
+.hv2-readiness summary { min-height: 44px; display: flex; align-items: center; font-size: 14px; font-weight: 650; cursor: pointer; }
+.hv2-readiness-group { margin: 14px 0 6px; font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--hv2-text-3); }
+.hv2-readiness ol { margin: 0; padding-left: 20px; font-size: 13px; line-height: 1.5; color: var(--hv2-text-2); }
+.hv2-readiness li + li { margin-top: 6px; }

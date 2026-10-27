@@ -4,7 +4,7 @@ import Link from "next/link"
 import { ArrowRight, Droplets, Eye, Thermometer } from "lucide-react"
 
 import { useNow } from "@/features/mobile/use-now"
-import { agoText, num, rangeText, type MetricId, type Range } from "@/lib/grow/intelligence"
+import { agoText, num, rangeText, type MetricId, type Range, type Trend } from "@/lib/grow/intelligence"
 import { stageLabel } from "@/lib/grow/presentation/stage"
 import { useHomeV2 } from "../../data/home-v2-provider"
 import { TONE } from "../../data/intelligence-view"
@@ -15,8 +15,8 @@ import { Sparkline } from "../ui/sparkline"
 const ICON = { temperature: Thermometer, humidity: Droplets } as const
 const LABEL: Record<MetricId, string> = { temperature: "Temperatura", humidity: "Humedad" }
 
-function MetricBlock({ metric, value, range, tone, series, minSpan, stale }: {
-  metric: MetricId; value: number | null; range?: Range; tone: Tone; series: number[]; minSpan: number; stale: boolean
+function MetricBlock({ metric, value, range, tone, series, minSpan, stale, trend }: {
+  metric: MetricId; value: number | null; range?: Range; tone: Tone; series: number[]; minSpan: number; stale: boolean; trend?: Trend | null
 }) {
   const Icon = ICON[metric]
   return (
@@ -27,6 +27,9 @@ function MetricBlock({ metric, value, range, tone, series, minSpan, stale }: {
         <small>{metric === "temperature" ? "°C" : "%"}</small>
       </span>
       {range && <span className="hv2-mind-metric-range">Objetivo {rangeText(metric, range)}</span>}
+      {!stale && trend && trend.direction !== "flat" && (
+        <span className="hv2-mind-metric-trend">{trend.direction === "up" ? "↑ Sube" : "↓ Baja"} {num(Math.abs(trend.perHour))} {metric === "temperature" ? "°C" : "pts"}/h</span>
+      )}
       <Sparkline values={series} minSpan={minSpan} className="hv2-mind-spark" />
     </div>
   )
@@ -66,8 +69,8 @@ export function MindHero() {
         <p className="hv2-mind-crop">{cultivation.profile.displayName} · {stageLabel(cultivation.stage)}{day ? ` · día ${day}` : ""}{cultivation.rangesSource === "owner" ? " · rangos tuyos" : cultivation.profile.validation === "sample" ? " · perfil de ejemplo" : ""}</p>
       )}
       <div className="hv2-mind-metrics">
-        <MetricBlock metric="temperature" value={report.current?.temperature ?? null} range={report.targets?.temperature} tone={flagged("temperature")} series={series("temperature")?.series ?? []} minSpan={2} stale={stale} />
-        <MetricBlock metric="humidity" value={report.current?.humidity ?? null} range={report.targets?.humidity} tone={flagged("humidity")} series={series("humidity")?.series ?? []} minSpan={8} stale={stale} />
+        <MetricBlock metric="temperature" value={report.current?.temperature ?? null} range={report.targets?.temperature} tone={flagged("temperature")} series={series("temperature")?.series ?? []} minSpan={2} stale={stale} trend={intelligence.context.telemetry.trend.temperature} />
+        <MetricBlock metric="humidity" value={report.current?.humidity ?? null} range={report.targets?.humidity} tone={flagged("humidity")} series={series("humidity")?.series ?? []} minSpan={8} stale={stale} trend={intelligence.context.telemetry.trend.humidity} />
       </div>
       {report.primaryAction && (
         <Link href={report.primaryAction.href} className="hv2-button hv2-button--primary hv2-button--block hv2-press">

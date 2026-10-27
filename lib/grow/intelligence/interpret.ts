@@ -2,7 +2,7 @@ import { DEFAULT_INTELLIGENCE_CONFIG } from "./config"
 import { ADJECTIVE, DIRECTION_TEXT, METRIC_LABEL, METRIC_NOUN, agoText, rangeText, withUnit } from "./copy.es"
 import { detectEpisodes, normalizeSeries, rapidChange, validValue, type Sample } from "./series"
 import type {
-  DeviceInfo, EnvTargets, Finding, FindingKind, IntelligenceConfig, IntelligenceReport, MetricId, PrimaryAction,
+  DecisionInfo, DeviceInfo, EnvTargets, Finding, FindingKind, IntelligenceConfig, IntelligenceReport, MetricId, PrimaryAction,
   ProposedIntent, Recommendation, Summary,
 } from "./types"
 
@@ -119,8 +119,13 @@ const INTENT: Partial<Record<FindingKind, ProposedIntent["intent"]>> = {
 }
 const UNAVAILABLE = "Todavía no hay actuadores conectados: MYKOSPHARE solo observa."
 
+export const DECISIONS: Record<"suggestion" | "needs_confirmation", DecisionInfo> = {
+  suggestion: { class: "suggestion", label: "Sugerencia", reason: "Algo que tú puedes revisar o hacer; MYKOSPHARE solo lo propone." },
+  needs_confirmation: { class: "needs_confirmation", label: "Requiere tu confirmación", reason: "Actuaría sobre un dispositivo, así que necesitaría tu aprobación; hoy no hay actuadores." },
+}
+
 export function recommend(findings: readonly Finding[]): Recommendation[] {
-  const out: Recommendation[] = []
+  const out: Omit<Recommendation, "decision">[] = []
   for (const finding of findings) {
     const base = { id: `rec:${finding.id}`, findingId: finding.id, findingKind: finding.kind, severity: finding.severity, metric: finding.metric, requiresHuman: true as const }
     const cause = { metric: finding.metric, value: finding.value, target: finding.target, observedAt: finding.observedAt, since: finding.since }
@@ -170,7 +175,7 @@ export function recommend(findings: readonly Finding[]): Recommendation[] {
         break
     }
   }
-  return out
+  return out.map(rec => ({ ...rec, decision: rec.proposal ? DECISIONS.needs_confirmation : DECISIONS.suggestion }))
 }
 
 export function summarize(findings: readonly Finding[], latest: Sample | undefined, now: number): Summary {

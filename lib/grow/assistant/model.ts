@@ -8,11 +8,25 @@ import type { AssistantAnswer, AssistantContext } from "../intelligence"
  * The model receives only the allow-listed AssistantContext, can only return text, and has no tool, no database
  * and no hardware access. Whatever it says is filtered before anyone sees it.
  */
-export interface AiConfig { apiKey: string; model: string; baseUrl: string }
+export type AiProvider = "anthropic" | "openai-compatible"
+export interface AiConfig { provider: AiProvider; apiKey: string; model: string; baseUrl: string }
 
+/**
+ * Disabled unless EVERYTHING needed is present, and nothing is paid for by default:
+ *  - `openai-compatible` talks to a model YOU run (Ollama, LM Studio, llama.cpp…) at MYKO_AI_BASE_URL: no key, no fee;
+ *  - `anthropic` is a paid API and needs a key. It is supported but this project does not use it.
+ */
 export function readAiConfig(env: Record<string, string | undefined> = process.env): AiConfig | null {
-  if (env.MYKO_AI_ENABLED !== "1" || !env.MYKO_AI_API_KEY) return null
-  return { apiKey: env.MYKO_AI_API_KEY, model: env.MYKO_AI_MODEL || "claude-haiku-5-5", baseUrl: env.MYKO_AI_BASE_URL || "https://api.anthropic.com" }
+  if (env.MYKO_AI_ENABLED !== "1") return null
+  const provider = env.MYKO_AI_PROVIDER
+  if (provider === "openai-compatible") {
+    if (!env.MYKO_AI_BASE_URL || !/^https?:\/\//.test(env.MYKO_AI_BASE_URL) || !env.MYKO_AI_MODEL) return null
+    return { provider, apiKey: env.MYKO_AI_API_KEY ?? "", model: env.MYKO_AI_MODEL, baseUrl: env.MYKO_AI_BASE_URL.replace(/\/$/, "") }
+  }
+  if (provider === "anthropic" && env.MYKO_AI_API_KEY) {
+    return { provider, apiKey: env.MYKO_AI_API_KEY, model: env.MYKO_AI_MODEL || "claude-haiku-5-5", baseUrl: env.MYKO_AI_BASE_URL || "https://api.anthropic.com" }
+  }
+  return null
 }
 
 export interface Turn { role: "user" | "assistant"; text: string }
@@ -79,15 +93,21 @@ export async function askModel(
   const controller = new AbortController()
   const timer = setTimeout(() => controller.abort(), 12_000)
   try {
-    const response = await fetchImpl(`${config.baseUrl}/v1/messages`, {
+    const messages = buildMessages(context, message, turns)
+    const compatible = config.provider === "openai-compatible"
+    const response = await fetchImpl(compatible ? `${config.baseUrl}/v1/chat/completions` : `${config.baseUrl}/v1/messages`, {
       method: "POST",
-      headers: { "content-type": "application/json", "x-api-key": config.apiKey, "anthropic-version": "2023-06-01" },
-      body: JSON.stringify({ model: config.model, max_tokens: 400, temperature: 0.2, system: SYSTEM_PROMPT, messages: buildMessages(context, message, turns) }),
+      headers: compatible
+        ? { "content-type": "application/json", ...(config.apiKey ? { authorization: `Bearer ${config.apiKey}` } : {}) }
+        : { "content-type": "application/json", "x-api-key": config.apiKey, "anthropic-version": "2023-06-01" },
+      body: JSON.stringify(compatible
+        ? { model: config.model, max_tokens: 400, temperature: 0.2, stream: false, messages: [{ role: "system", content: SYSTEM_PROMPT }, ...messages] }
+        : { model: config.model, max_tokens: 400, temperature: 0.2, system: SYSTEM_PROMPT, messages }),
       signal: controller.signal,
     })
     if (!response.ok) return { status: "error", reason: `provider status ${response.status}` }
-    const body = (await response.json()) as { content?: { type?: string; text?: string }[] }
-    const raw = body.content?.find(part => part.type === "text")?.text ?? ""
+    const body = (await response.json()) as { content?: { type?: string; text?: string }[]; choices?: { message?: { content?: string } }[] }
+    const raw = compatible ? body.choices?.[0]?.message?.content ?? "" : body.content?.find(part => part.type === "text")?.text ?? ""
     const reply = parseModelReply(raw)
     if (!reply) return { status: "rejected", reason: "unparseable reply" }
     const verdict = guardReply(reply)

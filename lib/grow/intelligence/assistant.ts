@@ -2,6 +2,7 @@ import { agoText, durationText, num, rangeText, withUnit } from "./copy.es"
 import { DEFAULT_INTELLIGENCE_CONFIG } from "./config"
 import { classifyIntent, type Intent } from "./intent"
 import { normalizeSeries, validValue, type Sample } from "./series"
+import { analyzeTelemetry, type TelemetryInsights } from "./telemetry"
 import type {
   ActivityEvent, CatalogEntry, CultivationFacts, EnvTargets, IntelligenceReport, MetricId, MissingInfo, ReadingPoint, Summary,
 } from "./types"
@@ -30,6 +31,8 @@ export interface AssistantContext {
   recommendations: { title: string; body: string }[]
   events: ActivityEvent[]
   window24h: { samples: number; temperature: Stats | null; humidity: Stats | null }
+  /** Numbers and sentences derived from the measurements alone (trend, stability, coverage, day vs night). */
+  telemetry: TelemetryInsights
   uptime: { streakStartedAt: string | null; streakMs: number; gaps: number; firstSampleAt: string | null }
   sinceYesterday: { then: { temperature: number | null; humidity: number | null } | null; now: { temperature: number | null; humidity: number | null } | null }
   overnight: { from: string; to: string; ongoing: boolean; samples: number; temperature: Stats | null; humidity: Stats | null; events: ActivityEvent[] } | null
@@ -166,6 +169,7 @@ export function buildAssistantContext(input: BuildContextInput): AssistantContex
     recommendations: input.report.recommendations.map(r => ({ title: r.title, body: r.body })),
     events: [...input.events],
     window24h: { samples: last24.length, temperature: stats(last24, "temperature"), humidity: stats(last24, "humidity") },
+    telemetry: analyzeTelemetry(input.history, now, { hourOf }),
     uptime,
     sinceYesterday: {
       then: samples.some(s => now - s.t >= 22 * HOUR && now - s.t <= 26 * HOUR)
@@ -205,7 +209,8 @@ export function answerIntent(intent: Intent, ctx: AssistantContext): AssistantAn
   switch (intent) {
     case "status": {
       const crop = ctx.cultivation ? ` Cultivo: ${ctx.cultivation.name}, ${ctx.cultivation.stageLabel.toLowerCase()}.` : ""
-      return done(`${ctx.summary.headline}${values ? ` Mido ${values}.` : ""} ${ctx.summary.detail}${crop}`, cur ? [`reading:${cur.observedAt}`] : [])
+      const note = ctx.telemetry.insights.find(i => i.id.startsWith("trend:"))?.text
+      return done(`${ctx.summary.headline}${values ? ` Mido ${values}.` : ""} ${ctx.summary.detail}${crop}${note ? ` ${note}` : ""}`, cur ? [`reading:${cur.observedAt}`] : [])
     }
     case "device_connected": {
       const last = ctx.device.lastReadingAt
@@ -215,6 +220,13 @@ export function answerIntent(intent: Intent, ctx: AssistantContext): AssistantAn
         : ctx.device.connection === "offline" ? `No: ${ctx.device.name ?? "tu dispositivo"} dejó de enviar mediciones. ${age ? `La última fue ${age}.` : ""}`
         : "Todavía no puedo confirmarlo: no recibí mediciones."
       return done(text, last ? [`reading:${last}`] : [])
+    }
+    case "trend": {
+      const t = ctx.telemetry
+      if (!t.trend.temperature && !t.trend.humidity) return done("Todavía no tengo suficientes mediciones de la última hora para hablar de tendencia.")
+      const lines = t.insights.filter(i => i.id.startsWith("trend:") || i.id.startsWith("variable:")).map(i => i.text)
+      const flat = (m: MetricId) => (t.trend[m]?.direction === "flat" ? `${m === "temperature" ? "La temperatura" : "La humedad"} se mantiene estable en la última hora.` : "")
+      return done(`${lines.join(" ")} ${flat("temperature")} ${flat("humidity")}`.trim() || "Sin cambios relevantes en la última hora.")
     }
     case "uptime": {
       const u = ctx.uptime
@@ -230,8 +242,10 @@ export function answerIntent(intent: Intent, ctx: AssistantContext): AssistantAn
       if (ctx.recommendations.length) parts.push(`Primero: ${ctx.recommendations[0]?.title.toLowerCase()}. ${ctx.recommendations[0]?.body}`)
       const wanted = ctx.missing.filter(m => m === "no_cultivation" || m === "targets_unconfirmed" || m === "profile_not_validated").map(m => MISSING_TEXT[m])
       if (wanted.length) parts.push(`Para evaluarte mejor: ${wanted[0]}`)
+      const variable = ctx.telemetry.insights.find(i => i.id.startsWith("variable:"))
+      if (variable) parts.push(`${variable.text} Estabilizarla suele ser lo que más ayuda.`)
       const h = ctx.window24h.humidity
-      if (h && h.max - h.min >= 15) parts.push(`La humedad varió ${num(h.max - h.min, 0)} puntos en 24 h (${withUnit("humidity", h.min)} a ${withUnit("humidity", h.max)}); estabilizarla suele ser lo que más ayuda.`)
+      if (!variable && h && h.max - h.min >= 15) parts.push(`La humedad varió ${num(h.max - h.min, 0)} puntos en 24 h (${withUnit("humidity", h.min)} a ${withUnit("humidity", h.max)}); estabilizarla suele ser lo que más ayuda.`)
       if (!parts.length) parts.push("Tu ambiente se ve estable con lo que puedo medir. Lo siguiente sería registrar tu cultivo para comparar con un rango objetivo.")
       return done(parts.join(" "), [])
     }

@@ -4,7 +4,7 @@
  */
 export type Intent =
   | "status" | "why_humidity" | "why_temperature" | "overnight" | "what_to_check" | "improve" | "device_connected"
-  | "uptime" | "since_yesterday" | "species" | "needs" | "start_crop" | "greeting" | "unknown"
+  | "uptime" | "trend" | "since_yesterday" | "species" | "needs" | "start_crop" | "greeting" | "unknown"
 
 export function normalizeText(text: string): string {
   return text.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9ñ\s]/g, " ").replace(/\s+/g, " ").trim()
@@ -28,6 +28,7 @@ export function classifyIntent(raw: string): Intent {
   if (has(t, /\b(por que|porque|motivo|causa|razon)\b/) && has(t, /\b(temperatura|calor|frio|caliente|helado)\b/)) return "why_temperature"
   if (has(t, /\bhumedad\b.*\b(baj|cay|descend|subi|sub[ei]|aument)/)) return "why_humidity"
   if (has(t, /\btemperatura\b.*\b(baj|cay|descend|subi|sub[ei]|aument)/)) return "why_temperature"
+  if (has(t, /\btendencia\b/) || (has(t, /\b(sube|subiendo|baja|bajando|aumentando|descendiendo|estable|estabilidad|se mantiene|variando)\b/) && has(t, /\b(temperatura|humedad|camara|todo|ambiente|esta|estan|se)\b/))) return "trend"
   if (has(t, /\b(mejorar|optimizar|perfeccionar|estabilizar)\b/)) return "improve"
   if (has(t, /\b(conectad[a-z]*|desconectad[a-z]*|conexion|online|offline|senal|wifi|wi fi)\b/)) return "device_connected"
   if (has(t, /\b(cambiar|revisar|atencion|alerta|problema|deberia|debo|hago|hacer|urgente)\b/) || has(t, /\bpasa algo\b/)) return "what_to_check"

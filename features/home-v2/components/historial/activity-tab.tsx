@@ -10,6 +10,7 @@ import { COPY } from "../../copy"
 import { formatClock, formatDayHeading } from "../../data/format"
 import { useHomeV2 } from "../../data/home-v2-provider"
 import type { HistoryEntryModel, HistoryKind } from "../../data/model"
+import { TelemetrySummary } from "../mind/mind-extras"
 import { CATEGORY_LABEL, EntryIcon } from "../ui/entry-icon"
 import { Card, Chip, EmptyState } from "../ui/surface"
 
@@ -88,6 +89,7 @@ export function ActivityTab() {
 
   return (
     <div className="hv2-stack hv2-stack--tight">
+      {mode !== "demo" && <TelemetrySummary />}
       {allSimulated && <Chip tone="sim" className="hv2-chip--caps hv2-log-flag">{COPY.historyPage.allSimulated}</Chip>}
       <div role="group" aria-label={COPY.historyPage.filtersLabel} className="hv2-filters">
         {FILTERS.map((id) => (
