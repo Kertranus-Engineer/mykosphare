@@ -5,6 +5,7 @@ import { BellOff, Check, Cpu, Lock } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 import { ACTUATOR_READINESS, AUTONOMY_MODES, agoText, automationEligibility, type AutonomyMode } from "@/lib/grow/intelligence"
+import { errorText, modeLabel } from "@/lib/grow/control/status"
 import { useNow } from "@/features/mobile/use-now"
 import { useHomeV2 } from "../../data/home-v2-provider"
 import { Card, SectionHeading, ToneDot } from "../ui/surface"
@@ -14,6 +15,7 @@ export function DeviceSettingsCard() {
   const { device, intelligence } = useHomeV2()
   const now = useNow(10_000)
   const last = intelligence?.report.current?.observedAt
+  const reported = intelligence?.control?.reported ?? null
   return (
     <section aria-labelledby="hv2-dev-h" className="hv2-block">
       <SectionHeading id="hv2-dev-h" title="Mi dispositivo" />
@@ -25,6 +27,19 @@ export function DeviceSettingsCard() {
         </div>
         <Link href="/home/conectar" className="hv2-section-link hv2-press">Detalles</Link>
       </Card>
+      {reported && (
+        <details className="hv2-readiness">
+          <summary>Diagnóstico del controlador</summary>
+          <dl className="hv2-diag">
+            <div><dt>Firmware</dt><dd>{reported.firmware ?? "—"}</dd></div>
+            <div><dt>Versión recibida / aplicada</dt><dd>v{reported.receivedVersion ?? "—"} / v{reported.appliedVersion ?? "—"}</dd></div>
+            <div><dt>Modo del controlador</dt><dd>{modeLabel(reported.mode)}</dd></div>
+            <div><dt>Estado</dt><dd>{reported.controllerState ?? "—"}{reported.sensorOk === false ? " · sensor no confiable" : ""}</dd></div>
+            <div><dt>Último reporte</dt><dd>{reported.reportedAt && now !== null ? agoText(now - Date.parse(reported.reportedAt)) : "—"}</dd></div>
+            <div><dt>Último error</dt><dd>{reported.lastError ? errorText(reported.lastError) : "ninguno"}</dd></div>
+          </dl>
+        </details>
+      )}
     </section>
   )
 }
@@ -56,6 +71,13 @@ export function ModesCard() {
               </li>
             )
           })}
+          <li className="hv2-mode is-active">
+            <span aria-hidden className="hv2-mode-icon"><Check className="size-4" /></span>
+            <div>
+              <p className="hv2-mode-title">Prueba (simulación) · activo</p>
+              <p className="hv2-caption">Para la cámara vacía: MYKO-001 calcula qué haría con tus objetivos y lo registra, sin activar ninguna salida eléctrica.</p>
+            </div>
+          </li>
         </ul>
         <div className="hv2-setup-note">
           <p className="hv2-setup-note-title">Para llegar al modo Automático falta</p>

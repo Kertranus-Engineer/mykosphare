@@ -25,10 +25,10 @@ const reply = (status: number, error: string) => Response.json({ error }, {
 })
 
 /** Enforces a BYTE limit while streaming, even without Content-Length. */
-export async function readReadingBody(request: Request): Promise<unknown | Response> {
+export async function readReadingBody(request: Request, maxBytes: number = READING_MAX_BYTES): Promise<unknown | Response> {
   if (request.headers.get("content-type")?.split(";")[0].trim().toLowerCase() !== "application/json") return reply(415, "application/json required")
   const length = request.headers.get("content-length")
-  if (length !== null && (!/^\d+$/.test(length) || Number(length) > READING_MAX_BYTES)) return reply(413, "payload too large")
+  if (length !== null && (!/^\d+$/.test(length) || Number(length) > maxBytes)) return reply(413, "payload too large")
   if (!request.body) return reply(400, "empty body")
   const reader = request.body.getReader()
   const chunks: Uint8Array[] = []
@@ -38,7 +38,7 @@ export async function readReadingBody(request: Request): Promise<unknown | Respo
       const chunk = await reader.read()
       if (chunk.done) break
       size += chunk.value.byteLength
-      if (size > READING_MAX_BYTES) { await reader.cancel(); return reply(413, "payload too large") }
+      if (size > maxBytes) { await reader.cancel(); return reply(413, "payload too large") }
       chunks.push(chunk.value)
     }
     const bytes = new Uint8Array(size)

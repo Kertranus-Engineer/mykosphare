@@ -47,6 +47,7 @@ try {
   `)
   await db.exec(await migration("202609300001_grow_data_platform.sql"))
   await db.exec(await migration("202610010001_grow_cultivation_loop.sql"))
+  await db.exec(await migration("202610280001_grow_device_control.sql"))
 
   const tables = (await db.query("select tablename from pg_tables where schemaname='public' and tablename like 'grow_%' order by tablename")).rows.map((r) => r.tablename)
   for (const name of ["grow_chambers", "grow_devices", "grow_device_credentials", "grow_readings", "grow_ingestion_rate_limits"]) {
@@ -138,7 +139,37 @@ try {
   assert.deepEqual(withRun.rows[0].result, { inserted: true, runAttached: true })
   assert.equal((await one("select run_id from public.grow_readings where device_id=$1 order by received_at desc limit 1", [deviceA])).run_id, run.id)
 
-  console.log("PASS: migrations, legacy coexistence, MYKO-001 template, FK, RLS, owner isolation, grants, rate, idempotence, atomic rollback.")
+  // ── Device control: desired state, events, RLS and privileges ──
+  const targets = JSON.stringify({ temperature: { min: 22, max: 24 }, humidity: { min: 75, max: 85 } })
+  assert.equal((await one("select has_function_privilege('authenticated','public.grow_publish_device_config(uuid,text,jsonb,jsonb,text,uuid)','execute') as allowed")).allowed, false)
+  assert.equal((await one("select has_function_privilege('service_role','public.grow_publish_device_config(uuid,text,jsonb,jsonb,text,uuid)','execute') as allowed")).allowed, true)
+  await assert.rejects(() => asRole("authenticated", "select public.grow_publish_device_config($1,'observation',$2::jsonb,'{}'::jsonb,null,$3)", [deviceA, targets, ownerA]))
+  await assert.rejects(() => asRole("anon", "select public.grow_publish_device_config($1,'observation',$2::jsonb,'{}'::jsonb,null,$3)", [deviceA, targets, ownerA]))
+  const v1 = (await asRole("service_role", "select public.grow_publish_device_config($1,'simulation',$2::jsonb,'{}'::jsonb,'prueba',$3) as v", [deviceA, targets, ownerA])).rows[0].v
+  const v2 = (await asRole("service_role", "select public.grow_publish_device_config($1,'observation',$2::jsonb,'{}'::jsonb,null,$3) as v", [deviceA, targets, ownerA])).rows[0].v
+  assert.deepEqual([v1, v2], [1, 2], "versions must be consecutive")
+  await assert.rejects(() => asRole("service_role", "select public.grow_publish_device_config($1,'teleport',$2::jsonb,'{}'::jsonb,null,$3)", [deviceA, targets, ownerA]), "unknown modes are rejected by the database")
+  await assert.rejects(() => asRole("service_role", "select public.grow_publish_device_config($1,'observation','[]'::jsonb,'{}'::jsonb,null,$2)", [deviceA, ownerA]), "targets must be an object")
+  await db.query("select set_config('request.jwt.claim.sub',$1,false)", [ownerA])
+  assert.equal((await asRole("authenticated", "select count(*)::int as n from public.grow_device_configs")).rows[0].n, 2)
+  await assert.rejects(() => asRole("authenticated", "insert into public.grow_device_configs(device_id,version,mode,targets) values ($1,3,'automatic','{}')", [deviceA]), "the browser cannot write configs")
+  await assert.rejects(() => asRole("authenticated", "update public.grow_device_configs set mode='automatic'"), "nor edit them")
+  await db.query("select set_config('request.jwt.claim.sub',$1,false)", [ownerB])
+  assert.equal((await asRole("authenticated", "select count(*)::int as n from public.grow_device_configs")).rows[0].n, 0, "another owner sees no configs")
+  assert.equal((await asRole("authenticated", "select count(*)::int as n from public.grow_device_events")).rows[0].n, 0)
+
+  const evt = "insert into public.grow_device_events(device_id,event_key,occurred_at,kind,simulated,config_version,detail) values ($1,$2,now(),$3,true,2,$4::jsonb) on conflict (device_id,event_key) do nothing"
+  await asRole("service_role", evt, [deviceA, "boot1:1", "config_applied", '{"ok":true}'])
+  await asRole("service_role", evt, [deviceA, "boot1:1", "config_applied", '{"ok":true}'])
+  assert.equal((await one("select count(*)::int as n from public.grow_device_events where device_id=$1", [deviceA])).n, 1, "a retried event is not duplicated")
+  await assert.rejects(() => asRole("service_role", evt, [deviceA, "boot1:2", "format_disk", "{}"]), "event kinds are a closed list")
+  await assert.rejects(() => asRole("service_role", evt, [deviceA, "boot1:3", "error", JSON.stringify({ blob: "x".repeat(2000) })]), "event details are bounded")
+  await db.query("select set_config('request.jwt.claim.sub',$1,false)", [ownerA])
+  assert.equal((await asRole("authenticated", "select count(*)::int as n from public.grow_device_events")).rows[0].n, 1)
+  await assert.rejects(() => asRole("authenticated", "insert into public.grow_device_events(device_id,event_key,occurred_at,kind) values ($1,'x',now(),'error')", [deviceA]))
+  await assert.rejects(() => asRole("authenticated", "delete from public.grow_device_events"))
+
+  console.log("PASS: migrations, legacy coexistence, MYKO-001 template, FK, RLS, owner isolation, grants, rate, idempotence, atomic rollback, device control.")
 } finally {
   await db.close()
 }

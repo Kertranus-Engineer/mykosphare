@@ -6,10 +6,11 @@ import { useRef, useState, type FormEvent } from "react"
 
 import { cn } from "@/lib/utils"
 import { SUGGESTIONS, answerIntent, classifyIntent, respondWithRules, type AssistantAnswer, type Intent } from "@/lib/grow/intelligence"
+import { publishControl } from "../../data/control-client"
 import { useHomeV2 } from "../../data/home-v2-provider"
 import { Card } from "../ui/surface"
 
-interface Message { id: number; from: "me" | "myko"; text: string; answer?: AssistantAnswer }
+interface Message { id: number; from: "me" | "myko"; text: string; answer?: AssistantAnswer; proposalState?: "open" | "saving" | "saved" | "cancelled" }
 
 const SOURCE_LABEL: Record<AssistantAnswer["source"], string> = { rules: "Reglas con tus datos", model: "IA · revisada con reglas de seguridad" }
 
@@ -19,7 +20,7 @@ const SOURCE_LABEL: Record<AssistantAnswer["source"], string> = { rules: "Reglas
  * not today). Every answer says where it came from.
  */
 export function MykoChat() {
-  const { intelligence } = useHomeV2()
+  const { intelligence, retrySensors } = useHomeV2()
   const [messages, setMessages] = useState<Message[]>([])
   const [text, setText] = useState("")
   const [busy, setBusy] = useState(false)
@@ -28,6 +29,23 @@ export function MykoChat() {
   const context = intelligence.context
 
   const push = (m: Omit<Message, "id">) => setMessages(prev => [...prev, { ...m, id: nextId.current++ }].slice(-6))
+  const mark = (id: number, proposalState: Message["proposalState"]) => setMessages(prev => prev.map(m => (m.id === id ? { ...m, proposalState } : m)))
+
+  /** Only after the person confirms the exact values shown in the message. Saving is not applying: the device must confirm. */
+  const confirmProposal = async (message: Message) => {
+    const proposal = message.answer?.proposal
+    if (!proposal) return
+    mark(message.id, "saving")
+    const result = await publishControl({ mode: proposal.mode, targets: proposal.targets })
+    if (result.ok) {
+      mark(message.id, "saved")
+      push({ from: "myko", text: `Guardado como versión ${result.version} (prueba). Todavía no está aplicado: MYKO-001 tiene que recibirlo y confirmarlo. Lo verás en la tarjeta «Objetivo de la cámara».` })
+      retrySensors()
+    } else {
+      mark(message.id, "open")
+      push({ from: "myko", text: result.message })
+    }
+  }
 
   const ask = async (question: string, intent?: Intent) => {
     const clean = question.trim()
@@ -35,7 +53,7 @@ export function MykoChat() {
     push({ from: "me", text: clean })
     setText("")
     const local = intent ? answerIntent(intent, context) : respondWithRules(clean, context)
-    if (local.understood || classifyIntent(clean) !== "unknown") { push({ from: "myko", text: local.text, answer: local }); return }
+    if (local.understood || classifyIntent(clean) !== "unknown") { push({ from: "myko", text: local.text, answer: local, proposalState: local.proposal ? "open" : undefined }); return }
     setBusy(true)
     try {
       const turns = messages.slice(-4).map(m => ({ role: m.from === "me" ? "user" as const : "assistant" as const, text: m.text }))
@@ -63,6 +81,12 @@ export function MykoChat() {
                   <span className="hv2-chat-meta"><Sparkles aria-hidden className="size-3" />{SOURCE_LABEL[m.answer.source]}</span>
                 )}
                 {m.answer?.action && <Link href={m.answer.action.href} className="hv2-button hv2-button--small hv2-press">{m.answer.action.label}</Link>}
+                {m.answer?.proposal && m.proposalState !== "saved" && m.proposalState !== "cancelled" && (
+                  <div className="hv2-chat-chips" role="group" aria-label="Confirmar cambio de objetivo">
+                    <button type="button" className="hv2-button hv2-button--small hv2-button--primary hv2-press" disabled={m.proposalState === "saving"} onClick={() => { void confirmProposal(m) }}>{m.proposalState === "saving" ? "Guardando…" : "Confirmar y guardar"}</button>
+                    <button type="button" className="hv2-filter hv2-press" disabled={m.proposalState === "saving"} onClick={() => mark(m.id, "cancelled")}>Cancelar</button>
+                  </div>
+                )}
               </li>
             ))}
             {busy && <li className="hv2-chat-msg is-myko" aria-busy="true"><p>Pensando…</p></li>}

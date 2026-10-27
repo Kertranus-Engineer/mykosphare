@@ -26,6 +26,7 @@ Sample latest = {false, 0, 0, 0, 0};
 uint32_t generation = 0;
 uint32_t sentGeneration = 0;
 bool cloudStarted = false;
+SemaphoreHandle_t netMux = nullptr;
 
 constexpr unsigned long SEND_INTERVAL_MS = 30000;
 constexpr unsigned long MAX_SAMPLE_AGE_MS = 10000;
@@ -98,18 +99,20 @@ void cloudTask(void *) {
     snprintf(body, sizeof(body), "{\"observedAt\":\"%s\",\"temperature\":%.2f,\"humidity\":%.2f}",
              timestamp, sample.temperature, sample.humidity);
 
+    if (!cloudNetLock(8000)) continue;
     WiFiClientSecure client;
     client.setCACert(CLOUD_ROOT_CA);
     client.setTimeout(4000);
     HTTPClient http;
     http.setTimeout(4000);
     http.setFollowRedirects(HTTPC_DISABLE_FOLLOW_REDIRECTS);
-    if (!http.begin(client, CLOUD_ENDPOINT)) continue;
+    if (!http.begin(client, CLOUD_ENDPOINT)) { cloudNetUnlock(); continue; }
     http.addHeader("Content-Type", "application/json");
     http.addHeader("x-device-id", CLOUD_DEVICE_ID);
     http.addHeader("x-device-key", CLOUD_DEVICE_KEY);
     const int status = http.POST(reinterpret_cast<uint8_t *>(body), strlen(body));
     http.end();
+    cloudNetUnlock();
     // Status alone allows USB verification without exposing the request.
     Serial.printf("[CLOUD] HTTPS status: %d\n", status);
     if (status == 401 || status == 403) rejected = true;
@@ -120,7 +123,17 @@ void cloudTask(void *) {
 }
 }  // namespace
 
+bool cloudNetLock(unsigned long timeoutMs) {
+  if (!netMux) return false;
+  return xSemaphoreTake(netMux, pdMS_TO_TICKS(timeoutMs)) == pdTRUE;
+}
+
+void cloudNetUnlock() {
+  if (netMux) xSemaphoreGive(netMux);
+}
+
 void cloudBegin() {
+  netMux = xSemaphoreCreateMutex();
   if (!configured()) return;
   // Network runs on its own core. Sensor, LCD, and actuator loop never waits
   // for Wi-Fi, NTP, TLS, or HTTP.

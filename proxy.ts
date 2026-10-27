@@ -18,7 +18,7 @@ export async function proxy(request: NextRequest) {
     if (decision === "not-found") return new NextResponse("Not available in Cloud Connect preview", { status: 404 })
   }
   // Device credentials are checked by the v2 handler, not by browser cookies.
-  if (path === "/api/v2/device/readings") return NextResponse.next()
+  if (path === "/api/v2/device/readings" || path === "/api/v2/device/sync") return NextResponse.next()
   return await updateSession(request)
 }
 

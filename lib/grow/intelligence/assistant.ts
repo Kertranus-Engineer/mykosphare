@@ -1,10 +1,11 @@
+import { describeTargets, interpretTargetRequest, type TargetProposal } from "../control/request"
 import { agoText, durationText, num, rangeText, withUnit } from "./copy.es"
 import { DEFAULT_INTELLIGENCE_CONFIG } from "./config"
 import { classifyIntent, type Intent } from "./intent"
 import { normalizeSeries, validValue, type Sample } from "./series"
 import { analyzeTelemetry, type TelemetryInsights } from "./telemetry"
 import type {
-  ActivityEvent, CatalogEntry, CultivationFacts, EnvTargets, IntelligenceReport, MetricId, MissingInfo, ReadingPoint, Summary,
+  ActivityEvent, CatalogEntry, ControlContext, CultivationFacts, EnvTargets, IntelligenceReport, MetricId, MissingInfo, ReadingPoint, Summary,
 } from "./types"
 
 /**
@@ -37,6 +38,10 @@ export interface AssistantContext {
   sinceYesterday: { then: { temperature: number | null; humidity: number | null } | null; now: { temperature: number | null; humidity: number | null } | null }
   overnight: { from: string; to: string; ongoing: boolean; samples: number; temperature: Stats | null; humidity: Stats | null; events: ActivityEvent[] } | null
   drop: { metric: MetricId; from: number; to: number; fromAt: string; toAt: string } | null
+  /** Largest recent rise of a metric versus its 6 h low (observation, never a cause). */
+  rise: { metric: MetricId; from: number; to: number; fromAt: string; toAt: string } | null
+  /** Desired vs reported control state, from real device reports. null when the account has no device control data. */
+  control: ControlContext | null
   missing: MissingInfo[]
 }
 
@@ -67,6 +72,8 @@ export interface AssistantAnswer {
   action?: { label: string; href: string }
   /** The rules did not understand the text; a configured model may take over. */
   understood: boolean
+  /** A change of targets the person asked for. It is only a PROPOSAL: nothing is saved until they confirm the exact values. */
+  proposal?: TargetProposal
 }
 
 export interface AssistantProvider {
@@ -94,6 +101,7 @@ export interface BuildContextInput {
   deviceName?: string | null
   cultivation?: CultivationFacts | null
   catalog?: readonly CatalogEntry[]
+  control?: ControlContext | null
   /** Hour of day (0–23) in the person's local time. Injectable for tests. */
   hourOf?: (ms: number) => number
 }
@@ -117,15 +125,22 @@ export function buildAssistantContext(input: BuildContextInput): AssistantContex
 
   // Largest recent fall of either metric versus the 6 h peak (observation, never a cause).
   let drop: AssistantContext["drop"] = null
+  let rise: AssistantContext["rise"] = null
   if (latest) {
     for (const metric of ["humidity", "temperature"] as const) {
       const current = validValue(latest, metric)
       const recent = samples.filter(s => now - s.t <= 6 * HOUR && s.t < latest.t && validValue(s, metric) !== null)
-      const peak = recent.reduce<Sample | null>((best, s) => (best === null || (validValue(s, metric) as number) > (validValue(best, metric) as number) ? s : best), null)
+      const extreme = (better: (a: number, b: number) => boolean) => recent.reduce<Sample | null>((best, s) => (best === null || better(validValue(s, metric) as number, validValue(best, metric) as number) ? s : best), null)
+      const peak = extreme((a, b) => a > b)
+      const valley = extreme((a, b) => a < b)
       const threshold = metric === "humidity" ? 5 : 2
       if (current !== null && peak) {
         const from = validValue(peak, metric) as number
         if (from - current >= threshold && (!drop || metric === "humidity")) drop = { metric, from, to: current, fromAt: peak.iso, toAt: latest.iso }
+      }
+      if (current !== null && valley) {
+        const from = validValue(valley, metric) as number
+        if (current - from >= threshold && (!rise || metric === "humidity")) rise = { metric, from, to: current, fromAt: valley.iso, toAt: latest.iso }
       }
     }
   }
@@ -178,6 +193,8 @@ export function buildAssistantContext(input: BuildContextInput): AssistantContex
     },
     overnight,
     drop,
+    rise,
+    control: input.control ?? null,
     missing,
   }
 }
@@ -221,6 +238,23 @@ export function answerIntent(intent: Intent, ctx: AssistantContext): AssistantAn
         : "Todavía no puedo confirmarlo: no recibí mediciones."
       return done(text, last ? [`reading:${last}`] : [])
     }
+    case "targets_now": {
+      const c = ctx.control
+      if (!c || c.phase === "none") return done("Todavía no hay un objetivo ambiental definido para la cámara. Dime uno, por ejemplo «humedad entre 75 y 85 %», y lo guardo solo cuando lo confirmes.")
+      return done(`El objetivo vigente es ${c.targetsText} (versión ${c.version}, ${c.mode === "simulation" ? "de prueba" : c.mode === "observation" ? "solo observación" : c.mode}). ${c.label} ${c.controller}`)
+    }
+    case "actuator_log": {
+      const c = ctx.control
+      if (!c || c.actions.length === 0) return done(`No hay actuaciones registradas. ${ctx.capabilities.actuators === false ? "Además, hoy no hay actuadores conectados: ningún ventilador ni humidificador ha hecho nada real." : ""}`)
+      const lines = c.actions.slice(0, 4).map(a => `${hhmm(a.at)} ${a.command === "on" ? "encendería" : "apagaría"} el ${a.actuator.replace("fan_exhaust", "ventilador de extracción").replace("fan_intake", "ventilador de entrada").replace("humidifier", "humidificador")}${a.value !== null ? ` (medición ${num(a.value)})` : ""}`)
+      return done(`Estas son decisiones SIMULADAS del controlador; ninguna salida eléctrica se activó. ${lines.join("; ")}.`)
+    }
+    case "automatic_status": {
+      const c = ctx.control
+      return done(`No: el modo Automático no está disponible. Hoy no hay actuadores conectados y el firmware no activa ninguna salida. ${c && c.phase !== "none" ? `Modo actual: ${c.mode === "simulation" ? "prueba (simulación)" : "observación"}. ${c.label} ${c.controller}` : "MYKO mide, analiza y recomienda."}`)
+    }
+    case "set_targets":
+      return done("Dime los valores y te muestro exactamente qué cambiaría antes de guardar nada. Por ejemplo: «Prueba una humedad entre 75 y 85 %».")
     case "trend": {
       const t = ctx.telemetry
       if (!t.trend.temperature && !t.trend.humidity) return done("Todavía no tengo suficientes mediciones de la última hora para hablar de tendencia.")
@@ -252,10 +286,16 @@ export function answerIntent(intent: Intent, ctx: AssistantContext): AssistantAn
     case "why_humidity":
     case "why_temperature": {
       const metric: MetricId = intent === "why_humidity" ? "humidity" : "temperature"
-      const d = ctx.drop && ctx.drop.metric === metric ? ctx.drop : null
+      const fell = ctx.drop && ctx.drop.metric === metric ? ctx.drop : null
+      const rose = ctx.rise && ctx.rise.metric === metric ? ctx.rise : null
+      // Report the larger of the two recent moves; both are observations, never causes.
+      const d = fell && rose ? (fell.from - fell.to >= rose.to - rose.from ? fell : rose) : fell ?? rose
+      const direction = d && d === rose ? "subió" : "bajó"
       const label = metric === "humidity" ? "La humedad" : "La temperatura"
-      if (!d) return done(cur && cur[metric] !== null ? `No veo una caída reciente: ${metric === "humidity" ? "la humedad" : "la temperatura"} está en ${withUnit(metric, cur[metric] as number)}.` : "No tengo mediciones recientes para comparar.")
-      return done(`${label} bajó de ${withUnit(metric, d.from)} (${hhmm(d.fromAt)}) a ${withUnit(metric, d.to)} (${hhmm(d.toAt)}). Eso es lo que medí; solo tengo temperatura y humedad, así que no puedo saber la causa. Puedes revisar el agua del humidificador, que la cámara esté cerrada y la ventilación.`, [`reading:${d.fromAt}`, `reading:${d.toAt}`])
+      if (!d) return done(cur && cur[metric] !== null ? `No veo un cambio reciente: ${metric === "humidity" ? "la humedad" : "la temperatura"} está en ${withUnit(metric, cur[metric] as number)}.` : "No tengo mediciones recientes para comparar.")
+      const actions = ctx.control?.actions.filter(a => a.at >= d.fromAt) ?? []
+      const simulated = actions.length ? ` En ese lapso el controlador simuló ${actions.length} actuación${actions.length === 1 ? "" : "es"} (ninguna real).` : ""
+      return done(`${label} ${direction} de ${withUnit(metric, d.from)} (${hhmm(d.fromAt)}) a ${withUnit(metric, d.to)} (${hhmm(d.toAt)}). Eso es lo que medí; solo tengo temperatura y humedad, así que no puedo saber la causa.${simulated} ${direction === "bajó" ? "Puedes revisar el agua del humidificador, que la cámara esté cerrada y la ventilación." : "Puedes revisar si se abrió la cámara, si cambió la ventilación o la temperatura del cuarto."}`, [`reading:${d.fromAt}`, `reading:${d.toAt}`])
     }
     case "overnight": {
       const n = ctx.overnight
@@ -296,7 +336,26 @@ export function answerIntent(intent: Intent, ctx: AssistantContext): AssistantAn
 
 /** Free text in, rule-based answer out. */
 export function respondWithRules(text: string, ctx: AssistantContext): AssistantAnswer {
-  return answerIntent(classifyIntent(text), ctx)
+  const intent = classifyIntent(text)
+  if (intent === "set_targets") return answerTargetRequest(text, ctx)
+  return answerIntent(intent, ctx)
+}
+
+/**
+ * A request to change targets becomes a PROPOSAL with the exact values and every assumption. It saves nothing: the
+ * interface asks the person to confirm, and only the device's own report can ever make it "Aplicado".
+ */
+function answerTargetRequest(text: string, ctx: AssistantContext): AssistantAnswer {
+  const request = interpretTargetRequest(text)
+  if (!request) return answerIntent("set_targets", ctx)
+  if (!request.ok) return { questionId: "set_targets", source: "rules", understood: true, evidence: [], text: request.error }
+  const { proposal } = request
+  const current = ctx.control?.targetsText ? ` Hoy está vigente: ${ctx.control.targetsText}.` : ""
+  const assumptions = proposal.assumptions.length ? ` ${proposal.assumptions.join(" ")}` : ""
+  return {
+    questionId: "set_targets", source: "rules", understood: true, evidence: [], proposal,
+    text: `Esto es lo que cambiaría, como configuración de PRUEBA (simulación): ${describeTargets(proposal.targets)}.${assumptions}${current} MYKO-001 la recibirá y confirmará; no se activa ninguna salida eléctrica. Se guarda solo si lo confirmas.`,
+  }
 }
 
 /** Backwards-compatible entry for the V1 chips. */

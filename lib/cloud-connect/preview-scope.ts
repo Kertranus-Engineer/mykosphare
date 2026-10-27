@@ -14,7 +14,8 @@ export function previewDecision(path: string, method: string): PreviewDecision {
   if ((path === "/home" || path.startsWith("/home/")) && (method === "GET" || method === "HEAD")) return "allow"
   if (path === "/auth/login" || (path === "/api/auth/callback" && method === "GET")) return "allow"
   if (path === "/api/v2/home" && method === "GET") return "allow"
-  if (path === "/api/v2/device/readings" && method === "POST") return "allow"
+  if ((path === "/api/v2/device/readings" || path === "/api/v2/device/sync") && method === "POST") return "allow"
+  if (path === "/api/v2/control" && method === "POST") return "allow"
   if (path.startsWith("/api/v2/grow/") && method === "GET") return "allow"
   return "not-found"
 }

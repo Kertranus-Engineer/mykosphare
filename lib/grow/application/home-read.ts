@@ -17,6 +17,8 @@ export interface HomeCultivation {
   targetsConfirmed: boolean
 }
 
+import type { HomeControl } from "../control/types"
+
 export interface HomeRepository {
   findOwnedChamber(ownerId: string, chamberId?: string): Promise<{ id: string; name: string } | null>
   findDevice(chamberId: string): Promise<HomeDevice | null>
@@ -25,6 +27,8 @@ export interface HomeRepository {
   history?(chamberId: string, deviceId: string, sinceIso: string): Promise<HomeReading[]>
   activeCultivation?(chamberId: string): Promise<HomeCultivation | null>
   profiles?(): Promise<HomeProfile[]>
+  /** Desired config, reported state and recent device events for the owner (RLS). */
+  control?(deviceId: string): Promise<HomeControl>
 }
 export type HomeResult =
   | { status: "unauthorized" | "unconfigured" | "not_found" | "unavailable" }
@@ -35,6 +39,8 @@ export type HomeResult =
       /** null = no active cultivation. Absent = not provided by this repository. */
       cultivation?: HomeCultivation | null
       profiles?: HomeProfile[]
+      /** Desired vs reported control state of the device. Absent when the repository does not provide it. */
+      control?: HomeControl
     }
 
 export async function getHomeReadings(
@@ -51,6 +57,9 @@ export async function getHomeReadings(
     if (options.includeHistory && device && repository.history) {
       const since = new Date((options.now ?? new Date()).getTime() - 24 * 3_600_000).toISOString()
       try { result.history = await repository.history(chamber.id, device.id, since) } catch { /* readings stay valid */ }
+    }
+    if (device && repository.control) {
+      try { result.control = await repository.control(device.id) } catch { /* readings stay valid */ }
     }
     if (repository.activeCultivation) {
       try {

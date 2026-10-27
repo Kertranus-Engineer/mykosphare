@@ -145,3 +145,17 @@ export interface CatalogEntry {
 
 export type MissingInfo =
   | "no_cultivation" | "targets_unconfirmed" | "profile_not_validated" | "no_actuators" | "sensors_limited" | "short_history"
+
+/** What the assistant may say about the control loop. Built from real device reports; nothing is assumed. */
+export interface ControlContext {
+  phase: "none" | "waiting" | "received" | "applied" | "rejected" | "unreachable"
+  label: string
+  controller: string
+  mode: "observation" | "simulation" | "assisted" | "automatic" | null
+  version: number | null
+  targetsText: string | null
+  appliedVersion: number | null
+  lastError: string | null
+  /** Latest simulated actuations the device logged (newest first). Real actuations do not exist yet. */
+  actions: { at: string; actuator: string; command: "on" | "off"; reason: string; value: number | null }[]
+}

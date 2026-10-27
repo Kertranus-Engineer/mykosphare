@@ -1,4 +1,5 @@
 #include "CloudTransport.h"
+#include "ControlSync.h"
 #include <Arduino.h>
 #include <Wire.h>
 #include <LiquidCrystal_I2C.h>
@@ -316,6 +317,7 @@ void readDHT() {
 
     sensorOK = false;
     cloudInvalidateSample();
+    controlInvalid();
     dhtErrors++;
 
     Serial.printf(
@@ -331,6 +333,7 @@ void readDHT() {
 
   sensorOK = true;
   cloudPublishSample(temperature, humidity);
+  controlFeed(temperature, humidity);
   dhtSuccess++;
 
   Serial.printf(
@@ -835,6 +838,7 @@ void setup() {
   if (MYKO_SENSOR_ONLY) Serial.println("[PILOT] SENSOR ONLY: actuator commands disabled");
   else showMenu();
   cloudBegin();
+  controlBegin();
 }
 
 // =====================================================
@@ -844,6 +848,7 @@ void setup() {
 void loop() {
 
   unsigned long now = millis();
+  controlTick();  // watchdog feed + one local control step per second (simulation only in this build)
 
   // COMANDOS SERIAL
   if (!MYKO_SENSOR_ONLY && Serial.available()) {

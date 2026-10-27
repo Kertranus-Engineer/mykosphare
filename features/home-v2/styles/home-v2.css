@@ -2884,3 +2884,17 @@ html:not([data-hv2-theme]) .hv2-root {
 .hv2-readiness-group { margin: 14px 0 6px; font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--hv2-text-3); }
 .hv2-readiness ol { margin: 0; padding-left: 20px; font-size: 13px; line-height: 1.5; color: var(--hv2-text-2); }
 .hv2-readiness li + li { margin-top: 6px; }
+
+/* ═════ 19. CONTROL CARD ════════════════════════════════════════════════════ */
+
+.hv2-ctl { display: flex; flex-direction: column; gap: 10px; }
+.hv2-ctl-head { display: flex; align-items: center; gap: 12px; }
+.hv2-ctl-head > div { flex: 1; min-width: 0; }
+.hv2-ctl-targets { margin: 0; font-size: 17px; font-weight: 650; letter-spacing: -0.01em; font-variant-numeric: tabular-nums; }
+.hv2-ctl-status { display: flex; align-items: center; gap: 8px; margin: 0; font-size: 14px; color: var(--hv2-text); }
+.hv2-ctl-editor { display: flex; flex-direction: column; gap: 12px; }
+.hv2-filter.is-active { border-color: var(--hv2-accent); background: var(--hv2-accent-soft); color: var(--hv2-text); }
+.hv2-diag { display: grid; grid-template-columns: 1fr; gap: 8px; margin: 8px 0 0; font-size: 13px; }
+.hv2-diag > div { display: flex; justify-content: space-between; gap: 12px; }
+.hv2-diag dt { color: var(--hv2-text-3); }
+.hv2-diag dd { margin: 0; text-align: right; font-variant-numeric: tabular-nums; }

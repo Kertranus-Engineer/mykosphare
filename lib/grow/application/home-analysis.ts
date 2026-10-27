@@ -2,6 +2,7 @@ import {
   HISTORY_INTELLIGENCE_CONFIG, buildAssistantContext, deriveActivity, interpretEnvironment,
   type ActivityEvent, type AssistantContext, type CatalogEntry, type CultivationFacts, type EnvTargets, type IntelligenceReport,
 } from "../intelligence"
+import { controlContext } from "../control/status"
 import { stageLabel } from "../presentation/stage"
 import type { HomeCultivation, HomeProfile, HomeReading, HomeResult } from "./home-read"
 
@@ -61,6 +62,7 @@ export function analyzeHome(result: ReadyHome, history: readonly HomeReading[] |
     .filter(event => event.endedAt !== null) // ongoing conditions come from the live report
   const context = buildAssistantContext({
     report, history: merged, events, now, deviceName: device?.name ?? null, cultivation: facts, catalog: catalogFromProfiles(result.profiles),
+    control: controlContext(result.control, new Date(now).getTime()),
   })
   return { report, events, context, targets, facts }
 }

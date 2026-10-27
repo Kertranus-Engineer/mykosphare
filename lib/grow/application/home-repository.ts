@@ -1,5 +1,6 @@
 import "server-only"
 import type { SupabaseClient } from "@supabase/supabase-js"
+import { CONFIG_COLUMNS, toDesired, toEvent, toReported } from "../control/mapping"
 import { GROW_STAGE_ORDER } from "../presentation/stage"
 import type { HomeCultivation, HomeProfile, HomeRange, HomeReading, HomeRepository, HomeTargets, HomeValidation } from "./home-read"
 
@@ -80,6 +81,17 @@ export function createHomeRepository(db: SupabaseClient): HomeRepository {
         rangesSource: profile.metadata?.custom === true ? "owner" : "profile",
         targetsConfirmed: profile.metadata?.confirmed_by_owner === true,
       }
+    },
+    async control(deviceId) {
+      const [config, state, events] = await Promise.all([
+        db.from("grow_device_configs").select(CONFIG_COLUMNS).eq("device_id", deviceId).order("version", { ascending: false }).limit(1).maybeSingle(),
+        db.from("grow_device_state").select("firmware_version, reported_actuators, updated_at").eq("device_id", deviceId).maybeSingle(),
+        db.from("grow_device_events").select("occurred_at, kind, simulated, config_version, detail").eq("device_id", deviceId).order("occurred_at", { ascending: false }).limit(20),
+      ])
+      if (config.error) throw config.error
+      if (state.error) throw state.error
+      if (events.error) throw events.error
+      return { desired: config.data ? toDesired(config.data) : null, reported: toReported(state.data), events: (events.data ?? []).map(toEvent) }
     },
     async profiles() {
       // Per-owner custom range profiles live in the same table; they are not part of the public catalog.
