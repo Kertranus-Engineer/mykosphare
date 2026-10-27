@@ -6,6 +6,7 @@ import { Check, Cpu, ExternalLink, FlaskConical, LayoutDashboard, SlidersHorizon
 import { cn } from "@/lib/utils"
 import { COPY } from "../copy"
 import { useFeedback } from "../components/feedback"
+import { DeviceSettingsCard, ModesCard, NotificationsNote } from "../components/mind/mind-settings"
 import { Card, Rise, SectionHeading } from "../components/ui/surface"
 import { DEMO_SCENARIOS, LAB_THEMES } from "../data/lab-request"
 import { useHomeV2 } from "../data/home-v2-provider"
@@ -17,7 +18,7 @@ const SWATCH: Record<string, string> = { negro: "hv2-swatch--negro", verde: "hv2
  * The demo mode is a preference only: turning it on never writes anything.
  */
 export function MoreScreen() {
-  const { theme, setTheme, demo, deviceSeen, setDemo } = useHomeV2()
+  const { theme, setTheme, demo, deviceSeen, setDemo, mode } = useHomeV2()
   const { notify } = useFeedback()
 
   const toggleDemo = () => {
@@ -37,6 +38,14 @@ export function MoreScreen() {
           <p className="hv2-page-lead">{COPY.morePage.lead}</p>
         </header>
       </Rise>
+
+      {mode !== "demo" && (
+        <>
+          <Rise i={1}><DeviceSettingsCard /></Rise>
+          <Rise i={1}><ModesCard /></Rise>
+          <Rise i={1}><NotificationsNote /></Rise>
+        </>
+      )}
 
       <Rise i={1}>
         <section aria-labelledby="hv2-theme-h" className="hv2-block">

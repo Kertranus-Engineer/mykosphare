@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Clock, Ellipsis, House, Leaf, Sprout, type LucideIcon } from "lucide-react"
+import { Clock, Ellipsis, House, Sprout, type LucideIcon } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 import { COPY } from "../../copy"
@@ -19,7 +19,6 @@ interface Tab {
 const TABS: Tab[] = [
   { id: "home", label: COPY.nav.home, icon: House, href: LAB_ROUTES.home },
   { id: "crop", label: COPY.nav.crop, icon: Sprout, href: LAB_ROUTES.crop },
-  { id: "environment", label: COPY.nav.environment, icon: Leaf, href: LAB_ROUTES.environment },
   { id: "history", label: COPY.nav.history, icon: Clock, href: LAB_ROUTES.history },
   { id: "more", label: COPY.nav.more, icon: Ellipsis, href: LAB_ROUTES.more },
 ]
@@ -28,7 +27,8 @@ export function BottomNav() {
   const pathname = usePathname()
   const { request } = useHomeV2()
   // Exact match for Inicio so it does not light up on /cultivo.
-  const activeIndex = TABS.findIndex((tab) => tab.href === LAB_ROUTES.home ? pathname === tab.href : pathname.startsWith(tab.href))
+  // Ambiente is reached from Inicio, so it keeps Inicio highlighted.
+  const activeIndex = pathname.startsWith(LAB_ROUTES.environment) ? 0 : TABS.findIndex((tab) => tab.href === LAB_ROUTES.home ? pathname === tab.href : pathname.startsWith(tab.href))
 
   return (
     <nav aria-label={COPY.nav.label} className="hv2-nav">

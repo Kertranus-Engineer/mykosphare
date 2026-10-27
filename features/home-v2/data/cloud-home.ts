@@ -4,7 +4,9 @@ import type { DeviceModel, EnvironmentModel, MetricModel } from "./model"
 export const CLOUD_POLL_MS = 30_000
 export const CLOUD_STALE_MS = 90_000
 export const CLOUD_OFFLINE_MS = 300_000
-export interface CloudHomeState { result: HomeResult | null; networkError: boolean; checkedAt: number }
+export const CLOUD_HISTORY_REFRESH_MS = 5 * 60_000
+/** `history` is the 24 h context (5-minute averages) the intelligence layer needs; it is refreshed less often than the live poll. */
+export interface CloudHomeState { result: HomeResult | null; networkError: boolean; checkedAt: number; history?: HomeReading[] | null; historyAt?: number }
 
 const object = (v: unknown): v is Record<string, unknown> => typeof v === "object" && v !== null && !Array.isArray(v)
 const stamp = (v: unknown) => typeof v === "string" && Number.isFinite(Date.parse(v))
@@ -16,7 +18,11 @@ export function isHomeResult(value: unknown): value is HomeResult {
   if (!object(value.chamber) || typeof value.chamber.id !== "string" || typeof value.chamber.name !== "string") return false
   const d = value.device
   if (d !== null && (!object(d) || typeof d.id !== "string" || typeof d.name !== "string" || typeof d.enabled !== "boolean" || (d.lastSeenAt !== null && !stamp(d.lastSeenAt)))) return false
-  return Array.isArray(value.readings) && value.readings.length <= 120 && value.readings.every(r => object(r) && stamp(r.observedAt) && metric(r.temperature) && metric(r.humidity))
+  const reading = (r: unknown) => object(r) && stamp(r.observedAt) && metric(r.temperature) && metric(r.humidity)
+  if (value.history !== undefined && !(Array.isArray(value.history) && value.history.length <= 400 && value.history.every(reading))) return false
+  if (value.cultivation !== undefined && value.cultivation !== null && !(object(value.cultivation) && typeof value.cultivation.runId === "string" && typeof value.cultivation.stage === "string" && object(value.cultivation.profile))) return false
+  if (value.profiles !== undefined && !Array.isArray(value.profiles)) return false
+  return Array.isArray(value.readings) && value.readings.length <= 120 && value.readings.every(reading)
 }
 
 /** Each chamber gets its own store. Network failure clears owner data. */
@@ -34,7 +40,9 @@ export function createCloudHomeStore(chamberId?: string, fetchImpl: typeof fetch
     current = controller
     const timeout = setTimeout(() => controller.abort(), 8000)
     try {
-      const response = await fetchImpl(`/api/v2/home${chamberId ? `?chamber=${encodeURIComponent(chamberId)}` : ""}`, { credentials: "same-origin", cache: "no-store", signal: controller.signal })
+      const wantHistory = !state.history || now() - (state.historyAt ?? 0) >= CLOUD_HISTORY_REFRESH_MS
+      const query = [chamberId ? `chamber=${encodeURIComponent(chamberId)}` : "", wantHistory ? "history=1" : ""].filter(Boolean).join("&")
+      const response = await fetchImpl(`/api/v2/home${query ? `?${query}` : ""}`, { credentials: "same-origin", cache: "no-store", signal: controller.signal })
       // A revoked session must clear previously visible owner data even if a
       // proxy responds with HTML or an otherwise malformed body.
       if (response.status === 401 || response.status === 403) {
@@ -47,7 +55,8 @@ export function createCloudHomeStore(chamberId?: string, fetchImpl: typeof fetch
       if (version !== generation) return
       // Without a fresh ownership check, cached values could belong to a
       // previous account after logout or account switching.
-      state = { result: body, networkError: body.status === "unavailable", checkedAt: now() }
+      const fresh = body.status === "ready" ? body.history : undefined
+      state = { result: body, networkError: body.status === "unavailable", checkedAt: now(), history: body.status === "ready" ? fresh ?? state.history ?? null : null, historyAt: fresh ? now() : state.historyAt }
     } catch {
       if (version !== generation) return
       state = { result: { status: "unavailable" }, networkError: true, checkedAt: now() }

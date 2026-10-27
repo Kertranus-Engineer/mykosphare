@@ -12,8 +12,8 @@ export const COPY = {
     home: "Inicio",
     crop: "Cultivo",
     environment: "Ambiente",
-    history: "Historial",
-    more: "Más",
+    history: "Actividad",
+    more: "Ajustes",
   },
 
   header: {
@@ -186,8 +186,8 @@ export const COPY = {
   },
 
   historyPage: {
-    title: "Historial",
-    lead: "Registro del cultivo y lecturas guardadas.",
+    title: "Actividad",
+    lead: "Lo que pasó con tu ambiente y tu dispositivo.",
     leadDemo: "La historia del cultivo de ejemplo: fotos, observaciones y ambiente.",
     tabs: { activity: "Actividad", charts: "Gráficos", photos: "Fotos" },
     tabsLabel: "Secciones del historial",
@@ -195,7 +195,7 @@ export const COPY = {
     filtersLabel: "Filtrar actividad",
     active: "Activas ahora",
     recent: "Registros",
-    sessionNote: "Aquí se muestra el registro del cultivo. Las lecturas reales guardadas están en Gráficos.",
+    sessionNote: "Aquí ves lo que pasó con tu ambiente y tu dispositivo, calculado con tus lecturas reales. El detalle numérico está en Gráficos.",
     empty: "Sin actividad reciente",
     emptyFiltered: "Nada en esta categoría",
     emptyBody: "Los eventos aparecerán aquí a medida que ocurran.",
@@ -272,8 +272,8 @@ export const COPY = {
   },
 
   morePage: {
-    title: "Más",
-    lead: "Apariencia, vista de ejemplo y otras vistas.",
+    title: "Ajustes",
+    lead: "Tu dispositivo, cómo funciona MYKOSPHARE y tus preferencias.",
     themeTitle: "Tema",
     themes: {
       negro: { label: "Negro", hint: "Profundo, para ambientes oscuros" },

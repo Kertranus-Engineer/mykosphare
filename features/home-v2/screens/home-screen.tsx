@@ -7,13 +7,31 @@ import { CropHero } from "../components/home/crop-hero"
 import { EnvironmentSummary } from "../components/home/environment-summary"
 import { InsightCard } from "../components/home/insight-card"
 import { StatusCard } from "../components/home/status-card"
+import { AssistantCard, AutonomyLine, MindRecommendations } from "../components/mind/mind-extras"
+import { MindHero } from "../components/mind/mind-hero"
 import { Rise } from "../components/ui/surface"
+import { useHomeV2 } from "../data/home-v2-provider"
 
 /**
- * Inicio: the crop first (photograph as the protagonist), then (example view only) what the person's own
- * data will look like, then the environment, the general state, MYKO Insight and the primary action. Detail lives in Cultivo and Ambiente.
+ * Inicio.
+ * - Example view: the crop first, then what the person's own data will look like (unchanged).
+ * - Real data: one answer first (MYKO Intelligence over the real readings), then only what needs attention,
+ *   what MYKOSPHARE is doing, and a question box. Detail lives in Cultivo, Actividad and Ambiente.
  */
 export function HomeScreen() {
+  const { mode } = useHomeV2()
+  if (mode !== "demo") {
+    return (
+      <div className="hv2-stack">
+        <h1 className="hv2-sr-only">{COPY.nav.home}</h1>
+        <Rise i={0}><MindHero /></Rise>
+        <ConnectCard />
+        <Rise i={1}><MindRecommendations /></Rise>
+        <Rise i={2}><AutonomyLine /></Rise>
+        <Rise i={3}><AssistantCard /></Rise>
+      </div>
+    )
+  }
   return (
     <div className="hv2-stack">
       <h1 className="hv2-sr-only">{COPY.nav.home}</h1>

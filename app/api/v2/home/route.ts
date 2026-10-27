@@ -12,7 +12,8 @@ export async function GET(request: Request) {
     if (error || !user) return Response.json({ status: "unauthorized" }, { status: 401, headers })
     const chamber = new URL(request.url).searchParams.get("chamber")
     if (chamber !== null && !isUuid(chamber)) return Response.json({ status: "not_found" }, { status: 404, headers })
-    const result = await getHomeReadings(createHomeRepository(db), user.id, chamber ?? undefined)
+    const includeHistory = new URL(request.url).searchParams.get("history") === "1"
+    const result = await getHomeReadings(createHomeRepository(db), user.id, chamber ?? undefined, { includeHistory })
     return Response.json(result, { status: result.status === "unavailable" ? 503 : result.status === "not_found" ? 404 : 200, headers })
   } catch { return Response.json({ status: "unavailable" }, { status: 503, headers }) }
 }

@@ -3,7 +3,9 @@
 import { usePathname, useRouter, useSearchParams } from "next/navigation"
 import { createContext, useCallback, useContext, useEffect, useMemo, useSyncExternalStore, type ReactNode } from "react"
 
+import { useNow } from "@/features/mobile/use-now"
 import { useCloudHome } from "./use-cloud-home"
+import { buildIntelligenceView, type IntelligenceView } from "./intelligence-view"
 import type { GrowDemoScenario } from "@/lib/grow/demo/simulation-demo"
 import { COPY } from "../copy"
 import { byRecency, toCropHistory, toCultivationModel } from "./adapters"
@@ -76,12 +78,14 @@ interface HomeV2Value {
   retryCultivation: () => void
   retrySensors: () => void
   cloudStatus: string
+  /** MYKO Intelligence over the owner's REAL readings. null in the example view, while loading, or without a registered chamber. */
+  intelligence: IntelligenceView | null
   /** Active warning/critical alerts for the bell badge. */
   attentionCount: number
 }
 
 type Base = Pick<HomeV2Value, "request" | "mode" | "demo" | "deviceSeen" | "setDemo" | "theme" | "setTheme">
-type Data = Pick<HomeV2Value, "sources" | "environment" | "device" | "cultivation" | "photos" | "history" | "insight" | "retryPhotos" | "retryCultivation" | "retrySensors" | "cloudStatus">
+type Data = Pick<HomeV2Value, "sources" | "environment" | "device" | "cultivation" | "photos" | "history" | "insight" | "retryPhotos" | "retryCultivation" | "retrySensors" | "cloudStatus" | "intelligence">
 
 const HomeV2Context = createContext<HomeV2Value | null>(null)
 
@@ -205,6 +209,7 @@ function DemoSource({ base, children }: { base: Base; children: ReactNode }) {
       retryCultivation: noop,
       retrySensors: noop,
       cloudStatus: "demo",
+      intelligence: null,
     }
   }, [world])
 
@@ -222,10 +227,12 @@ function LiveSource({ base, children }: { base: Base; children: ReactNode }) {
   const cultivation = useMemo(() => toCultivationModel(view), [view])
   // Legacy snapshots are global; do not expose them as this owner's captures.
   const photos: PhotosModel = NO_PHOTOS
+  const nowMs = useNow(15_000)
+  const intelligence = useMemo(() => (nowMs === null ? null : buildIntelligenceView(cloud.state, nowMs)), [cloud.state, nowMs])
   const history = useMemo(() => {
     const crop = cultivation.status === "ready" ? toCropHistory(cultivation.log) : []
-    return crop.sort(byRecency)
-  }, [cultivation])
+    return [...(intelligence?.historyEntries ?? []), ...crop].sort(byRecency)
+  }, [cultivation, intelligence])
 
   const data = useMemo<Data>(
     () => ({
@@ -240,8 +247,9 @@ function LiveSource({ base, children }: { base: Base; children: ReactNode }) {
       retryCultivation: retry,
       retrySensors: cloud.retry,
       cloudStatus: cloud.state.networkError ? "network_error" : cloud.state.result?.status ?? "loading",
+      intelligence,
     }),
-    [environment, device, cultivation, photos, history, cloud.retry, cloud.state, retry],
+    [environment, device, cultivation, photos, history, cloud.retry, cloud.state, retry, intelligence],
   )
 
   return <Provide base={base} data={data}>{children}</Provide>

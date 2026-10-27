@@ -26,3 +26,30 @@ describe("HOME owner reads", () => {
     expect(repo.readings).toHaveBeenCalledWith("chamber-a", "device-a")
   })
 })
+
+describe("HOME intelligence context", () => {
+  const profile = { id: "p1", displayName: "Sample", species: "Pleurotus ostreatus", validation: "sample" as const, stages: ["inoculation"] }
+
+  it("adds history, cultivation and profiles only when available, and offers profiles when no crop is active", async () => {
+    const repo = {
+      ...repository(),
+      history: vi.fn(async () => [{ observedAt: "2026-10-21T11:00:00Z", temperature: 20, humidity: 70 }]),
+      activeCultivation: vi.fn(async () => null),
+      profiles: vi.fn(async () => [profile]),
+    }
+    const plain = await getHomeReadings(repo, "owner-a")
+    expect(plain).not.toHaveProperty("history")
+    expect(plain).toMatchObject({ cultivation: null, profiles: [profile] })
+    const withHistory = await getHomeReadings(repo, "owner-a", undefined, { includeHistory: true, now: new Date("2026-10-21T12:00:00Z") })
+    expect(withHistory).toMatchObject({ history: [{ humidity: 70 }] })
+    expect(repo.history).toHaveBeenCalledWith("chamber-a", "device-a", "2026-10-20T12:00:00.000Z")
+  })
+
+  it("never hides the real readings when the extra context fails", async () => {
+    const repo = { ...repository(), history: vi.fn(async () => { throw new Error("boom") }), activeCultivation: vi.fn(async () => { throw new Error("boom") }) }
+    const result = await getHomeReadings(repo, "owner-a", undefined, { includeHistory: true })
+    expect(result).toMatchObject({ status: "ready", readings: [{ temperature: 20.7 }] })
+    expect(result).not.toHaveProperty("history")
+    expect(result).not.toHaveProperty("cultivation")
+  })
+})
