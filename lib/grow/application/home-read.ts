@@ -5,12 +5,16 @@ export interface HomeRange { min: number; max: number; criticalMin?: number; cri
 export interface HomeTargets { temperature?: HomeRange; humidity?: HomeRange }
 export type HomeValidation = "sample" | "experimental" | "validated"
 /** An available species profile the person can start a cultivation with. */
-export interface HomeProfile { id: string; displayName: string; species: string; validation: HomeValidation; stages: string[] }
+export interface HomeProfile { id: string; displayName: string; species: string; validation: HomeValidation; stages: string[]; /** Ranges of the first stage, for orientation only. */ example?: HomeTargets | null }
 /** The chamber's active cultivation, with the targets of its CONFIRMED stage (null when the profile lacks them). */
 export interface HomeCultivation {
   runId: string; name: string; startedAt: string; stage: string
   profile: { id: string; displayName: string; species: string; validation: HomeValidation; stages: string[] }
   targets: HomeTargets | null
+  /** Who defined the ranges in use: the species profile or the owner. */
+  rangesSource: "profile" | "owner"
+  /** The owner explicitly confirmed the ranges (required before any future automation). */
+  targetsConfirmed: boolean
 }
 
 export interface HomeRepository {

@@ -108,3 +108,30 @@ export interface ActivityEvent {
   startedAt: string
   endedAt: string | null
 }
+
+/** Facts about the owner's active cultivation. Provided by the caller; absent when nothing is registered. */
+export interface CultivationFacts {
+  name: string
+  speciesName: string
+  scientificName: string
+  stage: string
+  stageLabel: string
+  startedAt: string
+  validation: "sample" | "experimental" | "validated"
+  /** Who defined the ranges in use: the species profile or the owner. */
+  rangesSource: "profile" | "owner"
+  /** The owner explicitly confirmed the ranges. Required before any future automation. */
+  targetsConfirmed: boolean
+}
+
+/** A species profile the assistant may mention. Only what exists in the catalog; nothing is invented. */
+export interface CatalogEntry {
+  name: string
+  scientificName: string
+  validation: "sample" | "experimental" | "validated"
+  /** Example ranges of the profile's first stage, for orientation only. */
+  example: { temperature?: Range; humidity?: Range } | null
+}
+
+export type MissingInfo =
+  | "no_cultivation" | "targets_unconfirmed" | "profile_not_validated" | "no_actuators" | "sensors_limited" | "short_history"

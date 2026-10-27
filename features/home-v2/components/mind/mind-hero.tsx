@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { ArrowRight, Droplets, Thermometer } from "lucide-react"
+import { ArrowRight, Droplets, Eye, Thermometer } from "lucide-react"
 
 import { useNow } from "@/features/mobile/use-now"
 import { agoText, num, rangeText, type MetricId, type Range } from "@/lib/grow/intelligence"
@@ -26,7 +26,7 @@ function MetricBlock({ metric, value, range, tone, series, minSpan, stale }: {
         {value === null ? "—" : metric === "temperature" ? num(value) : num(value, 0)}
         <small>{metric === "temperature" ? "°C" : "%"}</small>
       </span>
-      <span className="hv2-mind-metric-range">{range ? `Objetivo ${rangeText(metric, range)}` : "Sin objetivo configurado"}</span>
+      {range && <span className="hv2-mind-metric-range">Objetivo {rangeText(metric, range)}</span>}
       <Sparkline values={series} minSpan={minSpan} className="hv2-mind-spark" />
     </div>
   )
@@ -63,7 +63,7 @@ export function MindHero() {
       <h2 id="hv2-mind-h" className="hv2-mind-headline">{report.summary.headline}</h2>
       <p className="hv2-mind-detail">{report.summary.detail}</p>
       {cultivation && (
-        <p className="hv2-mind-crop">{cultivation.profile.displayName} · {stageLabel(cultivation.stage)}{day ? ` · día ${day}` : ""}{cultivation.profile.validation === "sample" ? " · perfil de ejemplo" : ""}</p>
+        <p className="hv2-mind-crop">{cultivation.profile.displayName} · {stageLabel(cultivation.stage)}{day ? ` · día ${day}` : ""}{cultivation.rangesSource === "owner" ? " · rangos tuyos" : cultivation.profile.validation === "sample" ? " · perfil de ejemplo" : ""}</p>
       )}
       <div className="hv2-mind-metrics">
         <MetricBlock metric="temperature" value={report.current?.temperature ?? null} range={report.targets?.temperature} tone={flagged("temperature")} series={series("temperature")?.series ?? []} minSpan={2} stale={stale} />
@@ -74,6 +74,7 @@ export function MindHero() {
           {report.primaryAction.label}<ArrowRight aria-hidden className="size-4" />
         </Link>
       )}
+      <p className="hv2-mind-mode"><Eye aria-hidden className="size-3.5" />MYKO observa y registra. Todavía no controla nada.</p>
     </Card>
   )
 }

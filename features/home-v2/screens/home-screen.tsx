@@ -7,8 +7,9 @@ import { CropHero } from "../components/home/crop-hero"
 import { EnvironmentSummary } from "../components/home/environment-summary"
 import { InsightCard } from "../components/home/insight-card"
 import { StatusCard } from "../components/home/status-card"
-import { AssistantCard, AutonomyLine, MindRecommendations } from "../components/mind/mind-extras"
+import { MindRecommendations } from "../components/mind/mind-extras"
 import { MindHero } from "../components/mind/mind-hero"
+import { MykoChat } from "../components/mind/myko-chat"
 import { Rise } from "../components/ui/surface"
 import { useHomeV2 } from "../data/home-v2-provider"
 
@@ -27,8 +28,7 @@ export function HomeScreen() {
         <Rise i={0}><MindHero /></Rise>
         <ConnectCard />
         <Rise i={1}><MindRecommendations /></Rise>
-        <Rise i={2}><AutonomyLine /></Rise>
-        <Rise i={3}><AssistantCard /></Rise>
+        <Rise i={2}><MykoChat /></Rise>
       </div>
     )
   }

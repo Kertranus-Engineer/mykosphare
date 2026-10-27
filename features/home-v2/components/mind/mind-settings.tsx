@@ -4,7 +4,7 @@ import Link from "next/link"
 import { BellOff, Check, Cpu, Lock } from "lucide-react"
 
 import { cn } from "@/lib/utils"
-import { AUTONOMY_MODES, agoText, type AutonomyMode } from "@/lib/grow/intelligence"
+import { AUTONOMY_MODES, agoText, automationEligibility, type AutonomyMode } from "@/lib/grow/intelligence"
 import { useNow } from "@/features/mobile/use-now"
 import { useHomeV2 } from "../../data/home-v2-provider"
 import { Card, SectionHeading, ToneDot } from "../ui/surface"
@@ -33,6 +33,12 @@ const ORDER: AutonomyMode[] = ["monitor", "assisted", "automatic"]
 
 /** The three ways MYKOSPHARE can work. Only monitoring exists; the others say why they are not available. */
 export function ModesCard() {
+  const { intelligence } = useHomeV2()
+  const crop = intelligence?.cultivation
+  const eligibility = automationEligibility({
+    actuatorsInstalled: false, targetsConfirmed: crop?.targetsConfirmed ?? false,
+    validation: crop?.profile.validation ?? "sample", rangesSource: crop?.rangesSource ?? "profile",
+  })
   return (
     <section aria-labelledby="hv2-modes-h" className="hv2-block">
       <SectionHeading id="hv2-modes-h" title="Cómo trabaja MYKOSPHARE" />
@@ -51,7 +57,11 @@ export function ModesCard() {
             )
           })}
         </ul>
-        <p className="hv2-caption">Mientras el firmware sea solo sensor, MYKOSPHARE no enciende ni apaga nada. Cuando haya actuadores, cualquier acción respetará límites, tiempos máximos y estado seguro, y tú podrás intervenir siempre.</p>
+        <div className="hv2-setup-note">
+          <p className="hv2-setup-note-title">Para llegar al modo Automático falta</p>
+          <ul>{eligibility.reasons.map(r => <li key={r}>{r}</li>)}</ul>
+        </div>
+        <p className="hv2-caption">Cuando haya actuadores, el control lo hará un controlador local con límites, tiempos máximos y estado seguro. La conversación con MYKO nunca enciende nada y tú podrás intervenir siempre.</p>
       </Card>
     </section>
   )

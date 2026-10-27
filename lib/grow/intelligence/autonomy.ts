@@ -40,6 +40,12 @@ export interface ActuatorSafetyPolicy {
   minOffMs: number
   /** Longest a manual override may hold before automation resumes. */
   manualOverrideMaxMs: number
+  /** A reading older than this is treated as a sensor failure. */
+  maxSensorAgeMs: number
+  /** The hardware must confirm a command within this time or the controller falls back to the safe state. */
+  ackTimeoutMs: number
+  /** After a reboot the actuator stays off until this many valid readings arrived. */
+  bootValidReadings: number
   onSensorInvalid: "off"
   onCommunicationLoss: "continue_locally" | "off"
   onReboot: "off_until_valid_reading"
@@ -53,6 +59,9 @@ export function validateActuatorPolicy(policy: ActuatorSafetyPolicy): string[] {
   if (!(policy.maxContinuousOnMs > 0)) errors.push("maxContinuousOnMs must be positive")
   if (!(policy.minOffMs >= 0)) errors.push("minOffMs cannot be negative")
   if (!(policy.manualOverrideMaxMs > 0)) errors.push("manualOverrideMaxMs must be positive")
+  if (!(policy.maxSensorAgeMs > 0)) errors.push("maxSensorAgeMs must be positive")
+  if (!(policy.ackTimeoutMs > 0)) errors.push("ackTimeoutMs must be positive")
+  if (!(Number.isInteger(policy.bootValidReadings) && policy.bootValidReadings >= 1)) errors.push("bootValidReadings must be at least 1")
   return errors
 }
 
@@ -107,4 +116,66 @@ export interface ActuationRecord {
   reason: string
   initiatedBy: "local_policy" | "person"
   confirmedByHardware: boolean
+}
+
+/**
+ * Hard envelope: limits no one can exceed through software, a person's confirmation included. The firmware carries
+ * its own copy; anything outside it is refused on the device regardless of what the app says.
+ */
+export const POLICY_ENVELOPE = {
+  temperature: { min: 5, max: 35 },
+  humidity: { min: 20, max: 98 },
+  maxContinuousOnMs: 30 * 60_000,
+  manualOverrideMaxMs: 2 * 3_600_000,
+  minHysteresis: { temperature: 0.5, humidity: 2 },
+} as const
+
+export function checkPolicyEnvelope(policy: ActuatorSafetyPolicy): string[] {
+  const errors = validateActuatorPolicy(policy)
+  const range = POLICY_ENVELOPE[policy.metric]
+  if (policy.band.min < range.min || policy.band.max > range.max) errors.push(`band must stay within ${range.min}–${range.max}`)
+  if (policy.maxContinuousOnMs > POLICY_ENVELOPE.maxContinuousOnMs) errors.push("maxContinuousOnMs exceeds the hard limit")
+  if (policy.manualOverrideMaxMs > POLICY_ENVELOPE.manualOverrideMaxMs) errors.push("manualOverrideMaxMs exceeds the hard limit")
+  if (policy.hysteresis < POLICY_ENVELOPE.minHysteresis[policy.metric]) errors.push("hysteresis is below the minimum that prevents chattering")
+  if (policy.onSensorInvalid !== "off" || policy.onReboot !== "off_until_valid_reading" || policy.recordEveryActuation !== true) errors.push("safety behaviours cannot be changed")
+  return errors
+}
+
+/** Whoever suggests a change (a person, the rules, or a language model), the result is only a proposal. */
+export interface PolicyChangeProposal {
+  kind: "policy_change_proposal"
+  proposedBy: "person" | "rules" | "model"
+  policy: ActuatorSafetyPolicy
+  rationale: string
+  status: "proposed"
+  requiresHumanApproval: true
+}
+
+export function proposePolicyChange(proposedBy: PolicyChangeProposal["proposedBy"], policy: ActuatorSafetyPolicy, rationale: string): PolicyChangeProposal {
+  return { kind: "policy_change_proposal", proposedBy, policy, rationale, status: "proposed", requiresHumanApproval: true }
+}
+
+export type PolicyApplication = { ok: true; policy: ActuatorSafetyPolicy } | { ok: false; errors: string[] }
+
+/**
+ * The only way a policy changes: a person confirms a proposal that is inside the hard envelope. A model cannot
+ * confirm (the type admits only "person"), cannot skip the envelope, and cannot touch the safety behaviours.
+ */
+export function applyPolicyChange(proposal: PolicyChangeProposal, confirmation: { by: "person"; at: string }): PolicyApplication {
+  if (confirmation.by !== "person") return { ok: false, errors: ["only a person can confirm a policy change"] }
+  const errors = checkPolicyEnvelope(proposal.policy)
+  return errors.length ? { ok: false, errors } : { ok: true, policy: proposal.policy }
+}
+
+/**
+ * Whether automation could ever be offered for this cultivation. Today it is never: the firmware is sensor-only.
+ * The reasons are shown to the person so they know what is missing.
+ */
+export function automationEligibility(input: { actuatorsInstalled: boolean; targetsConfirmed: boolean; validation: "sample" | "experimental" | "validated"; rangesSource: "profile" | "owner" }): { eligible: boolean; reasons: string[] } {
+  const reasons: string[] = []
+  if (!ACTUATION_ENABLED) reasons.push("El firmware actual es solo sensor.")
+  if (!input.actuatorsInstalled) reasons.push("No hay actuadores instalados y verificados.")
+  if (!input.targetsConfirmed) reasons.push("Los rangos objetivo no están confirmados por ti.")
+  if (input.validation !== "validated" && input.rangesSource !== "owner") reasons.push("El perfil de especie es de ejemplo y no está validado.")
+  return { eligible: reasons.length === 0, reasons }
 }

@@ -33,10 +33,10 @@ describe("MYKO Intelligence — interpretation", () => {
 
   it("asks for configuration instead of judging when no stage/targets exist, and never invents a stage", () => {
     const report = run(readings(flat(20, 22, 68), T0 + 19 * STEP), { targets: null })
-    expect(report.summary.headline).toBe("Necesito que configures la etapa del cultivo antes de evaluar sus condiciones.")
+    expect(report.summary.headline).toBe("Tu cámara está conectada y midiendo.")
     expect(report.findings.some(f => f.kind === "needs_configuration")).toBe(true)
     expect(report.findings.some(f => f.kind === "in_range")).toBe(false)
-    expect(report.primaryAction).toMatchObject({ kind: "configure_cultivation", href: "/home/cultivo" })
+    expect(report.primaryAction).toMatchObject({ kind: "configure_cultivation", href: "/home/cultivo", label: "Empezar con MYKO" })
     expect(report.current).toMatchObject({ temperature: 22, humidity: 68 })
   })
 
@@ -208,6 +208,7 @@ describe("Autonomy model — safety", () => {
   const humidifier: ActuatorSafetyPolicy = {
     actuator: "humidifier", direction: "raise", metric: "humidity", band: { min: 60, max: 75 }, hysteresis: 5,
     maxContinuousOnMs: 10 * 60_000, minOffMs: 60_000, manualOverrideMaxMs: 30 * 60_000,
+    maxSensorAgeMs: 30_000, ackTimeoutMs: 5_000, bootValidReadings: 2,
     onSensorInvalid: "off", onCommunicationLoss: "continue_locally", onReboot: "off_until_valid_reading", recordEveryActuation: true,
   }
   const base = { state: "off" as const, inStateMs: 120_000, manualOverride: null, manualOverrideAgeMs: 0 }

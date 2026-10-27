@@ -1,69 +1,86 @@
-import { agoText, num, withUnit } from "./copy.es"
-import { normalizeSeries, validValue, type Sample } from "./series"
+import { agoText, durationText, num, rangeText, withUnit } from "./copy.es"
 import { DEFAULT_INTELLIGENCE_CONFIG } from "./config"
-import type { ActivityEvent, EnvTargets, IntelligenceReport, MetricId, ReadingPoint, Summary } from "./types"
+import { classifyIntent, type Intent } from "./intent"
+import { normalizeSeries, validValue, type Sample } from "./series"
+import type {
+  ActivityEvent, CatalogEntry, CultivationFacts, EnvTargets, IntelligenceReport, MetricId, MissingInfo, ReadingPoint, Summary,
+} from "./types"
 
 /**
- * MYKO ASSISTANT — provider-agnostic context layer.
+ * MYKO ASSISTANT — provider-agnostic context and a deterministic answerer.
  *
- * `buildAssistantContext` projects real, already-computed facts into a small allow-listed structure
- * (no ids, keys, owner data or hardware identifiers). Any provider can consume it later; today the
- * only provider is `rulesProvider`, which answers from the data and says so. No model is called here
- * and no AI key exists in the frontend.
+ * `buildAssistantContext` projects real, already-computed facts into a small allow-listed structure (no ids, keys,
+ * owner data or hardware identifiers). Any provider can consume it; `respondWithRules` answers from the same data and
+ * says so. Nothing here calls a model, and nothing claims a physical action happened.
  */
 export interface Stats { min: number; max: number; avg: number; count: number }
 export interface AssistantContext {
-  schemaVersion: 1
+  schemaVersion: 2
   generatedAt: string
   device: { name: string | null; connection: IntelligenceReport["connection"]; lastReadingAt: string | null }
   current: IntelligenceReport["current"]
   targets: EnvTargets | null
-  stageLabel: string | null
+  cultivation: CultivationFacts | null
+  catalog: CatalogEntry[]
   autonomyMode: "monitor"
+  /** What the hardware can and cannot do today. */
+  capabilities: { sensors: MetricId[]; actuators: false }
   summary: Summary
   findings: { kind: string; severity: string; metric?: MetricId; since?: string }[]
   recommendations: { title: string; body: string }[]
   events: ActivityEvent[]
   window24h: { samples: number; temperature: Stats | null; humidity: Stats | null }
+  uptime: { streakStartedAt: string | null; streakMs: number; gaps: number; firstSampleAt: string | null }
   sinceYesterday: { then: { temperature: number | null; humidity: number | null } | null; now: { temperature: number | null; humidity: number | null } | null }
   overnight: { from: string; to: string; ongoing: boolean; samples: number; temperature: Stats | null; humidity: Stats | null; events: ActivityEvent[] } | null
-  humidityDrop: { from: number; to: number; fromAt: string; toAt: string } | null
+  drop: { metric: MetricId; from: number; to: number; fromAt: string; toAt: string } | null
+  missing: MissingInfo[]
 }
 
+/** The six chips of V1 stay valid ids; the assistant now understands free text too. */
 export type QuestionId = "status" | "why_humidity" | "overnight" | "what_to_check" | "device_connected" | "since_yesterday"
 export const QUESTIONS: { id: QuestionId; label: string }[] = [
-  { id: "status", label: "¿Cómo está mi cultivo?" },
-  { id: "why_humidity", label: "¿Por qué bajó la humedad?" },
-  { id: "overnight", label: "¿Qué ocurrió durante la noche?" },
+  { id: "status", label: "¿Cómo está mi cámara?" },
   { id: "what_to_check", label: "¿Qué debería revisar?" },
-  { id: "device_connected", label: "¿Mi dispositivo sigue conectado?" },
-  { id: "since_yesterday", label: "¿Qué ha cambiado desde ayer?" },
+  { id: "overnight", label: "¿Qué ocurrió anoche?" },
+  { id: "why_humidity", label: "¿Por qué bajó la humedad?" },
+  { id: "device_connected", label: "¿Sigue conectado?" },
+  { id: "since_yesterday", label: "¿Qué cambió desde ayer?" },
+]
+export const SUGGESTIONS: { id: Intent; label: string }[] = [
+  { id: "status", label: "¿Cómo está mi cámara?" },
+  { id: "improve", label: "¿Qué puedo mejorar?" },
+  { id: "overnight", label: "¿Qué ocurrió anoche?" },
+  { id: "needs", label: "¿Qué necesitas de mí?" },
 ]
 
 export interface AssistantAnswer {
-  questionId: QuestionId
+  questionId: Intent
   /** Always disclosed: where the words came from. */
   source: "rules" | "model"
   text: string
   evidence: string[]
+  /** Optional single next step shown as a button. */
+  action?: { label: string; href: string }
+  /** The rules did not understand the text; a configured model may take over. */
+  understood: boolean
 }
 
 export interface AssistantProvider {
   id: string
-  answer(question: QuestionId, context: AssistantContext): Promise<AssistantAnswer> | AssistantAnswer
+  answer(question: Intent, context: AssistantContext, text?: string): Promise<AssistantAnswer> | AssistantAnswer
 }
 
 const HOUR = 3_600_000
+const GAP_MS = 15 * 60_000
 
 function stats(samples: readonly Sample[], metric: MetricId): Stats | null {
   const values = samples.map(s => validValue(s, metric)).filter((v): v is number => v !== null)
   if (!values.length) return null
   return { min: Math.min(...values), max: Math.max(...values), avg: values.reduce((a, b) => a + b, 0) / values.length, count: values.length }
 }
-const avgIn = (samples: readonly Sample[], metric: MetricId, from: number, to: number) => {
-  const part = samples.filter(s => s.t >= from && s.t <= to)
-  return stats(part, metric)?.avg ?? null
-}
+const avgIn = (samples: readonly Sample[], metric: MetricId, from: number, to: number) =>
+  stats(samples.filter(s => s.t >= from && s.t <= to), metric)?.avg ?? null
 
 export interface BuildContextInput {
   report: IntelligenceReport
@@ -72,7 +89,8 @@ export interface BuildContextInput {
   events: readonly ActivityEvent[]
   now: string | number | Date
   deviceName?: string | null
-  stageLabel?: string | null
+  cultivation?: CultivationFacts | null
+  catalog?: readonly CatalogEntry[]
   /** Hour of day (0–23) in the person's local time. Injectable for tests. */
   hourOf?: (ms: number) => number
 }
@@ -82,104 +100,197 @@ export function buildAssistantContext(input: BuildContextInput): AssistantContex
   const samples = normalizeSeries(input.history, DEFAULT_INTELLIGENCE_CONFIG)
   const hourOf = input.hourOf ?? ((ms: number) => new Date(ms).getHours())
   const last24 = samples.filter(s => now - s.t <= 24 * HOUR)
+  const latest = samples[samples.length - 1]
 
-  // The most recent night (22:00–07:00 local), possibly still in progress.
   const inNight = (ms: number) => { const h = hourOf(ms); return h >= 22 || h < 7 }
   const nightSamples = last24.filter(s => inNight(s.t))
-  const ongoing = inNight(now)
   const overnight = nightSamples.length >= 3
     ? {
-        from: nightSamples[0]?.iso ?? "", to: nightSamples[nightSamples.length - 1]?.iso ?? "", ongoing, samples: nightSamples.length,
+        from: nightSamples[0]?.iso ?? "", to: nightSamples[nightSamples.length - 1]?.iso ?? "", ongoing: inNight(now), samples: nightSamples.length,
         temperature: stats(nightSamples, "temperature"), humidity: stats(nightSamples, "humidity"),
         events: input.events.filter(e => inNight(Date.parse(e.startedAt)) && now - Date.parse(e.startedAt) <= 24 * HOUR),
       }
     : null
 
-  const latest = samples[samples.length - 1]
-  let humidityDrop: AssistantContext["humidityDrop"] = null
+  // Largest recent fall of either metric versus the 6 h peak (observation, never a cause).
+  let drop: AssistantContext["drop"] = null
   if (latest) {
-    const latestHumidity = validValue(latest, "humidity")
-    const recent = samples.filter(s => now - s.t <= 6 * HOUR && s.t < latest.t && validValue(s, "humidity") !== null)
-    const peak = recent.reduce<Sample | null>((best, s) => (best === null || (validValue(s, "humidity") as number) > (validValue(best, "humidity") as number) ? s : best), null)
-    if (latestHumidity !== null && peak) {
-      const from = validValue(peak, "humidity") as number
-      if (from - latestHumidity >= 5) humidityDrop = { from, to: latestHumidity, fromAt: peak.iso, toAt: latest.iso }
+    for (const metric of ["humidity", "temperature"] as const) {
+      const current = validValue(latest, metric)
+      const recent = samples.filter(s => now - s.t <= 6 * HOUR && s.t < latest.t && validValue(s, metric) !== null)
+      const peak = recent.reduce<Sample | null>((best, s) => (best === null || (validValue(s, metric) as number) > (validValue(best, metric) as number) ? s : best), null)
+      const threshold = metric === "humidity" ? 5 : 2
+      if (current !== null && peak) {
+        const from = validValue(peak, metric) as number
+        if (from - current >= threshold && (!drop || metric === "humidity")) drop = { metric, from, to: current, fromAt: peak.iso, toAt: latest.iso }
+      }
     }
   }
 
+  // Continuous connection: walk back from the latest sample until a silence longer than the gap threshold.
+  let streakIdx = last24.length - 1
+  for (let i = last24.length - 1; i > 0; i--) {
+    if ((last24[i]?.t ?? 0) - (last24[i - 1]?.t ?? 0) > GAP_MS) break
+    streakIdx = i - 1
+  }
+  const streakBegin = latest ? last24[streakIdx] : undefined
+  const uptime = {
+    streakStartedAt: streakBegin?.iso ?? null,
+    streakMs: latest && streakBegin ? (input.report.connection === "live" ? now : latest.t) - streakBegin.t : 0,
+    gaps: last24.slice(1).filter((s, i) => s.t - (last24[i]?.t ?? s.t) > GAP_MS).length,
+    firstSampleAt: last24[0]?.iso ?? null,
+  }
+
+  const cultivation = input.cultivation ?? null
+  const missing: MissingInfo[] = []
+  if (!cultivation) missing.push("no_cultivation")
+  else {
+    if (!cultivation.targetsConfirmed) missing.push("targets_unconfirmed")
+    if (cultivation.validation !== "validated" && cultivation.rangesSource !== "owner") missing.push("profile_not_validated")
+  }
+  missing.push("no_actuators", "sensors_limited")
+  if (last24.length < 36) missing.push("short_history")
+
   return {
-    schemaVersion: 1,
+    schemaVersion: 2,
     generatedAt: new Date(now).toISOString(),
     device: { name: input.deviceName ?? null, connection: input.report.connection, lastReadingAt: latest?.iso ?? null },
     current: input.report.current,
     targets: input.report.targets,
-    stageLabel: input.stageLabel ?? null,
+    cultivation,
+    catalog: [...(input.catalog ?? [])],
     autonomyMode: "monitor",
+    capabilities: { sensors: ["temperature", "humidity"], actuators: false },
     summary: input.report.summary,
     findings: input.report.findings.map(f => ({ kind: f.kind, severity: f.severity, metric: f.metric, since: f.since })),
     recommendations: input.report.recommendations.map(r => ({ title: r.title, body: r.body })),
     events: [...input.events],
     window24h: { samples: last24.length, temperature: stats(last24, "temperature"), humidity: stats(last24, "humidity") },
+    uptime,
     sinceYesterday: {
       then: samples.some(s => now - s.t >= 22 * HOUR && now - s.t <= 26 * HOUR)
         ? { temperature: avgIn(samples, "temperature", now - 25 * HOUR, now - 23 * HOUR), humidity: avgIn(samples, "humidity", now - 25 * HOUR, now - 23 * HOUR) } : null,
       now: latest ? { temperature: avgIn(samples, "temperature", now - HOUR, now), humidity: avgIn(samples, "humidity", now - HOUR, now) } : null,
     },
     overnight,
-    humidityDrop,
+    drop,
+    missing,
   }
 }
 
 const hhmm = (iso: string) => new Date(iso).toLocaleTimeString("es-CL", { hour: "2-digit", minute: "2-digit" })
+const statLine = (label: string, metric: MetricId, s: Stats | null) =>
+  s ? `${label}: ${withUnit(metric, s.min)} a ${withUnit(metric, s.max)} (promedio ${withUnit(metric, s.avg)}).` : ""
+const tidy = (s: string) => s.replace(/\s+/g, " ").trim()
 
-function statLine(label: string, metric: MetricId, s: Stats | null) {
-  return s ? `${label}: ${withUnit(metric, s.min)} a ${withUnit(metric, s.max)} (promedio ${withUnit(metric, s.avg)}).` : ""
+const MISSING_TEXT: Record<MissingInfo, string> = {
+  no_cultivation: "Registrar qué vas a cultivar y en qué etapa está, para poder comparar tus lecturas con un rango objetivo.",
+  targets_unconfirmed: "Confirmar los rangos objetivo del cultivo (hoy son los del perfil).",
+  profile_not_validated: "Un perfil de especie validado: el que tengo es de ejemplo y no tiene validación científica.",
+  no_actuators: "Actuadores instalados: hoy solo observo, no puedo encender ni apagar nada.",
+  sensors_limited: "Más sensores: solo mido temperatura y humedad (no CO₂, luz ni sustrato).",
+  short_history: "Más horas de mediciones: aún tengo poco historial para ver tendencias.",
 }
 
-export function answerWithRules(question: QuestionId, ctx: AssistantContext): AssistantAnswer {
-  const done = (text: string, evidence: string[] = []): AssistantAnswer => ({ questionId: question, source: "rules", text, evidence })
+/** Deterministic answers. `understood: false` marks free text the rules could not place. */
+export function answerIntent(intent: Intent, ctx: AssistantContext): AssistantAnswer {
+  const done = (text: string, evidence: string[] = [], extra: Partial<AssistantAnswer> = {}): AssistantAnswer =>
+    ({ questionId: intent, source: "rules", text: tidy(text), evidence, understood: true, ...extra })
   const now = Date.parse(ctx.generatedAt)
+  const cur = ctx.current
+  const values = cur
+    ? [cur.temperature !== null ? withUnit("temperature", cur.temperature) : null, cur.humidity !== null ? withUnit("humidity", cur.humidity) : null].filter(Boolean).join(" y ")
+    : null
 
-  switch (question) {
+  switch (intent) {
     case "status": {
-      const values = ctx.current
-        ? [ctx.current.temperature !== null ? withUnit("temperature", ctx.current.temperature) : null, ctx.current.humidity !== null ? withUnit("humidity", ctx.current.humidity) : null].filter(Boolean).join(" y ")
-        : null
-      return done(`${ctx.summary.headline}${values ? ` Ahora mido ${values}.` : ""} ${ctx.summary.detail}`.trim(), ctx.current ? [`reading:${ctx.current.observedAt}`] : [])
+      const crop = ctx.cultivation ? ` Cultivo: ${ctx.cultivation.name}, ${ctx.cultivation.stageLabel.toLowerCase()}.` : ""
+      return done(`${ctx.summary.headline}${values ? ` Mido ${values}.` : ""} ${ctx.summary.detail}${crop}`, cur ? [`reading:${cur.observedAt}`] : [])
     }
     case "device_connected": {
       const last = ctx.device.lastReadingAt
       const age = last ? agoText(now - Date.parse(last)) : null
       const text = ctx.device.connection === "live" ? `Sí, ${ctx.device.name ?? "tu dispositivo"} está conectado. Última medición ${age}.`
-        : ctx.device.connection === "stale" ? `Con señal débil: última medición ${age}.`
+        : ctx.device.connection === "stale" ? `Con señal débil: la última medición fue ${age}.`
         : ctx.device.connection === "offline" ? `No: ${ctx.device.name ?? "tu dispositivo"} dejó de enviar mediciones. ${age ? `La última fue ${age}.` : ""}`
         : "Todavía no puedo confirmarlo: no recibí mediciones."
       return done(text, last ? [`reading:${last}`] : [])
     }
+    case "uptime": {
+      const u = ctx.uptime
+      if (!u.streakStartedAt || ctx.device.connection !== "live") return done(ctx.device.connection === "offline" ? "Ahora mismo no está conectado, así que no hay una conexión en curso." : "Todavía no tengo suficientes mediciones para medir el tiempo conectado.")
+      return done(`Lleva ${durationText(u.streakMs)} conectado sin cortes (desde las ${hhmm(u.streakStartedAt)}). ${u.gaps > 0 ? `En las últimas 24 h hubo ${u.gaps} corte${u.gaps === 1 ? "" : "s"} de señal.` : "No registré cortes en las últimas 24 h."}`, [`reading:${u.streakStartedAt}`])
+    }
     case "what_to_check": {
       if (ctx.recommendations.length) return done(ctx.recommendations.map(r => `${r.title}: ${r.body}`).join(" "), ctx.findings.map(f => `finding:${f.kind}`))
-      return done("Por ahora no tengo nada que revisar: no hay condiciones fuera de rango ni problemas de conexión.", [])
+      return done("Por ahora no tengo nada urgente que revisar: no hay condiciones fuera de rango ni problemas de conexión.")
     }
-    case "why_humidity": {
-      const drop = ctx.humidityDrop
-      if (!drop) return done(ctx.current?.humidity != null ? `No veo una caída reciente de humedad: ahora está en ${withUnit("humidity", ctx.current.humidity)}.` : "No tengo mediciones recientes de humedad para comparar.", [])
-      return done(`La humedad bajó de ${withUnit("humidity", drop.from)} (${hhmm(drop.fromAt)}) a ${withUnit("humidity", drop.to)} (${hhmm(drop.toAt)}). Solo mido temperatura y humedad, así que no puedo saber la causa. Puedes revisar el agua del humidificador, que la cámara esté cerrada y la ventilación.`,
-        [`reading:${drop.fromAt}`, `reading:${drop.toAt}`])
+    case "improve": {
+      const parts: string[] = []
+      if (ctx.recommendations.length) parts.push(`Primero: ${ctx.recommendations[0]?.title.toLowerCase()}. ${ctx.recommendations[0]?.body}`)
+      const wanted = ctx.missing.filter(m => m === "no_cultivation" || m === "targets_unconfirmed" || m === "profile_not_validated").map(m => MISSING_TEXT[m])
+      if (wanted.length) parts.push(`Para evaluarte mejor: ${wanted[0]}`)
+      const h = ctx.window24h.humidity
+      if (h && h.max - h.min >= 15) parts.push(`La humedad varió ${num(h.max - h.min, 0)} puntos en 24 h (${withUnit("humidity", h.min)} a ${withUnit("humidity", h.max)}); estabilizarla suele ser lo que más ayuda.`)
+      if (!parts.length) parts.push("Tu ambiente se ve estable con lo que puedo medir. Lo siguiente sería registrar tu cultivo para comparar con un rango objetivo.")
+      return done(parts.join(" "), [])
+    }
+    case "why_humidity":
+    case "why_temperature": {
+      const metric: MetricId = intent === "why_humidity" ? "humidity" : "temperature"
+      const d = ctx.drop && ctx.drop.metric === metric ? ctx.drop : null
+      const label = metric === "humidity" ? "La humedad" : "La temperatura"
+      if (!d) return done(cur && cur[metric] !== null ? `No veo una caída reciente: ${metric === "humidity" ? "la humedad" : "la temperatura"} está en ${withUnit(metric, cur[metric] as number)}.` : "No tengo mediciones recientes para comparar.")
+      return done(`${label} bajó de ${withUnit(metric, d.from)} (${hhmm(d.fromAt)}) a ${withUnit(metric, d.to)} (${hhmm(d.toAt)}). Eso es lo que medí; solo tengo temperatura y humedad, así que no puedo saber la causa. Puedes revisar el agua del humidificador, que la cámara esté cerrada y la ventilación.`, [`reading:${d.fromAt}`, `reading:${d.toAt}`])
     }
     case "overnight": {
       const n = ctx.overnight
-      if (!n) return done("No tengo suficientes mediciones de la noche para resumirla.", [])
+      if (!n) return done("No tengo suficientes mediciones de la noche para resumirla.")
       const events = n.events.length ? ` Eventos: ${n.events.map(e => e.title.toLowerCase()).join("; ")}.` : " No hubo alertas."
-      return done(`${n.ongoing ? "Esta noche" : "Anoche"} (${hhmm(n.from)}–${hhmm(n.to)}) registré ${n.samples} mediciones. ${statLine("Temperatura", "temperature", n.temperature)} ${statLine("Humedad", "humidity", n.humidity)}${events}`.replace(/\s+/g, " ").trim(), [`reading:${n.from}`, `reading:${n.to}`])
+      return done(`${n.ongoing ? "Esta noche" : "Anoche"} (${hhmm(n.from)}–${hhmm(n.to)}) registré ${n.samples} mediciones. ${statLine("Temperatura", "temperature", n.temperature)} ${statLine("Humedad", "humidity", n.humidity)}${events}`, [`reading:${n.from}`, `reading:${n.to}`])
     }
     case "since_yesterday": {
       const { then, now: current } = ctx.sinceYesterday
-      if (!then || !current) return done("Todavía no tengo mediciones de hace un día para comparar.", [])
+      if (!then || !current) return done("Todavía no tengo mediciones de hace un día para comparar.")
       const part = (label: string, metric: MetricId, a: number | null, b: number | null) =>
         a !== null && b !== null ? `${label}: ${metric === "temperature" ? num(a) : num(a, 0)} → ${withUnit(metric, b)} (promedio de la última hora).` : ""
-      return done(`Comparado con ayer a esta hora. ${part("Temperatura", "temperature", then.temperature, current.temperature)} ${part("Humedad", "humidity", then.humidity, current.humidity)}`.replace(/\s+/g, " ").trim(), [])
+      return done(`Comparado con ayer a esta hora. ${part("Temperatura", "temperature", then.temperature, current.temperature)} ${part("Humedad", "humidity", then.humidity, current.humidity)}`)
     }
+    case "species": {
+      if (ctx.cultivation) return done(`Ya tienes registrado ${ctx.cultivation.name} (${ctx.cultivation.speciesName}, ${ctx.cultivation.stageLabel.toLowerCase()}). Si quieres cambiar de especie, puedes corregirlo en Cultivo.`)
+      if (!ctx.catalog.length) return done("Todavía no tengo perfiles de especie cargados, así que no puedo recomendarte una con respaldo.")
+      const first = ctx.catalog[0] as CatalogEntry
+      const ex = first.example
+      const fit = cur && ex?.temperature && cur.temperature !== null
+        ? ` Tu cámara mide hoy ${withUnit("temperature", cur.temperature)}; el rango de ejemplo del perfil es ${rangeText("temperature", ex.temperature)}${cur.temperature > ex.temperature.max ? ", así que probablemente necesitarías enfriar o ventilar" : cur.temperature < ex.temperature.min ? ", así que probablemente necesitarías más calor" : ", y estás dentro"}.`
+        : ""
+      const others = ctx.catalog.length > 1 ? ` También tengo: ${ctx.catalog.slice(1).map(c => c.name).join(", ")}.` : ""
+      return done(`Hoy solo tengo un perfil de especie para acompañarte: ${first.name} (${first.scientificName}). Es una orientación general, no un diagnóstico: ${first.validation === "validated" ? "el perfil está validado" : "el perfil es de ejemplo y no está validado científicamente"}.${fit}${others}`, [], { action: { label: "Empezar con MYKO", href: "/home/cultivo" } })
+    }
+    case "needs": {
+      const lines = ctx.missing.map(m => MISSING_TEXT[m])
+      return done(`Para funcionar mejor me falta: ${lines.slice(0, 3).join(" ")}${lines.length > 3 ? ` (y ${lines.length - 3} más en Ajustes)` : ""}`, [], ctx.missing.includes("no_cultivation") ? { action: { label: "Empezar con MYKO", href: "/home/cultivo" } } : {})
+    }
+    case "start_crop":
+      return done(ctx.cultivation ? `Ya hay un cultivo activo (${ctx.cultivation.name}). Para empezar otro primero hay que cerrar el actual en Cultivo.` : "Claro, te acompaño paso a paso: me cuentas qué quieres cultivar y en qué etapa está, y lo registro solo cuando tú lo confirmes.", [], { action: { label: "Empezar con MYKO", href: "/home/cultivo" } })
+    case "greeting":
+      return done(`Hola. ${ctx.summary.headline} Pregúntame por tu cámara, la noche, la humedad o qué revisar.`)
+    default:
+      return { questionId: "unknown", source: "rules", understood: false, evidence: [], text: "No estoy seguro de haberte entendido. Puedo contarte cómo está tu cámara, qué ocurrió anoche, por qué cambió la humedad, qué revisar o cómo empezar un cultivo." }
   }
 }
 
-export const rulesProvider: AssistantProvider = { id: "rules", answer: answerWithRules }
+/** Free text in, rule-based answer out. */
+export function respondWithRules(text: string, ctx: AssistantContext): AssistantAnswer {
+  return answerIntent(classifyIntent(text), ctx)
+}
+
+/** Backwards-compatible entry for the V1 chips. */
+export function answerWithRules(question: QuestionId | Intent, ctx: AssistantContext): AssistantAnswer {
+  return answerIntent(question, ctx)
+}
+
+export const rulesProvider: AssistantProvider = {
+  id: "rules",
+  answer: (question, context, text) => (question === "unknown" && text ? respondWithRules(text, context) : answerIntent(question, context)),
+}

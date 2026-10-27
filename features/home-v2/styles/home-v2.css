@@ -2840,3 +2840,34 @@ html:not([data-hv2-theme]) .hv2-root {
 }
 
 .hv2-inline-link { color: var(--hv2-accent); text-decoration: underline; text-underline-offset: 3px; white-space: nowrap; }
+
+/* ═════ 17. MYKO CHAT AND GUIDED SETUP ══════════════════════════════════════ */
+
+.hv2-mind-mode { display: inline-flex; align-items: center; gap: 6px; margin: 0; font-size: 12px; color: var(--hv2-text-3); }
+.hv2-chat { display: flex; flex-direction: column; gap: 12px; }
+.hv2-chat-thread { display: flex; flex-direction: column; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.hv2-chat-msg { display: flex; flex-direction: column; gap: 6px; max-width: 92%; padding: 10px 14px; border-radius: 18px; font-size: 14.5px; line-height: 1.5; }
+.hv2-chat-msg p { margin: 0; }
+.hv2-chat-msg.is-me { align-self: flex-end; background: var(--hv2-accent-soft); border-bottom-right-radius: 6px; }
+.hv2-chat-msg.is-myko { align-self: flex-start; background: var(--hv2-surface-2); border-bottom-left-radius: 6px; }
+.hv2-chat-meta { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; color: var(--hv2-text-3); }
+.hv2-chat-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.hv2-chat-form { display: flex; gap: 8px; }
+.hv2-chat-input {
+  flex: 1;
+  min-width: 0;
+  min-height: 48px;
+  padding: 0 16px;
+  border-radius: 999px;
+  border: 1px solid var(--hv2-line-2);
+  background: var(--hv2-surface-3);
+  color: var(--hv2-text);
+  font: inherit;
+  font-size: 16px;
+}
+.hv2-chat-input:focus-visible { outline: 2px solid var(--hv2-accent); outline-offset: 2px; }
+.hv2-chat-send { display: grid; place-items: center; width: 48px; height: 48px; flex: none; border: 0; border-radius: 50%; background: var(--hv2-accent); color: var(--hv2-accent-ink); font-size: 18px; cursor: pointer; }
+.hv2-chat-send:disabled { opacity: 0.4; cursor: not-allowed; }
+.hv2-setup-note { padding: 12px 14px; border-radius: 16px; background: var(--hv2-surface-3); }
+.hv2-setup-note-title { margin: 0 0 6px; font-size: 13px; font-weight: 650; }
+.hv2-setup-note ul { margin: 0; padding-left: 18px; font-size: 12.5px; line-height: 1.5; color: var(--hv2-text-3); }

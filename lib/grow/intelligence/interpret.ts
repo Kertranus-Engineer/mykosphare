@@ -109,7 +109,7 @@ export function interpretEnvironment(input: InterpretInput): IntelligenceReport 
 function primaryActionFor(findings: readonly Finding[]): PrimaryAction | null {
   const has = (...kinds: FindingKind[]) => findings.some(f => kinds.includes(f.kind))
   if (has("device_offline", "device_disabled", "reading_stale", "sensor_invalid")) return { kind: "check_device", label: "Revisar MYKO-001", href: "/home/conectar" }
-  if (has("needs_configuration")) return { kind: "configure_cultivation", label: "Configurar mi cultivo", href: "/home/cultivo" }
+  if (has("needs_configuration")) return { kind: "configure_cultivation", label: "Empezar con MYKO", href: "/home/cultivo" }
   return null
 }
 
@@ -164,7 +164,7 @@ export function recommend(findings: readonly Finding[]): Recommendation[] {
         out.push({ ...base, title: "Medición no válida", body: "El sensor entregó un valor imposible o incompleto. No lo uso para evaluar; revisa el cableado del DHT22.", cause })
         break
       case "needs_configuration":
-        out.push({ ...base, title: "Falta configurar el cultivo", body: "Elige la especie y la etapa para comparar tus lecturas con un rango objetivo.", cause: {} })
+        out.push({ ...base, title: "Aún no hay un cultivo", body: "Cuéntale a MYKO qué vas a cultivar y en qué etapa está. Hasta entonces solo observo y registro.", cause: {} })
         break
       default:
         break
@@ -181,7 +181,7 @@ export function summarize(findings: readonly Finding[], latest: Sample | undefin
   if (has("reading_stale")) return { headline: "Sin señal reciente de MYKO-001.", detail: `Última medición ${age}.`, tone: "muted" }
   if (!latest) return { headline: "Esperando la primera medición.", detail: "En cuanto llegue una lectura real la evaluaré.", tone: "muted" }
   if (has("sensor_invalid")) return { headline: "Una medición no es válida.", detail: "No la uso para evaluar tu cultivo hasta que el sensor vuelva a entregar datos correctos.", tone: "attention" }
-  if (has("needs_configuration")) return { headline: "Necesito que configures la etapa del cultivo antes de evaluar sus condiciones.", detail: "Mientras tanto muestro tus mediciones reales sin juzgarlas.", tone: "info" }
+  if (has("needs_configuration")) return { headline: "Tu cámara está conectada y midiendo.", detail: "Aún no hay un cultivo registrado, así que no juzgo estos valores. Cuando me cuentes qué cultivas, los comparo con su rango.", tone: "info" }
   const out = findings.filter(f => f.kind === "temperature_low" || f.kind === "temperature_high" || f.kind === "humidity_low" || f.kind === "humidity_high")
   const first = out[0]
   if (first) {

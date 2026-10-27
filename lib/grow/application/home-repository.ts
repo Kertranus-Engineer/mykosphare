@@ -68,7 +68,7 @@ export function createHomeRepository(db: SupabaseClient): HomeRepository {
       return [...buckets.entries()].sort((a, b) => a[0] - b[0]).map<HomeReading>(([key, b]) => ({ observedAt: new Date(key + BUCKET_MS / 2).toISOString(), temperature: avg(b.t), humidity: avg(b.h) }))
     },
     async activeCultivation(chamberId): Promise<HomeCultivation | null> {
-      const { data, error } = await db.from("grow_cultivation_runs").select("id,name,started_at,confirmed_stage,grow_species_profiles(id,display_name,species,validation_status,stage_targets)").eq("chamber_id", chamberId).eq("status", "active").limit(1).maybeSingle()
+      const { data, error } = await db.from("grow_cultivation_runs").select("id,name,started_at,confirmed_stage,grow_species_profiles(id,display_name,species,validation_status,stage_targets,metadata)").eq("chamber_id", chamberId).eq("status", "active").limit(1).maybeSingle()
       if (error) throw error
       if (!data) return null
       const profile = Array.isArray(data.grow_species_profiles) ? data.grow_species_profiles[0] : data.grow_species_profiles
@@ -77,12 +77,18 @@ export function createHomeRepository(db: SupabaseClient): HomeRepository {
         runId: data.id, name: data.name, startedAt: data.started_at, stage: String(data.confirmed_stage),
         profile: { id: profile.id, displayName: profile.display_name, species: profile.species, validation: validation(profile.validation_status), stages: stagesOf(profile.stage_targets) },
         targets: targetsOf(profile.stage_targets, String(data.confirmed_stage)),
+        rangesSource: profile.metadata?.custom === true ? "owner" : "profile",
+        targetsConfirmed: profile.metadata?.confirmed_by_owner === true,
       }
     },
     async profiles() {
-      const { data, error } = await db.from("grow_species_profiles").select("id,display_name,species,validation_status,stage_targets").order("display_name").limit(20)
+      // Per-owner custom range profiles live in the same table; they are not part of the public catalog.
+      const { data, error } = await db.from("grow_species_profiles").select("id,display_name,species,validation_status,stage_targets,metadata").order("display_name").limit(40)
       if (error) throw error
-      return (data ?? []).map<HomeProfile>(p => ({ id: p.id, displayName: p.display_name, species: p.species, validation: validation(p.validation_status), stages: stagesOf(p.stage_targets) }))
+      return (data ?? []).filter(p => p.metadata?.custom !== true).map<HomeProfile>(p => {
+        const stages = stagesOf(p.stage_targets)
+        return { id: p.id, displayName: p.display_name, species: p.species, validation: validation(p.validation_status), stages, example: stages[0] ? targetsOf(p.stage_targets, stages[0]) : null }
+      })
     },
   }
 }

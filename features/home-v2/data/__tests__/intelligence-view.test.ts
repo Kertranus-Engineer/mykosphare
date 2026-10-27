@@ -12,6 +12,7 @@ const cultivation: HomeCultivation = {
   runId: "run-1", name: "Mi cultivo", startedAt: "2026-10-26T12:00:00Z", stage: "fruiting",
   profile: { id: "p1", displayName: "Sample oyster mushroom", species: "Pleurotus ostreatus", validation: "sample", stages: ["inoculation", "fruiting"] },
   targets: { temperature: { min: 20, max: 24 }, humidity: { min: 60, max: 75 } },
+  rangesSource: "profile", targetsConfirmed: false,
 }
 const ready = (over: Partial<Extract<HomeResult, { status: "ready" }>> = {}): HomeResult => ({
   status: "ready", chamber: { id: "chamber-a", name: "Principal" },
@@ -29,7 +30,7 @@ describe("HOME intelligence view", () => {
 
   it("asks to configure the crop when none exists and never invents a stage", () => {
     const view = buildIntelligenceView(state(ready({ cultivation: null, profiles: [{ id: "p1", displayName: "Sample oyster mushroom", species: "Pleurotus ostreatus", validation: "sample", stages: ["inoculation"] }] })), NOW)
-    expect(view?.report.summary.headline).toContain("configures la etapa")
+    expect(view?.report.summary.headline).toBe("Tu cámara está conectada y midiendo.")
     expect(view?.targetsLabel).toBeNull()
     expect(view?.profiles).toHaveLength(1)
     expect(view?.report.primaryAction?.href).toBe("/home/cultivo")
