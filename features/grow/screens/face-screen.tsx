@@ -84,7 +84,7 @@ export function FaceScreen() {
   const day = cultivationDay(snapshot.run.startedAt, evaluatedAt)
   const [temperature, humidity] = presentSenses(snapshot)
   const dim = temperature.lastKnown || humidity.lastKnown
-  const stage = stageLabel(snapshot.state.confirmedStage)
+  const stage = stageLabel(snapshot.state.confirmedStage, snapshot.profile)
 
   return (
     <div className="g-face" data-face-mode={mode}>

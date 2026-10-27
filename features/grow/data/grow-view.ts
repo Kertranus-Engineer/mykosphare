@@ -55,6 +55,18 @@ export function isGrowSnapshot(value: unknown): value is GrowSnapshot {
     && isObject(myko) && typeof myko.form === "string" && typeof myko.mood === "string" && typeof myko.messageKey === "string"
 }
 
+/** Maps persisted twin events to timeline items the UI already knows; others are not shown yet. */
+export function timelineFromPersistedEvents(events: unknown[]): GrowTimelineEvent[] {
+  const mapped: GrowTimelineEvent[] = []
+  for (const event of events) {
+    if (!isObject(event) || typeof event.id !== "string" || typeof event.occurredAt !== "string") continue
+    if (event.type === "cultivation_started") mapped.push({ id: event.id, at: event.occurredAt, kind: "cultivation_started", origin: "real" })
+    else if (event.type === "stage_confirmed") mapped.push({ id: event.id, at: event.occurredAt, kind: "stage_confirmed", origin: "real", ...(typeof event.stage === "string" ? { stage: event.stage } : {}) })
+    else if (event.type === "capture_received") mapped.push({ id: event.id, at: event.occurredAt, kind: "capture_added", origin: "real" })
+  }
+  return mapped
+}
+
 const API_STATUS: Record<string, GrowFailureStatus> = {
   not_found: "not_found",
   no_active_run: "no_active_run",
@@ -98,11 +110,14 @@ export async function fetchRealGrowView(
   }
 
   if (!isObject(body)) return { status: "unavailable", mode: "real" }
-  if (response.ok && body.status === "ready" && isGrowSnapshot(body.snapshot)) {
+  const twin = isObject(body.twin) ? body.twin : null
+  if (response.ok && body.status === "ready" && twin && isGrowSnapshot(twin.grow)) {
     const now = options.now?.() ?? new Date()
-    // Real mode has no persisted event feed yet: only milestones that are facts of the run record.
-    const timeline = runMilestoneEvents(body.snapshot.run, "real")
-    return { status: "ready", mode: "real", snapshot: body.snapshot, timeline, evaluatedAt: now.toISOString(), notices: [] }
+    const memory = isObject(twin.memory) ? twin.memory : null
+    const persisted = timelineFromPersistedEvents(memory && Array.isArray(memory.recentEvents) ? memory.recentEvents : [])
+    // Persisted run events when they exist; otherwise only milestones that are facts of the run record.
+    const timeline = persisted.length > 0 ? persisted : runMilestoneEvents(twin.grow.run, "real")
+    return { status: "ready", mode: "real", snapshot: twin.grow, timeline, evaluatedAt: now.toISOString(), notices: [] }
   }
   const mapped = typeof body.status === "string" ? API_STATUS[body.status] : undefined
   return { status: mapped ?? "unavailable", mode: "real" }

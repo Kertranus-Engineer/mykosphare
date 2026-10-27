@@ -1,4 +1,4 @@
-import type { CultivationRun, DataOrigin, GrowthStage } from "./types"
+import type { CultivationRun, DataOrigin, StageId } from "./types"
 
 /**
  * Structured cultivation events for the human timeline ("Hoy" / "Historia").
@@ -26,7 +26,7 @@ export interface GrowTimelineEvent {
   kind: GrowTimelineEventKind
   metric?: "temperature" | "humidity"
   /** Only for stage_confirmed. */
-  stage?: GrowthStage
+  stage?: StageId
   /** Whether this event describes real or simulated observations. */
   origin: DataOrigin
 }

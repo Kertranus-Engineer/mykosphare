@@ -40,7 +40,7 @@ export function presentDevelopment(snapshot: GrowSnapshot, now: string | Date): 
       status: index < currentIndex ? "past" : index === currentIndex ? "current" : "future",
     })),
     currentFormName: GROW_COPY.myko.formNames[snapshot.myko.form],
-    stage: stageLabel(snapshot.state.confirmedStage),
+    stage: stageLabel(snapshot.state.confirmedStage, snapshot.profile),
     day: cultivationDay(snapshot.run.startedAt, now),
   }
 }

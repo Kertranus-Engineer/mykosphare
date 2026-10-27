@@ -19,7 +19,7 @@ describe("v2 device validation", () => {
     expect(validateDeviceReadingPayload({ deviceId: "d", observedAt: now, origin: "simulated", temperature: 20 })).toMatchObject({ ok: false })
   })
   it("accepts partial measured telemetry without creating absent metrics", () => {
-    const result = validateDeviceReadingPayload({ deviceId: "d", observedAt: now, temperature: 20 })
+    const result = validateDeviceReadingPayload({ deviceId: "d", observedAt: now, temperature: 20 }, now)
     expect(result).toEqual({ ok: true, data: { deviceId: "d", observedAt: now, temperature: 20 } })
   })
 })

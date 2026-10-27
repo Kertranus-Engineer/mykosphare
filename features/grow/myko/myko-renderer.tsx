@@ -1,5 +1,6 @@
+import { createElement } from "react"
 import { describeMyko, type MykoLiveActivity } from "@/lib/grow/presentation"
-import type { MykoViewModel } from "@/lib/grow/types"
+import type { MykoMorphologyFamily, MykoViewModel } from "@/lib/grow/types"
 import { SvgMyko, type MykoMomentPhase, type MykoSenseMark } from "./svg-myko"
 import type { MykoVisualTraits } from "./traits"
 
@@ -30,6 +31,23 @@ export interface MykoRendererProps {
   still?: boolean
 }
 
+/**
+ * MORPHOLOGY SEAM. MYKO's anatomy family comes from the organism profile
+ * (`MykoViewModel.morphology`). Only the fungal anatomy exists; a future plant
+ * family registers its own renderer here without touching the twin, the
+ * domain or any page. Unimplemented families render the fungal anatomy.
+ */
+const MORPHOLOGY_RENDERERS: Record<MykoMorphologyFamily, typeof SvgMyko | null> = {
+  fungal: SvgMyko,
+  plant: null,
+  flowering_plant: null,
+}
+
+export function mykoRendererFor(morphology: MykoMorphologyFamily | undefined): typeof SvgMyko {
+  return MORPHOLOGY_RENDERERS[morphology ?? "fungal"] ?? SvgMyko
+}
+
 export function MykoRenderer({ model, ...rest }: MykoRendererProps) {
-  return <SvgMyko model={model} label={describeMyko(model)} {...rest} />
+  // Renderers are module-level constants from the registry (never created per render).
+  return createElement(mykoRendererFor(model.morphology), { model, label: describeMyko(model), ...rest })
 }

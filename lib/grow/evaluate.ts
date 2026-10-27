@@ -1,5 +1,5 @@
 import { DEFAULT_FRESHNESS_POLICY, evaluateFreshness } from "./freshness"
-import { suggestStageForRun } from "./stages"
+import { suggestStageForProfileRun } from "./stages"
 import type {
   EvaluateGrowStateInput,
   GrowCondition,
@@ -95,7 +95,7 @@ export function evaluateGrowState(input: EvaluateGrowStateInput): GrowState {
   return {
     run: input.run,
     confirmedStage: input.run.confirmedStage,
-    suggestedStage: suggestStageForRun(input.run.startedAt, input.now),
+    suggestedStage: suggestStageForProfileRun(input.profile, input.run.startedAt, input.now),
     freshness,
     origin: input.reading?.origin ?? null,
     dataStatus: completeness,

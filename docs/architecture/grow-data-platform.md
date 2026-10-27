@@ -22,11 +22,15 @@ capture metadata preserve history; Storage remains responsible for image blobs.
 Device ingestion is server-side service-role only and resolves device → chamber →
 active run. It assigns `real` itself, rejects origin/CO2/energy fields, uses a
 unique `(device_id, observed_at, origin)` constraint for retry idempotency, and
-updates device state after a persisted reading. Per-device credentials and a fully
-transactional RPC are future hardening work.
+updates device state after a persisted reading. Since the cultivation-loop
+migration (`202610010001`), devices authenticate with PER-DEVICE credentials
+(`x-device-id` + `x-device-key`, SHA-256 stored); the shared secret is retired.
+A fully transactional RPC is still future hardening work. See
+`grow-cultivation-loop.md`.
 
-RLS permits authenticated owners to access their chamber graph. There are no anon
-write policies. Profiles are shared read-only reference data. `/api/v2/grow/[id]`
+RLS permits authenticated owners to READ their chamber graph. Since `202610010001`,
+runs, stage/run events and captures are written only by the server application
+layer (service role, after ownership checks); there are no anon write policies. Profiles are shared read-only reference data. `/api/v2/grow/[id]`
 authenticates, verifies ownership through the repository, and returns explicit
 not-found/no-run/profile/unavailable states rather than a fabricated healthy state.
 

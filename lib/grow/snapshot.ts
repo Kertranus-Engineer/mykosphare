@@ -10,6 +10,6 @@ export function buildGrowSnapshot(input: EvaluateGrowStateInput): GrowSnapshot {
     profile: input.profile,
     reading: input.reading,
     state,
-    myko: toMykoViewModel(state),
+    myko: toMykoViewModel(state, input.profile),
   }
 }

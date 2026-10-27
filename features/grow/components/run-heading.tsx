@@ -11,7 +11,7 @@ export function RunHeading({ snapshot, now }: { snapshot: GrowSnapshot; now: str
       <p className="g-crop-name">{species.name}</p>
       <p className="g-crop-meta">
         <GlyphGrowth size={16} />
-        {stageLabel(snapshot.state.confirmedStage)}
+        {stageLabel(snapshot.state.confirmedStage, snapshot.profile)}
         {day !== null && <span aria-hidden="true">·</span>}
         {day !== null && GROW_COPY.stage.day(day)}
       </p>

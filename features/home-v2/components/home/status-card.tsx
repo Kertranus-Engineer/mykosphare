@@ -87,7 +87,7 @@ function DeviceLine() {
       <span className="hv2-status-device-icon" aria-hidden><Cpu className="size-4" /></span>
       <span className="hv2-status-device-text">
         <ToneDot tone={device.tone} pulse={device.kind === "live"} />
-        <span className="hv2-status-device-name">{device.label}</span>
+        <span className="hv2-status-device-name">{device.name ? `${device.name} · ${device.label}` : device.label}</span>
         <span aria-hidden>·</span>
         <span className="hv2-status-device-sample">
           {device.lastSampleAt ? (

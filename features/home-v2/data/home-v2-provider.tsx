@@ -1,22 +1,18 @@
 "use client"
 
 import { usePathname, useRouter, useSearchParams } from "next/navigation"
-import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useSyncExternalStore, type ReactNode } from "react"
+import { createContext, useCallback, useContext, useEffect, useMemo, useSyncExternalStore, type ReactNode } from "react"
 
-import { useLiveSnapshots } from "@/features/live/live-snapshots"
-import { MobileDataProvider, useMobileData } from "@/features/mobile/mobile-data-context"
+import { useCloudHome } from "./use-cloud-home"
 import type { GrowDemoScenario } from "@/lib/grow/demo/simulation-demo"
 import { COPY } from "../copy"
-import { useFeedback } from "../components/feedback"
-import { byRecency, toCropHistory, toCultivationModel, toDeviceModel, toEnvironmentModel, toHistoryEntries, toPhotosModel } from "./adapters"
+import { byRecency, toCropHistory, toCultivationModel } from "./adapters"
 import { getDemoClock, getDemoClockServer, subscribeDemoClock } from "./demo/clock"
 import { buildDemoWorld } from "./demo/world"
-import { getDeviceSeenServerSnapshot, getDeviceSeenSnapshot, subscribeDeviceSeen, useDeviceProbe } from "./device-seen"
 import {
   DEFAULT_DEMO_SCENARIO,
   DEMO_OFF,
   demoFromUrl,
-  effectiveDemo,
   effectiveGrowRequest,
   getDemoServerSnapshot,
   getDemoSnapshot,
@@ -26,7 +22,7 @@ import {
 } from "./demo-mode"
 import { DEFAULT_LAB_THEME, isLabTheme, LAB_THEME_STORAGE_KEY, labHref, parseLabRequest, type LabRequest } from "./lab-request"
 import type { CultivationModel, DeviceModel, EnvironmentModel, HistoryEntryModel, InsightModel, LabThemeId, PhotosModel } from "./model"
-import { assertNoSimulationOutsideDemo, resolveCultivation, resolveDemoTelemetry, resolvePhotos, resolveTelemetry, type DataMode, type ResolvedSources } from "./resolve"
+import { assertNoSimulationOutsideDemo, resolveCultivation, resolveDemoTelemetry, resolvePhotos, type DataMode, type ResolvedSources } from "./resolve"
 import { useGrowView } from "./use-grow-view"
 
 // ── Theme (lab-only preference; never touches the app-wide theme) ─────────
@@ -78,12 +74,14 @@ interface HomeV2Value {
   insight: InsightModel
   retryPhotos: () => void
   retryCultivation: () => void
+  retrySensors: () => void
+  cloudStatus: string
   /** Active warning/critical alerts for the bell badge. */
   attentionCount: number
 }
 
 type Base = Pick<HomeV2Value, "request" | "mode" | "demo" | "deviceSeen" | "setDemo" | "theme" | "setTheme">
-type Data = Pick<HomeV2Value, "sources" | "environment" | "device" | "cultivation" | "photos" | "history" | "insight" | "retryPhotos" | "retryCultivation">
+type Data = Pick<HomeV2Value, "sources" | "environment" | "device" | "cultivation" | "photos" | "history" | "insight" | "retryPhotos" | "retryCultivation" | "retrySensors" | "cloudStatus">
 
 const HomeV2Context = createContext<HomeV2Value | null>(null)
 
@@ -105,6 +103,7 @@ const LOADING_DEVICE: DeviceModel = {
     { id: "humidifier", label: COPY.device.humidifier, state: "unknown" },
   ],
 }
+const NO_PHOTOS: PhotosModel = { status: "unavailable" }
 const NO_INSIGHT: InsightModel = { status: "none" }
 const noop = () => {}
 
@@ -113,8 +112,8 @@ const noop = () => {}
  *
  *  - demonstration ON  → the demo engine (one deterministic world). The shared telemetry, activity and
  *    captures hooks are NOT mounted, so nothing polls the device or the storage while demoing.
- *  - demonstration OFF → the existing systems (mobile telemetry, grow domain view, captures hook),
- *    adapted into view models. The silent simulator inside the shared telemetry hook is never data.
+ *  - demonstration OFF → the owner-scoped cloud API and grow domain view,
+ *    adapted into view models. Legacy telemetry and global snapshots are never mounted.
  *
  * Either way the screens receive the same view models and never know which source produced them.
  */
@@ -125,23 +124,12 @@ export function HomeV2Provider({ children }: { children: ReactNode }) {
 
   const request = useMemo<LabRequest>(() => parseLabRequest(new URLSearchParams(search.toString())), [search])
 
-  // ── Demonstration mode: the visitor's saved choice, or the default (on) — until a real device reports ──
+  // ── Demonstration mode: the visitor's saved choice, or the default (off); never changes in response to connection status ──
   const stored = useSyncExternalStore(subscribeDemo, getDemoSnapshot, getDemoServerSnapshot)
-  const deviceSeen = useSyncExternalStore(subscribeDeviceSeen, getDeviceSeenSnapshot, getDeviceSeenServerSnapshot)
-  const urlDemo = useMemo(() => demoFromUrl(request.grow), [request.grow]) // internal-testing compatibility only
-  const demo: DemoState = useMemo(() => urlDemo ?? effectiveDemo(stored, deviceSeen), [urlDemo, stored, deviceSeen])
+  const deviceSeen = false // Connection is resolved from the signed-in owner's persisted device, never browser storage.
+  const urlDemo = useMemo(() => demoFromUrl(request.grow), [request.grow])
+  const demo: DemoState = search.get("view") === "real" ? DEMO_OFF : urlDemo ?? stored
   const urlDemoKey = urlDemo ? urlDemo.scenario : null
-
-  // While the example view is automatic, look for the first real device. Seeing one flips every screen
-  // to the person's own data (no reload) and says so once.
-  const following = stored.enabled && !stored.pinned && !urlDemo
-  useDeviceProbe(following && !deviceSeen)
-  const { notify } = useFeedback()
-  const announced = useRef(deviceSeen)
-  useEffect(() => {
-    if (deviceSeen && !announced.current && following) notify({ title: COPY.demo.connectedTitle, message: COPY.demo.connectedBody })
-    announced.current = deviceSeen
-  }, [deviceSeen, following, notify])
 
   useEffect(() => {
     // Adopt the internal URL switch into the preference, so clean links keep the demo on.
@@ -157,9 +145,9 @@ export function HomeV2Provider({ children }: { children: ReactNode }) {
           : DEMO_OFF,
       )
       // The URL switch would otherwise keep overriding the choice.
-      if (request.grow.kind === "simulation") router.replace(labHref(pathname, { grow: { kind: "unconfigured" } }))
+      if (request.grow.kind === "simulation" || search.has("view")) router.replace(labHref(pathname, { grow: { kind: "unconfigured" } }))
     },
-    [stored.scenario, stored.pinned, deviceSeen, request.grow.kind, router, pathname],
+    [stored.scenario, stored.pinned, deviceSeen, request.grow.kind, router, pathname, search],
   )
 
   // ── Theme ──
@@ -191,9 +179,7 @@ export function HomeV2Provider({ children }: { children: ReactNode }) {
   return demo.enabled ? (
     <DemoSource base={base}>{children}</DemoSource>
   ) : (
-    <MobileDataProvider>
-      <LiveSource base={base}>{children}</LiveSource>
-    </MobileDataProvider>
+    <LiveSource base={base}>{children}</LiveSource>
   )
 }
 
@@ -217,6 +203,8 @@ function DemoSource({ base, children }: { base: Base; children: ReactNode }) {
       sources: { mode: "demo", telemetry: resolveDemoTelemetry(environment), cultivation: resolveCultivation(cultivation), photos: resolvePhotos(photos) },
       retryPhotos: noop,
       retryCultivation: noop,
+      retrySensors: noop,
+      cloudStatus: "demo",
     }
   }, [world])
 
@@ -225,21 +213,19 @@ function DemoSource({ base, children }: { base: Base; children: ReactNode }) {
 
 /** Real data: the existing hooks, adapted. Demonstration values never reach this branch. */
 function LiveSource({ base, children }: { base: Base; children: ReactNode }) {
-  const { tel, activity } = useMobileData()
-  const captures = useLiveSnapshots()
-  const { view, retry } = useGrowView(effectiveGrowRequest(base.demo, base.request.grow))
-
-  const environment = useMemo(() => toEnvironmentModel(tel), [tel])
-  const device = useMemo(() => toDeviceModel(tel), [tel])
+  const chamberId = base.request.grow.kind === "real" ? base.request.grow.chamberId : undefined
+  const cloud = useCloudHome(chamberId)
+  const selected = cloud.state.result?.status === "ready" ? cloud.state.result.chamber.id : chamberId
+  const growRequest = selected ? { kind: "real" as const, chamberId: selected } : effectiveGrowRequest(base.demo, base.request.grow)
+  const { view, retry } = useGrowView(growRequest)
+  const { environment, device } = cloud
   const cultivation = useMemo(() => toCultivationModel(view), [view])
-  const photos = useMemo(
-    () => toPhotosModel({ images: captures.images, loading: captures.loading, error: captures.error }),
-    [captures.images, captures.loading, captures.error],
-  )
+  // Legacy snapshots are global; do not expose them as this owner's captures.
+  const photos: PhotosModel = NO_PHOTOS
   const history = useMemo(() => {
     const crop = cultivation.status === "ready" ? toCropHistory(cultivation.log) : []
-    return [...toHistoryEntries(activity), ...crop].sort(byRecency)
-  }, [activity, cultivation])
+    return crop.sort(byRecency)
+  }, [cultivation])
 
   const data = useMemo<Data>(
     () => ({
@@ -249,11 +235,13 @@ function LiveSource({ base, children }: { base: Base; children: ReactNode }) {
       photos,
       history,
       insight: NO_INSIGHT,
-      sources: { mode: "normal", telemetry: resolveTelemetry(tel), cultivation: resolveCultivation(cultivation), photos: resolvePhotos(photos) },
-      retryPhotos: captures.refresh,
+      sources: { mode: "normal", telemetry: environment.status === "ready" ? "REAL" : "UNAVAILABLE", cultivation: resolveCultivation(cultivation), photos: resolvePhotos(photos) },
+      retryPhotos: noop,
       retryCultivation: retry,
+      retrySensors: cloud.retry,
+      cloudStatus: cloud.state.networkError ? "network_error" : cloud.state.result?.status ?? "loading",
     }),
-    [environment, device, cultivation, photos, history, tel, captures.refresh, retry],
+    [environment, device, cultivation, photos, history, cloud.retry, cloud.state, retry],
   )
 
   return <Provide base={base} data={data}>{children}</Provide>
@@ -271,7 +259,7 @@ function Provide({ base, data, children }: { base: Base; data: Data; children: R
     [data.history],
   )
 
-  const value = useMemo<HomeV2Value>(() => ({ ...base, ...data, attentionCount }), [base, data, attentionCount])
+  const value = useMemo<HomeV2Value>(() => ({ ...base, ...data, deviceSeen: data.device.provenance === "real", attentionCount }), [base, data, attentionCount])
 
   return <HomeV2Context.Provider value={value}>{children}</HomeV2Context.Provider>
 }

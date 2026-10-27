@@ -36,7 +36,7 @@ export function CultivationScreen() {
   const status = presentStatus(snapshot, evaluatedAt)
   const species = presentSpecies(snapshot.profile)
   const day = cultivationDay(snapshot.run.startedAt, evaluatedAt)
-  const journey = presentStageJourney(snapshot.state.confirmedStage, snapshot.state.suggestedStage)
+  const journey = presentStageJourney(snapshot.state.confirmedStage, snapshot.state.suggestedStage, snapshot.profile)
   const today = eventsOfDay(timeline, evaluatedAt)
   const earlier = timeline.filter((event) => !today.includes(event))
 

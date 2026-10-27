@@ -20,7 +20,7 @@ export interface DemoState {
 }
 
 /** v2: the example view now follows the device connection, so earlier saved choices are not carried over. */
-export const DEMO_STORAGE_KEY = "mykosphare-demo-mode-v2"
+export const DEMO_STORAGE_KEY = "mykosphare-demo-mode-cloud-v1"
 export const DEMO_OFF: DemoState = Object.freeze({ enabled: false, scenario: "stable" })
 export const DEFAULT_DEMO_SCENARIO: GrowDemoScenario = "stable"
 

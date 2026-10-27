@@ -12,7 +12,7 @@ import type { ConnectionKind, MobileTelemetry } from "@/features/mobile/use-mobi
 import type { ActivityItem, ActivitySeverity } from "@/features/mobile/use-mobile-activity"
 import type { EnvState } from "@/lib/useEnvironment"
 import type { GrowTimelineEvent } from "@/lib/grow/timeline"
-import type { GrowSnapshot, GrowthStage, SpeciesProfile } from "@/lib/grow/types"
+import type { GrowSnapshot, StageId, SpeciesProfile } from "@/lib/grow/types"
 import { cultivationDay, GROW_STAGE_ORDER, presentSpecies, stageLabel } from "@/lib/grow/presentation"
 import type { GrowView } from "@/features/grow/data/grow-view"
 import { resolveTelemetry } from "./resolve"
@@ -167,16 +167,20 @@ export function toDeviceModel(tel: MobileTelemetry): DeviceModel {
  * targets for) instead of a hardcoded list; falls back to the full cycle when the
  * profile defines fewer than two. The confirmed stage is always part of the plan.
  */
-export function resolveStagePlan(profile: Pick<SpeciesProfile, "stageTargets">, confirmed: GrowthStage): GrowthStage[] {
+export function resolveStagePlan(profile: Pick<SpeciesProfile, "stageTargets"> & Partial<Pick<SpeciesProfile, "stages">>, confirmed: StageId): StageId[] {
+  if (profile.stages?.length) {
+    const order = profile.stages.map(stage => stage.id)
+    return order.includes(confirmed) ? order : [...order, confirmed]
+  }
   const defined = GROW_STAGE_ORDER.filter((stage) => profile.stageTargets[stage] !== undefined)
   const base = defined.length >= 2 ? defined : [...GROW_STAGE_ORDER]
   return GROW_STAGE_ORDER.filter((stage) => base.includes(stage) || stage === confirmed)
 }
 
 export function buildStageSteps(
-  plan: readonly GrowthStage[],
-  confirmed: GrowthStage,
-  suggested: GrowthStage | null,
+  plan: readonly StageId[],
+  confirmed: StageId,
+  suggested: StageId | null,
 ): { steps: StageStepModel[]; possibleChange: { label: string } | null } {
   const currentIndex = plan.indexOf(confirmed)
   const suggestedIndex = suggested === null ? -1 : plan.indexOf(suggested)

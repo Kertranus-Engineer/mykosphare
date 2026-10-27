@@ -64,7 +64,7 @@ export function DeviceDetails() {
         <div className="hv2-device-head">
           <span className="hv2-device-icon" aria-hidden><Cpu className="size-5" /></span>
           <div className="hv2-device-text">
-            <p className="hv2-device-name">{COPY.device.board}</p>
+            <p className="hv2-device-name">{device.name ?? COPY.device.board}</p>
             <p className="hv2-device-sample">
               {device.lastSampleAt ? (
                 <>
@@ -78,6 +78,7 @@ export function DeviceDetails() {
           <Chip tone={device.tone} icon={<ToneDot tone={device.tone} pulse={device.kind === "live"} />}>{device.label}</Chip>
         </div>
 
+        {device.lastSeenAt && <p className="hv2-caption">Última comunicación: <RelativeTime at={device.lastSeenAt} /></p>}
         <div className="hv2-device-group">
           <p className="hv2-eyebrow">{COPY.device.sensorsTitle}</p>
           {metrics.length > 0 ? (

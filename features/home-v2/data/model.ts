@@ -30,7 +30,7 @@ export interface MetricModel {
   trend: "up" | "down" | "flat" | null
   delta: number | null
   condition: { label: string; tone: Tone } | null
-  /** Samples received in this session only, oldest → newest. */
+  /** Samples for this view, oldest → newest: persisted for real devices, generated for demo. */
   series: number[]
   /** Display time ("HH:MM:SS") of each sample, same order/length as `series`. */
   times: string[]
@@ -49,10 +49,10 @@ export type EnvironmentModel =
       dimmed: boolean
       metrics: MetricModel[]
       /**
-       * What the series in `metrics` is: samples received during this session (real),
-       * or the labelled demonstration series. Charts word their note accordingly.
+       * What the series in `metrics` is: persisted real samples or a labelled
+       * demonstration series. `session` remains for legacy adapters only.
        */
-      window: "session" | "demo"
+      window: "session" | "demo" | "persisted"
       /** Overall state from the shared environment engine; null until it has caught up. */
       overall: { label: string; detail: string; tone: Tone; level: StatusLevel } | null
     }
@@ -69,6 +69,8 @@ export interface ActuatorModel {
 }
 
 export interface DeviceModel {
+  name?: string
+  lastSeenAt?: string | null
   kind: DeviceKind
   label: string
   provenance: Provenance

@@ -8,6 +8,7 @@ import { Sprout } from "lucide-react"
 import Link from "next/link"
 import { login } from "@/lib/auth/actions"
 import { useUser } from "@/lib/auth/hooks"
+import { safeNext } from "@/lib/auth/safe-next"
 
 function SubmitButton() {
   const { pending } = useFormStatus()
@@ -36,7 +37,7 @@ function LoginForm() {
   const [state, formAction] = useActionState(login, null)
   const router = useRouter()
   const searchParams = useSearchParams()
-  const next = searchParams.get("next") ?? "/dashboard"
+  const next = safeNext(searchParams.get("next"))
   const { user, loading } = useUser()
 
   useEffect(() => {

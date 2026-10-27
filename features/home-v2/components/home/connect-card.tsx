@@ -23,9 +23,15 @@ const ITEM_ICON: Record<string, LucideIcon> = {
  * it offers the way back to real data instead.
  */
 export function ConnectCard() {
-  const { mode, deviceSeen, setDemo } = useHomeV2()
+  const { mode, deviceSeen, setDemo, cloudStatus } = useHomeV2()
   const { notify } = useFeedback()
-  if (mode !== "demo") return null
+  if (mode !== "demo") return cloudStatus === "loading" || deviceSeen ? null : (
+    <Card as="section" className="hv2-connect">
+      <h2 className="hv2-connect-title">Conecta tu ESP32</h2>
+      <p>Consulta el dispositivo de tu cuenta y sus lecturas reales.</p>
+      <Link href={COPY.demo.connectHref} className="hv2-button hv2-button--primary">Conectar<ArrowRight aria-hidden className="size-4" /></Link>
+    </Card>
+  )
   const copy = COPY.connectCard
 
   return (

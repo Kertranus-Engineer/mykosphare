@@ -33,7 +33,7 @@ export function ChartsTab() {
           <TrendChart metric={metric} />
         </Card>
       ))}
-      <p className="hv2-caption">{mode === "demo" ? COPY.historyPage.chartsNoteDemo : COPY.historyPage.chartsNote} {COPY.environmentPage.scrubHint}</p>
+      <p className="hv2-caption">{mode === "demo" ? COPY.historyPage.chartsNoteDemo : "Últimas 120 lecturas reales guardadas; disponibles desde cualquier teléfono."} {COPY.environmentPage.scrubHint}</p>
     </div>
   )
 }

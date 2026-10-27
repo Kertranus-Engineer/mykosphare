@@ -1,0 +1,46 @@
+-- REVIEW ONLY. Do not execute until both Grow migrations are approved and applied.
+-- Replace the two placeholders using a newly issued per-device credential.
+-- Never paste the plaintext key or a Wi-Fi password into SQL or a repository.
+-- Run as an authorized database operator in one transaction.
+begin;
+
+do $provision$
+declare
+  v_owner_id uuid;
+  v_chamber_id uuid;
+  v_device_id uuid;
+  v_key_hash text := '<REPLACE_WITH_64_LOWERCASE_HEX_SHA256>';
+  v_key_hint text := '<REPLACE_WITH_KEY_HINT>';
+begin
+  select id into strict v_owner_id
+    from auth.users
+    where lower(email) = 'kertranus@gmail.com' and email_confirmed_at is not null;
+
+  if v_key_hash !~ '^[0-9a-f]{64}$' or
+     char_length(v_key_hint) not between 4 and 16 or
+     v_key_hint like '<%' then
+    raise exception 'replace credential hash and hint before provisioning';
+  end if;
+
+  if exists (select 1 from public.grow_devices where hardware_identifier = 'MYKO-001') then
+    raise exception 'MYKO-001 already exists; inspect ownership before any change';
+  end if;
+  if exists (select 1 from public.grow_chambers
+             where owner_id = v_owner_id and display_code = 'MYKO-001') then
+    raise exception 'chamber code already exists for owner; inspect before any change';
+  end if;
+
+  insert into public.grow_chambers(owner_id, name, display_code)
+    values (v_owner_id, 'MYKOSPHARE Prototype 01', 'MYKO-001')
+    returning id into v_chamber_id;
+  insert into public.grow_devices(chamber_id, device_type, name,
+                                  hardware_identifier, enabled, capabilities)
+    values (v_chamber_id, 'controller', 'MYKOSPHARE Prototype 01', 'MYKO-001', true,
+            array['temperature','humidity']::text[])
+    returning id into v_device_id;
+  insert into public.grow_device_credentials(device_id, key_hash, key_hint)
+    values (v_device_id, v_key_hash, v_key_hint);
+end;
+$provision$;
+
+commit;

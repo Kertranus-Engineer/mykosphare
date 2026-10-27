@@ -1,10 +1,13 @@
-import type { GrowState, MykoForm, MykoViewModel } from "./types"
+import { findStage } from "./stages"
+import type { GrowState, MykoForm, MykoViewModel, SpeciesProfile, StageId } from "./types"
 
-function formForStage(stage: GrowState["confirmedStage"]): MykoForm {
-  if (stage === "primordia") return "emerging"
-  if (stage === "fruiting") return "mature"
-  if (stage === "harvest") return "complete"
-  return "early"
+/**
+ * Biological stage → MYKO form is a PRESENTATION mapping declared by the
+ * profile. A stage id the profile does not declare renders the earliest form
+ * (never crashes, never claims development it cannot ground).
+ */
+export function mykoFormForStage(stage: StageId, profile?: Pick<SpeciesProfile, "stages"> | null): MykoForm {
+  return findStage(profile, stage)?.mykoForm ?? "early"
 }
 
 function messageKey(state: GrowState): string {
@@ -19,10 +22,11 @@ function messageKey(state: GrowState): string {
   return state.origin === "simulated" ? "myko.status.simulated" : "myko.status.healthy"
 }
 
-export function toMykoViewModel(state: GrowState): MykoViewModel {
+export function toMykoViewModel(state: GrowState, profile?: Pick<SpeciesProfile, "stages" | "morphology"> | null): MykoViewModel {
   const isUnknown = state.freshness !== "live" || state.health === "unknown"
   return {
-    form: formForStage(state.confirmedStage),
+    form: mykoFormForStage(state.confirmedStage, profile),
+    ...(profile?.morphology && profile.morphology !== "fungal" ? { morphology: profile.morphology } : {}),
     mood: isUnknown ? "uncertain" : state.health === "critical" ? "distressed" : state.health === "attention" ? "concerned" : "content",
     activity: "idle",
     attention: isUnknown ? "unknown" : state.health === "critical" ? "urgent" : state.health === "attention" ? "notice" : "none",

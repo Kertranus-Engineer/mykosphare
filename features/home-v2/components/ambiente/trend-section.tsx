@@ -15,7 +15,7 @@ const OPTIONS = [
   { id: "humidity", label: COPY.environment.humidity },
 ] as const
 
-/** Interactive session trend for one metric at a time. Never shows a stored history. */
+/** Interactive persisted trend for real data, labelled generated trend for demo. */
 export function TrendSection() {
   const { environment, device } = useHomeV2()
   const [metricId, setMetricId] = useState<MetricId>("temperature")

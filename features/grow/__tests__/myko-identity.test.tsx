@@ -228,7 +228,7 @@ describe("offline is waiting, not illness", () => {
 })
 
 describe("reduced motion contract", () => {
-  const css = readFileSync(path.resolve(__dirname, "../styles/grow.css"), "utf8")
+  const css = readFileSync(path.resolve(__dirname, "../styles/grow.css"), "utf8").replace(/\r\n/g, "\n")
 
   it("every infinite MYKO animation lives inside prefers-reduced-motion: no-preference", () => {
     const block = css.slice(css.indexOf("@media (prefers-reduced-motion: no-preference)"))

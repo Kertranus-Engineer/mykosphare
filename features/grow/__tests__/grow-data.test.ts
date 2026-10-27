@@ -76,12 +76,29 @@ describe("real mode never falls back to simulation", () => {
     }
   })
 
-  it("accepts a valid snapshot as real; its timeline holds only run-record milestones", async () => {
-    const view = await fetchRealGrowView("abc", { fetchImpl: respond(200, { status: "ready", snapshot: readySnapshot }) })
+  it("accepts a valid twin as real; without persisted events its timeline holds only run-record milestones", async () => {
+    const view = await fetchRealGrowView("abc", { fetchImpl: respond(200, { status: "ready", twin: { grow: readySnapshot, memory: { recentEvents: [] } } }) })
     expect(view).toMatchObject({ status: "ready", mode: "real" })
     if (view.status !== "ready") throw new Error("expected ready")
     expect(view.timeline.map((event) => event.kind)).toEqual(["cultivation_started", "stage_confirmed"])
     expect(view.timeline.every((event) => event.origin === "real")).toBe(true)
+  })
+
+  it("prefers persisted run events, keeps them real, and ignores event types the UI does not show yet", async () => {
+    const recentEvents = [
+      { id: "e2", type: "stage_confirmed", occurredAt: "2026-09-25T10:00:00.000Z", provenance: "manual", stage: "consolidation" },
+      { id: "e1", type: "cultivation_started", occurredAt: "2026-09-20T10:00:00.000Z", provenance: "manual" },
+      { id: "e3", type: "environment_attention", occurredAt: "2026-09-26T10:00:00.000Z", provenance: "deterministic" },
+    ]
+    const view = await fetchRealGrowView("abc", { fetchImpl: respond(200, { status: "ready", twin: { grow: readySnapshot, memory: { recentEvents } } }) })
+    if (view.status !== "ready") throw new Error("expected ready")
+    expect(view.timeline.map((event) => [event.kind, event.stage ?? null])).toEqual([["stage_confirmed", "consolidation"], ["cultivation_started", null]])
+    expect(view.timeline.every((event) => event.origin === "real")).toBe(true)
+  })
+
+  it("rejects the legacy snapshot-only body instead of guessing", async () => {
+    const view = await fetchRealGrowView("abc", { fetchImpl: respond(200, { status: "ready", snapshot: readySnapshot }) })
+    expect(view).toMatchObject({ status: "unavailable", mode: "real" })
   })
 
   it("the store surfaces a network failure instead of simulated data", async () => {

@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache"
 import { redirect } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
+import { safeNext } from "@/lib/auth/safe-next"
 
 export async function login(
   _prevState: { error: string | null } | null,
@@ -26,7 +27,7 @@ export async function login(
     return { error: error.message }
   }
 
-  const next = (formData.get("next") as string) || "/dashboard"
+  const next = safeNext(formData.get("next"))
   revalidatePath("/", "layout")
   redirect(next)
 }

@@ -6,7 +6,7 @@ import { presentSource } from "@/lib/grow/presentation"
 import type { MykoViewModel } from "@/lib/grow/types"
 import { SourceBadge } from "../components/source-badge"
 import { buildMykoGeometry } from "../myko/geometry"
-import { MykoRenderer, type MykoRendererProps } from "../myko/myko-renderer"
+import { MykoRenderer, mykoRendererFor, type MykoRendererProps } from "../myko/myko-renderer"
 import type { MykoVisualTraits } from "../myko/traits"
 
 const model: MykoViewModel = { form: "emerging", mood: "concerned", activity: "idle", attention: "notice", messageKey: "myko.status.humidity_low", origin: "simulated" }
@@ -26,6 +26,15 @@ describe("SourceBadge", () => {
     const html = renderToStaticMarkup(<SourceBadge source={presentSource("real", "real")} />)
     expect(html).toContain('data-source="real"')
     expect(html).toContain("g-source-mark-real")
+  })
+})
+
+describe("MYKO morphology seam", () => {
+  it("only the fungal anatomy is implemented; other families fall back to it without crashing", () => {
+    expect(mykoRendererFor(undefined)).toBe(mykoRendererFor("fungal"))
+    expect(mykoRendererFor("flowering_plant")).toBe(mykoRendererFor("fungal"))
+    const html = renderToStaticMarkup(<MykoRenderer model={{ ...model, morphology: "flowering_plant" }} />)
+    expect(html).toContain("myko-signature")
   })
 })
 

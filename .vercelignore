@@ -1,0 +1,5 @@
+/firmware
+*.ino
+*.local.h
+/scripts/backup
+.env*
